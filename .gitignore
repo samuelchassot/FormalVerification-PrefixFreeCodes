@@ -2,4 +2,5 @@
 *.log
 **/.DS_Store
 **/.metals
-**.vscode
+**/.vscode
+**/.stainless-cache
