@@ -1,4 +1,4 @@
-//Proejct Formal verification (CS-550, EPFL)
+//Project Formal verification (CS-550, EPFL)
 //
 //Samuel Chassot 270955
 //Daniel Filipe Nunes Silva 275197
