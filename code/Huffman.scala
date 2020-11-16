@@ -1,7 +1,8 @@
-//Project Formal verification (CS-550, EPFL)
+// Personal final Project
+// Formal verification (CS-550, EPFL)
 //
-//Samuel Chassot 270955
-//Daniel Filipe Nunes Silva 275197
+// Samuel Chassot 270955
+// Daniel Filipe Nunes Silva 275197
 
 import stainless.collection._
 import stainless.lang._
@@ -11,16 +12,12 @@ import stainless.proof.check
 
 object HuffmanCode {
 
-  // Tree -----------------------------------------------------------
-
-  type Alphabet = Char
+  // Huffman's Algorithm--------------------------------------------------------
   type Forest = List[Tree]
   
-  sealed abstract class Tree {
-  }
-
+  sealed abstract class Tree
   case class InnerNode(w: BigInt, t1: Tree, t2: Tree) extends Tree
-  case class Leaf(w: BigInt, c: Alphabet) extends Tree
+  case class Leaf(w: BigInt, c: Char) extends Tree
 
   def cachedWeight(t: Tree): BigInt = t match {
     case InnerNode(w, t1, t2) => w
@@ -31,19 +28,16 @@ object HuffmanCode {
 
   def insortTree(t: Tree, f: Forest): Forest = f match {
     case Nil() => List(t)
-    case head :: tail => if (cachedWeight(t) <= cachedWeight(head)) t :: f else head :: insortTree(t, tail)
+    case hd :: tl => if (cachedWeight(t) <= cachedWeight(hd)) t :: f else hd :: insortTree(t, tl)
   }
 
   def huffmansAlgorithm(f: Forest): Tree = f match {
-    case t1 :: t2 :: ts => huffmansAlgorithm(insortTree(uniteTrees(t1, t2), ts))
+    case t1 :: t2 :: tl => huffmansAlgorithm(insortTree(uniteTrees(t1, t2), tl))
     case t :: _ => t
   }
 
-  // ------------------------------------------------------------------
-  // Token ------------------------------------------------------------
-
+  // Tokenizer -----------------------------------------------------------------
   sealed abstract class Token
-
   case class ValidToken(bits: List[Boolean]) extends Token
   case class ElementNotFoundToken() extends Token
 
@@ -52,72 +46,96 @@ object HuffmanCode {
     case ValidToken(_) => true
   }
 
-  def encodeElement(t: Tree, elmt: Alphabet, acc: List[Boolean]): Token = t match {
-    case Leaf(w, c) => if (c == elmt) ValidToken(acc) else ElementNotFoundToken()
-    case InnerNode(w, t1, t2) => encodeElement(t1, elmt, acc ++ List(false)) match {
+  def isValidListOfTokens(l: List[Token]): Boolean = {
+    l.forall(isValidToken)
+  }
+
+  def encodeElement(t: Tree, e: Char, acc: List[Boolean]): Token = t match {
+    case Leaf(w, c) => if (c == e) ValidToken(acc) else ElementNotFoundToken()
+    case InnerNode(w, t1, t2) => encodeElement(t1, e, acc ++ List(false)) match {
       case ValidToken(bits) => ValidToken(bits)
-      case ElementNotFoundToken() => encodeElement(t2, elmt, acc ++ List(true)) 
+      case ElementNotFoundToken() => encodeElement(t2, e, acc ++ List(true)) 
     }
   }
-  def encode(t: Tree, content: List[Alphabet]): List[Token] = content match {
+
+  def encode(t: Tree, s: List[Char]): List[Token] = s match {
     case Nil() => Nil()
-    case head :: tl => encodeElement(t, head, Nil()) :: encode(t, tl)
+    case hd :: tl => encodeElement(t, hd, Nil()) :: encode(t, tl)
   }
   
-  def decodeElement(t: Tree, token: Token): Option[Alphabet] = {
-    
-    def decodeElementHelper(t: Tree, bits: List[Boolean]): Option[Alphabet] = t match {
-      case Leaf(w, c) => if(bits.size == 0) Some(c) else None()
+  def decodeElement(t: Tree, token: Token): Option[Char] = {
+
+    def decodeElementHelper(t: Tree, bits: List[Boolean]): Option[Char] = t match {
+      case Leaf(w, c) => if (bits.size == 0) Some(c) else None()
       case InnerNode(w, t1, t2) => {
         bits match {
           case Nil() => None()
-          case head :: tl => if(!head) decodeElementHelper(t1, tl) else decodeElementHelper(t2, tl)
+          case hd :: tl => if (!hd) decodeElementHelper(t1, tl) else decodeElementHelper(t2, tl)
         }
       }
     }
+    
     token match {
       case ElementNotFoundToken() => None()
       case ValidToken(bits) => decodeElementHelper(t, bits)
     }
-    
   }
   
-  def decode(t: Tree, tokens: List[Token]): Option[List[Alphabet]] = {
+  def decode(t: Tree, tokens: List[Token]): Option[List[Char]] = {
     require(isValidListOfTokens(tokens))
+
     tokens match {
       case Nil() => Some(Nil())
-      case head :: tl => decodeElement(t, head) match {
+      case hd :: tl => decodeElement(t, hd) match {
+        case None() => None()
         case Some(elmt) => decode(t, tl) match {
           case Some(value) => Some(elmt :: value)
           case None() => None()
         }
-        case None() => None()
       } 
     }
-}
-
-  def isValidListOfTokens(l: List[Token]): Boolean = {
-    l.forall(isValidToken)
   }
   
- // Token ------------------------------------------------------------
-  @extern
-  def printHuffmanCode(t: Tree): Unit = {
-    def printHuffmanCodeHelper(t: Tree, cw: String): Unit = t match {
-      case InnerNode(_, t1, t2) => {
-        printHuffmanCodeHelper(t1, cw.concat("0"))
-        printHuffmanCodeHelper(t2, cw.concat("1"))
-      }
-      case Leaf(_, c) => {
-        println(s"$c : $cw")
-      }
-    }
-
-    printHuffmanCodeHelper(t, "")
-  }
- 
+  // main-----------------------------------------------------------------------
   @extern
   def main(args: Array[String]): Unit = {
-    printHuffmanCode(huffmansAlgorithm(List(Leaf(1, 'a'), Leaf(3, 'b'), Leaf(4, 'c'), Leaf(12, 'd'))))
+ 
+    def scalaListToStainlessList[T](l: scala.collection.immutable.List[T]): List[T] = l match {
+      case scala.collection.immutable.Nil => Nil()
+      case scala.collection.immutable.::(x, xs) => Cons(x, scalaListToStainlessList(xs))
+    }
+ 
+    def stainlessListToScalaList[T](l: List[T]): scala.collection.immutable.List[T] = l match {
+      case Nil()        => scala.collection.immutable.Nil
+      case Cons(x, xs)  => scala.collection.immutable.::(x, stainlessListToScalaList(xs))
+    }
+
+    def generateSortedForest(s: String): Forest = {
+      scalaListToStainlessList(args(0).toList.groupBy(c => c).map(t => Leaf(t._2.length, t._1)).toList.sortBy(l => cachedWeight(l)))
+    }
+
+    def printHuffmanCode(t: Tree): Unit = {
+      def printHuffmanCodeHelper(t: Tree, cw: String): Unit = t match {
+        case InnerNode(_, t1, t2) => {
+          printHuffmanCodeHelper(t1, cw.concat("0"))
+          printHuffmanCodeHelper(t2, cw.concat("1"))
+        }
+        case Leaf(_, c) => {
+          println(s"$c : $cw")
+        }
+      }
+
+      printHuffmanCodeHelper(t, "")
+    }
+
+    if (args.size != 1) {
+      println("This expects only one String")
+      return
+    }
+
+    val f: Forest = generateSortedForest(args(0))
+    val t: Tree = huffmansAlgorithm(f)
+
+    printHuffmanCode(t)
   }
 }
