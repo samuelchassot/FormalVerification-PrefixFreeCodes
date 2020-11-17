@@ -49,8 +49,17 @@ object HuffmanCode {
     }
   }.ensuring(_ => insortTree(t, f).length == f.length+1)
 
+  def generateUnsortedForest(s: List[Char]): Forest = {
+    s.foldLeft[List[Char]](Nil())((l, c) => if (l.contains(c)) l else (c :: l)).map(c => Leaf(s.count(_ == c), c))
+  }
+
+  def sortForest(f: Forest): Forest = f match {
+      case Nil() => Nil()
+      case hd :: tl => insortTree(hd, sortForest(tl))
+  }
+
   def generateSortedForest(s: List[Char]): Forest = {
-    s.groupBy(c => c).map(t => Leaf(t._2.length, t._1)).toList.sortBy(l => cachedWeight(l))
+    sortForest(generateUnsortedForest(s))
   }
 
   def huffmansAlgorithm(f: Forest): Tree = {
@@ -62,7 +71,7 @@ object HuffmanCode {
         insortTreeLength(uniteTrees(t1, t2), tl)
         huffmansAlgorithm(insortTree(uniteTrees(t1, t2), tl))
       }
-      case t :: Nil() => t
+      case t :: _ => t
     }
   }
 
@@ -84,9 +93,15 @@ object HuffmanCode {
     }
   }
 
-  def encode(t: Tree, s: List[Char]): (Tree, List[Token]) = s match {
-    case Nil() => (t, Nil())
-    case hd :: tl => (t, encodeElement(t, hd, Nil()) :: encode(t, tl)._2)
+  def encode(s: List[Char]): (Tree, List[Token]) = {
+
+    def encodeHelper(t: Tree, s: List[Char]) : List[Token] = s match {
+      case Nil() => Nil()
+      case hd :: tl => encodeElement(t, hd, Nil()) :: encodeHelper(t, tl)
+    }
+
+    val t = huffmansAlgorithm(generateSortedForest(s))
+    (t, encodeHelper(t, s))
   }
   
   def decodeElement(t: Tree, token: Token): Option[Char] = {
