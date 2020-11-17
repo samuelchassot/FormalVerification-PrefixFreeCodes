@@ -151,10 +151,6 @@ object HuffmanCode {
       case Cons(x, xs)  => scala.collection.immutable.::(x, stainlessListToScalaList(xs))
     }
 
-    def generateSortedForest(s: String): Forest = {
-      scalaListToStainlessList(args(0).toList.groupBy(c => c).map(t => Leaf(t._2.length, t._1)).toList.sortBy(l => cachedWeight(l)))
-    }
-
     def printHuffmanCode(t: Tree): Unit = {
       def printHuffmanCodeHelper(t: Tree, cw: String): Unit = t match {
         case InnerNode(_, t1, t2) => {
@@ -174,7 +170,7 @@ object HuffmanCode {
       return
     }
 
-    val f: Forest = generateSortedForest(args(0))
+    val f: Forest = generateSortedForest(scalaListToStainlessList(args(0).toList))
     val t: Tree = huffmansAlgorithm(f)
 
     printHuffmanCode(t)
