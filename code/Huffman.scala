@@ -72,10 +72,6 @@ object HuffmanCode {
     case ValidToken(_) => true
   }
 
-  def isValidListOfTokens(l: List[Token]): Boolean = {
-    l.forall(isValidToken)
-  }
-
   def encodeElement(t: Tree, e: Char, acc: List[Boolean]): Token = t match {
     case Leaf(w, c) => if (c == e) ValidToken(acc) else ElementNotFoundToken()
     case InnerNode(w, t1, t2) => encodeElement(t1, e, acc ++ List(false)) match {
@@ -108,7 +104,7 @@ object HuffmanCode {
   }
   
   def decode(t: Tree, tokens: List[Token]): Option[List[Char]] = {
-    require(isValidListOfTokens(tokens))
+    require(tokens.forall(isValidToken))
 
     tokens match {
       case Nil() => Some(Nil())
