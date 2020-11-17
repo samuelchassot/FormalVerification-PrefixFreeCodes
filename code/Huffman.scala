@@ -26,14 +26,40 @@ object HuffmanCode {
 
   def uniteTrees(t1: Tree, t2: Tree): Tree = InnerNode(cachedWeight(t1) + cachedWeight(t2), t1, t2)
 
-  def insortTree(t: Tree, f: Forest): Forest = f match {
-    case Nil() => List(t)
-    case hd :: tl => if (cachedWeight(t) <= cachedWeight(hd)) t :: f else hd :: insortTree(t, tl)
+  def insortTree(t: Tree, f: Forest): Forest = {
+    decreases(f.length)
+    f match {
+      case Nil() => List(t)
+      case hd :: tl => if (cachedWeight(t) <= cachedWeight(hd)) t :: f else hd :: insortTree(t, tl)
+    }
   }
 
-  def huffmansAlgorithm(f: Forest): Tree = f match {
-    case t1 :: t2 :: tl => huffmansAlgorithm(insortTree(uniteTrees(t1, t2), tl))
-    case t :: _ => t
+  def insortTreeLength(t: Tree, f: Forest): Unit = {
+    f match {
+      case Nil() => ()
+      case hd :: tl if (cachedWeight(t) <= cachedWeight(hd)) => ()
+      case hd :: tl => (
+        insortTree(t, f).length          ==:| trivial |:
+        (hd :: insortTree(t, tl)).length ==:| trivial |:
+        1+insortTree(t, tl).length       ==:| insortTreeLength(t, tl) |:
+        1+tl.length+1                    ==:| trivial |:
+        (hd :: tl).length+1              ==:| trivial |:
+        f.length+1
+      ).qed
+    }
+  }.ensuring(_ => insortTree(t, f).length == f.length+1)
+
+  def huffmansAlgorithm(f: Forest): Tree = {
+    require(!f.isEmpty)
+    decreases(f.length)
+
+    f match {
+      case t1 :: t2 :: tl => {
+        insortTreeLength(uniteTrees(t1, t2), tl)
+        huffmansAlgorithm(insortTree(uniteTrees(t1, t2), tl))
+      }
+      case t :: Nil() => t
+    }
   }
 
   // Tokenizer -----------------------------------------------------------------
