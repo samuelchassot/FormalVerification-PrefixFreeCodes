@@ -49,6 +49,10 @@ object HuffmanCode {
     }
   }.ensuring(_ => insortTree(t, f).length == f.length+1)
 
+  def generateSortedForest(s: List[Char]): Forest = {
+    s.groupBy(c => c).map(t => Leaf(t._2.length, t._1)).toList.sortBy(l => cachedWeight(l))
+  }
+
   def huffmansAlgorithm(f: Forest): Tree = {
     require(!f.isEmpty)
     decreases(f.length)
@@ -80,9 +84,9 @@ object HuffmanCode {
     }
   }
 
-  def encode(t: Tree, s: List[Char]): List[Token] = s match {
-    case Nil() => Nil()
-    case hd :: tl => encodeElement(t, hd, Nil()) :: encode(t, tl)
+  def encode(t: Tree, s: List[Char]): (Tree, List[Token]) = s match {
+    case Nil() => (t, Nil())
+    case hd :: tl => (t, encodeElement(t, hd, Nil()) :: encode(t, tl)._2)
   }
   
   def decodeElement(t: Tree, token: Token): Option[Char] = {
