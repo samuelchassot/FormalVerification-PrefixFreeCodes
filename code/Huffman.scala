@@ -1,4 +1,5 @@
 // Personal final Project
+// Verification of encode/decode with Huffman codes
 // Formal verification (CS-550, EPFL)
 //
 // Samuel Chassot 270955
@@ -85,62 +86,58 @@ object HuffmanCode {
     }
   }
 
-  // Tokenizer------------------------------------------------------------------
-
-  // datatypes------------------------------------------------------------------
-  sealed abstract class Token
-  case class ValidToken(bits: List[Boolean]) extends Token
-  case class ElementNotFoundToken() extends Token
-
-  // return true iff a token is valid-------------------------------------------
-  def isValidToken(t: Token): Boolean = t match {
-    case ElementNotFoundToken() => false
-    case ValidToken(_) => true
-  }
+  // encode/decode--------------------------------------------------------------
 
   // to complete----------------------------------------------------------------
-  def encodeElement(t: Tree, e: Char, acc: List[Boolean]): Token = t match {
-    case Leaf(w, c) => if (c == e) ValidToken(acc) else ElementNotFoundToken()
-    case InnerNode(w, t1, t2) => encodeElement(t1, e, acc ++ List(false)) match {
-      case ValidToken(bits) => ValidToken(bits)
-      case ElementNotFoundToken() => encodeElement(t2, e, acc ++ List(true)) 
-    }
-  }
-
-  // to complete----------------------------------------------------------------
-  def encodeHelper(t: Tree, s: List[Char]) : List[Token] = s match {
-    case Nil() => Nil()
-    case hd :: tl => encodeElement(t, hd, Nil()) :: encodeHelper(t, tl)
-  }
-
-  // to complete----------------------------------------------------------------
-  def encode(s: List[Char]): (Tree, List[Token]) = {
-    val t = huffmansAlgorithm(generateSortedForest(s))
-    (t, encodeHelper(t, s))
-  }
-  
-  // to complete----------------------------------------------------------------
-  def decodeOneChar(t: Tree, bs: List[Boolean]): (Char, List[Boolean]) = {
+  def encodeChar(t: Tree, c: Char, acc: List[Boolean]): List[Boolean] = {
     t match {
-      case Leaf(_, c) => (c, bs)
-      case InnerNode(_, t1, t2) => bs match {
-        case hd :: tl => if (!hd) decodeOneChar(t1, tl) else decodeOneChar(t2, tl)
+      case Leaf(_, lC) => if (lC == c) acc else Nil()
+      case InnerNode(_, t1, t2) => {
+        encodeChar(t1, c, acc ++ List(false)) match {
+          case Nil() => encodeChar(t2, c, acc ++ List(true))
+          case l => l
+        }
       }
     }
   }
 
+  // to complete----------------------------------------------------------------
+  def encodeHelper(t: Tree, s: List[Char]) : List[Boolean] = {
+    s match {
+      case Nil() => Nil()
+      case hd :: tl => encodeChar(t, hd, Nil()) ++ encodeHelper(t, tl)
+    }
+  }
+
+  // to complete----------------------------------------------------------------
+  def encode(t: Tree, s: List[Char]): List[Boolean] = {
+    encodeHelper(t, s)
+  }
+  
+  // to complete----------------------------------------------------------------
+  def decodeChar(t: Tree, bs: List[Boolean]): (Char, List[Boolean]) = {
+    t match {
+      case Leaf(_, c) => (c, bs)
+      case InnerNode(_, t1, t2) => bs match {
+        case hd :: tl => if (!hd) decodeChar(t1, tl) else decodeChar(t2, tl)
+      }
+    }
+  }
+
+  // to complete----------------------------------------------------------------
   def decodeHelper(t: Tree, bs: List[Boolean], acc: List[Char]): List[Char] = {
     bs match {
       case Nil() => acc
       case _ => {
-        val (c, nBs) = decodeOneChar(t, bs)
-        decodeHelper(t, nBs, c :: acc)
+        val (c, nBs) = decodeChar(t, bs)
+        decodeHelper(t, nBs, acc ++ List(c))
       }
     }
   }
 
+  // to complete----------------------------------------------------------------
   def decode(t: Tree, bs: List[Boolean]): List[Char] = {
-    decodeHelper(t, bs, Nil()).reverse
+    decodeHelper(t, bs, Nil())
   }
   
   // main-----------------------------------------------------------------------
