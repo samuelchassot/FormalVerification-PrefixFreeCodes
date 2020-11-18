@@ -22,6 +22,11 @@ object HuffmanCode {
 
   type Forest = List[Tree]
 
+  def isLeaf(t: Tree): Boolean = t match {
+    case InnerNode(_, _, _) => false
+    case Leaf(_, _) => true
+  }
+
   // return the weight of a tree------------------------------------------------
   def cachedWeight(t: Tree): BigInt = t match {
     case InnerNode(w, t1, t2) => w
@@ -115,7 +120,19 @@ object HuffmanCode {
   }
   
   // to complete----------------------------------------------------------------
+  def canDecodeAtLeastOneChar(t: Tree, bs: List[Boolean]): Boolean = {
+    t match {
+      case Leaf(_, _) => true
+      case InnerNode(_, t1, t2) => bs match {
+        case Nil() => false
+        case hd :: tl => if (!hd) canDecodeAtLeastOneChar(t1, tl) else canDecodeAtLeastOneChar(t2, tl)
+      }
+    }
+  }
+
   def decodeChar(t: Tree, bs: List[Boolean]): (Char, List[Boolean]) = {
+    require(canDecodeAtLeastOneChar(t, bs))
+
     t match {
       case Leaf(_, c) => (c, bs)
       case InnerNode(_, t1, t2) => bs match {
