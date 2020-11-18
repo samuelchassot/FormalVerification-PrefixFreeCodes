@@ -1,7 +1,5 @@
 # Todo
 
-- split {en, de}codeHelper
-- check elements are encodable for Char with Tree, etc.
-- clean EncodeElement, element is encodable with tree, ensure result is only one element, etc.
-- same for decode
+- prove decreasing measures for `decodeChar` and `decodeHelper`
+- find valid `require` and `ensuring` for encode/decode functions
 - `encode(decode(s)) == s`
