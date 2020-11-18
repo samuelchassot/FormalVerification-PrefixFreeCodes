@@ -119,38 +119,28 @@ object HuffmanCode {
     (t, encodeHelper(t, s))
   }
   
-  def decodeElementHelper(t: Tree, bits: List[Boolean]): Option[Char] = t match {
-    case Leaf(w, c) => if (bits.size == 0) Some(c) else None()
-    case InnerNode(w, t1, t2) => {
-      bits match {
-        case Nil() => None()
-        case hd :: tl => if (!hd) decodeElementHelper(t1, tl) else decodeElementHelper(t2, tl)
+  // to complete----------------------------------------------------------------
+  def decodeOneChar(t: Tree, bs: List[Boolean]): (Char, List[Boolean]) = {
+    t match {
+      case Leaf(_, c) => (c, bs)
+      case InnerNode(_, t1, t2) => bs match {
+        case hd :: tl => if (!hd) decodeOneChar(t1, tl) else decodeOneChar(t2, tl)
       }
     }
   }
 
-  // to complete----------------------------------------------------------------
-  def decodeElement(t: Tree, token: Token): Option[Char] = {
-    token match {
-      case ElementNotFoundToken() => None()
-      case ValidToken(bits) => decodeElementHelper(t, bits)
+  def decodeHelper(t: Tree, bs: List[Boolean], acc: List[Char]): List[Char] = {
+    bs match {
+      case Nil() => acc
+      case _ => {
+        val (c, nBs) = decodeOneChar(t, bs)
+        decodeHelper(t, nBs, c :: acc)
+      }
     }
   }
-  
-  // to complete----------------------------------------------------------------
-  def decode(t: Tree, tokens: List[Token]): Option[List[Char]] = {
-    require(tokens.forall(isValidToken))
 
-    tokens match {
-      case Nil() => Some(Nil())
-      case hd :: tl => decodeElement(t, hd) match {
-        case None() => None()
-        case Some(elmt) => decode(t, tl) match {
-          case Some(value) => Some(elmt :: value)
-          case None() => None()
-        }
-      } 
-    }
+  def decode(t: Tree, bs: List[Boolean]): List[Char] = {
+    decodeHelper(t, bs, Nil()).reverse
   }
   
   // main-----------------------------------------------------------------------
