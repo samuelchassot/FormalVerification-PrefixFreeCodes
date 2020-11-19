@@ -27,6 +27,11 @@ object HuffmanCode {
     case Leaf(_, _) => true
   }
 
+  def isInnerNode(t: Tree): Boolean = t match {
+    case InnerNode(_, _, _) => true
+    case Leaf(_, _) => false
+  }
+
   // return the weight of a tree------------------------------------------------
   def cachedWeight(t: Tree): BigInt = t match {
     case InnerNode(w, t1, t2) => w
@@ -39,6 +44,7 @@ object HuffmanCode {
   // insert a tree in a forest and sort the latter------------------------------
   def insortTree(t: Tree, f: Forest): Forest = {
     decreases(f.length)
+
     f match {
       case Nil() => List(t)
       case hd :: tl => if (cachedWeight(t) <= cachedWeight(hd)) t :: f else hd :: insortTree(t, tl)
@@ -130,19 +136,44 @@ object HuffmanCode {
     }
   }
 
-  def decodeChar(t: Tree, bs: List[Boolean]): (Char, List[Boolean]) = {
-    require(canDecodeAtLeastOneChar(t, bs))
+  // to complete----------------------------------------------------------------
+  def canDecode(s: Tree, bs: List[Boolean])(implicit t: InnerNode): Boolean = {
+    require(isInnerNode(s))
+    decreases(bs.length)
 
-    t match {
-      case Leaf(_, c) => (c, bs)
-      case InnerNode(_, t1, t2) => bs match {
-        case hd :: tl => if (!hd) decodeChar(t1, tl) else decodeChar(t2, tl)
+    s match { case InnerNode(_, t1, t2) => { bs match {
+      case hd :: tl => {
+        if (!hd) t1 match {
+          case Leaf(_, c) => if (tl.isEmpty) true else canDecode(t, tl)
+          case InnerNode(_, _, _) => canDecode(t1, tl)
+        } else t2 match {
+          case Leaf(_, c) => if (tl.isEmpty) true else canDecode(t, tl)
+          case InnerNode(_, _, _) => canDecode(t2, tl)
+        }
       }
-    }
+      case Nil() => true
+    }}}
   }
 
   // to complete----------------------------------------------------------------
-  def decodeHelper(t: Tree, bs: List[Boolean], acc: List[Char]): List[Char] = {
+  def decodeChar(t: Tree, bs: List[Boolean]): (Char, List[Boolean]) = {
+    require(isInnerNode(t) && canDecodeAtLeastOneChar(t, bs))
+
+    t match { case InnerNode(_, t1, t2) => { bs match {
+      case hd :: tl => {
+        if (!hd) t1 match {
+          case Leaf(_, c) => (c, tl)
+          case InnerNode(_, _, _) => decodeChar(t1, tl)
+        } else t2 match {
+          case Leaf(_, c) => (c, tl)
+          case InnerNode(_, _, _) => decodeChar(t2, tl)
+        }
+      }
+    }}}
+  }
+
+  // to complete----------------------------------------------------------------
+  def decodeHelper(t: InnerNode, bs: List[Boolean], acc: List[Char]): List[Char] = {
     bs match {
       case Nil() => acc
       case _ => {
@@ -153,7 +184,8 @@ object HuffmanCode {
   }
 
   // to complete----------------------------------------------------------------
-  def decode(t: Tree, bs: List[Boolean]): List[Char] = {
+  def decode(t: InnerNode, bs: List[Boolean]): List[Char] = {
+    require(canDecode(t, bs)(t))
     decodeHelper(t, bs, Nil())
   }
   
@@ -192,6 +224,8 @@ object HuffmanCode {
 
     val f: Forest = generateSortedForest(scalaListToStainlessList(args(0).toList))
     val t: Tree = huffmansAlgorithm(f)
+
+    val test: Tree = InnerNode(13, null, null)
 
     printHuffmanCode(t)
   }
