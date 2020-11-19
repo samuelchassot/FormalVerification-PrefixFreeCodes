@@ -174,19 +174,19 @@ object HuffmanCode {
 
   // to complete----------------------------------------------------------------
   def decodeHelper(t: InnerNode, bs: List[Boolean], acc: List[Char]): List[Char] = {
-    bs match {
-      case Nil() => acc
-      case _ => {
-        val (c, nBs) = decodeChar(t, bs)
-        decodeHelper(t, nBs, acc ++ List(c))
-      }
-    }
+    require(!bs.isEmpty)
+
+    decodeChar(t, bs) match { case(c, nBs) => if (nBs.isEmpty) acc else decodeHelper(t, nBs, acc ++ List(c)) }
   }
 
   // to complete----------------------------------------------------------------
   def decode(t: InnerNode, bs: List[Boolean]): List[Char] = {
     require(canDecode(t, bs)(t))
-    decodeHelper(t, bs, Nil())
+
+    bs match {
+      case Nil() => Nil()
+      case _ => decodeHelper(t, bs, Nil())
+    }
   }
   
   // main-----------------------------------------------------------------------
