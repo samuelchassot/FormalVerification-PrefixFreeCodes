@@ -22,14 +22,16 @@ object HuffmanCode {
 
   type Forest = List[Tree]
 
-  def isLeaf(t: Tree): Boolean = t match {
-    case InnerNode(_, _, _) => false
-    case Leaf(_, _) => true
-  }
-
+  // return true if Tree is an InnerNode----------------------------------------
   def isInnerNode(t: Tree): Boolean = t match {
     case InnerNode(_, _, _) => true
     case Leaf(_, _) => false
+  }
+
+  // return true if Tree is a Leaf----------------------------------------------
+  def isLeaf(t: Tree): Boolean = t match {
+    case InnerNode(_, _, _) => false
+    case Leaf(_, _) => true
   }
 
   // return the weight of a tree------------------------------------------------
@@ -127,13 +129,20 @@ object HuffmanCode {
   
   // to complete----------------------------------------------------------------
   def canDecodeAtLeastOneChar(t: Tree, bs: List[Boolean]): Boolean = {
-    t match {
-      case Leaf(_, _) => true
-      case InnerNode(_, t1, t2) => bs match {
-        case Nil() => false
-        case hd :: tl => if (!hd) canDecodeAtLeastOneChar(t1, tl) else canDecodeAtLeastOneChar(t2, tl)
+    require(isInnerNode(t))
+
+    t match { case InnerNode(_, t1, t2) => { bs match {
+      case hd :: tl => {
+        if (!hd) t1 match {
+          case Leaf(_, c) => true
+          case InnerNode(_, _, _) => canDecodeAtLeastOneChar(t1, tl)
+        } else t2 match {
+          case Leaf(_, c) => true
+          case InnerNode(_, _, _) => canDecodeAtLeastOneChar(t2, tl)
+        }
       }
-    }
+      case Nil() => false
+    }}}
   }
 
   // to complete----------------------------------------------------------------
@@ -151,9 +160,20 @@ object HuffmanCode {
           case InnerNode(_, _, _) => canDecode(t2, tl)
         }
       }
-      case Nil() => true
+      case Nil() => false
     }}}
   }
+
+  def canDecodeImpliesCanDecodeAtLeastOneChar(t: InnerNode, bs: List[Boolean]): Unit = {
+    require(canDecode(t, bs)(t))
+    ()
+  }.ensuring(_ => canDecodeAtLeastOneChar(t, bs))
+
+  def canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t: InnerNode, bs: List[Boolean]): Unit = {
+    require(canDecode(t, bs)(t))
+
+    canDecodeImpliesCanDecodeAtLeastOneChar(t, bs)
+  }.ensuring(_ => decodeChar(t, bs) match { case(_, nBs) => if (nBs.isEmpty) true else canDecode(t, nBs)(t) })
 
   // to complete----------------------------------------------------------------
   def decodeChar(t: Tree, bs: List[Boolean]): (Char, List[Boolean]) = {
@@ -172,9 +192,18 @@ object HuffmanCode {
     }}}
   }
 
+  def decodeCharLength(t: Tree, bs: List[Boolean]): Unit = {
+    require(isInnerNode(t) && canDecodeAtLeastOneChar(t, bs))
+    ()
+  }.ensuring(_ => decodeChar(t, bs) match { case (_, nBs) => nBs.length < bs.length })
+
   // to complete----------------------------------------------------------------
   def decodeHelper(t: InnerNode, bs: List[Boolean], acc: List[Char]): List[Char] = {
-    require(!bs.isEmpty)
+    require(!bs.isEmpty && canDecode(t, bs)(t))
+    decreases(bs.length)
+
+    canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t, bs)
+    decodeCharLength(t, bs)
 
     decodeChar(t, bs) match { case(c, nBs) => if (nBs.isEmpty) acc else decodeHelper(t, nBs, acc ++ List(c)) }
   }
@@ -182,10 +211,14 @@ object HuffmanCode {
   // to complete----------------------------------------------------------------
   def decode(t: InnerNode, bs: List[Boolean]): List[Char] = {
     require(canDecode(t, bs)(t))
+    decreases(bs.length)
 
     bs match {
       case Nil() => Nil()
-      case _ => decodeHelper(t, bs, Nil())
+      case _ => {
+        canDecodeImpliesCanDecodeAtLeastOneChar(t, bs)
+        decodeHelper(t, bs, Nil())
+      }
     }
   }
   
@@ -224,8 +257,6 @@ object HuffmanCode {
 
     val f: Forest = generateSortedForest(scalaListToStainlessList(args(0).toList))
     val t: Tree = huffmansAlgorithm(f)
-
-    val test: Tree = InnerNode(13, null, null)
 
     printHuffmanCode(t)
   }
