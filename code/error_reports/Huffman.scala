@@ -191,20 +191,14 @@ object HuffmanCode {
   }
 
   // prove that canDecode implies canDecodeAtLeastOneChar-----------------------
-  def canDecodeImpliesCanDecodeAtLeastOneChar(s: InnerNode, bs: List[Boolean])(implicit t: InnerNode): Unit = {
+  def canDecodeImpliesCanDecodeAtLeastOneChar(t: InnerNode, bs: List[Boolean]): Unit = {
     require(canDecode(t, bs)(t))
-    decreases(bs.length)
+
     t match { case InnerNode(_, t1, t2) => { bs match {
       case hd :: tl => {
         if (!hd) t1 match {
           case Leaf(_, c) => ()
-          case t1@InnerNode(_, tt1, tt2) => (
-            canDecode(t, bs)(t)                               ==:| trivial |:
-            canDecode(t1, tl)(t)                              ==:| canDecodeImpliesCanDecodeAtLeastOneChar(t1, tl) |:
-            canDecodeAtLeastOneChar(t1, tl)                   ==:| trivial |:
-            
-            canDecodeAtLeastOneChar(s, bs)
-          ).qed
+          case InnerNode(_, _, _) => //TODO
         } else t2 match {
           case Leaf(_, c) => ()
           case InnerNode(_, _, _) => //TODO
@@ -212,14 +206,14 @@ object HuffmanCode {
       }
       case Nil() => ()
     }}}
-  }.ensuring(_ => canDecodeAtLeastOneChar(s, bs))
+  }.ensuring(_ => canDecodeAtLeastOneChar(t, bs))
 
   // prove that can decode implies that we can decode the remaining bits--------
   // after having decoded the first decodable character-------------------------
   def canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t: InnerNode, bs: List[Boolean]): Unit = {
     require(canDecode(t, bs)(t))
 
-    canDecodeImpliesCanDecodeAtLeastOneChar(t, bs)(t)
+    canDecodeImpliesCanDecodeAtLeastOneChar(t, bs)
 
     //TODO
   }.ensuring(_ => decodeChar(t, bs) match { case(_, nBs) => if (nBs.isEmpty) true else canDecode(t, nBs)(t) })
@@ -227,7 +221,6 @@ object HuffmanCode {
   // decode a single character from a list of bits with a given tree------------
   def decodeChar(t: InnerNode, bs: List[Boolean]): (Char, List[Boolean]) = {
     require(canDecodeAtLeastOneChar(t, bs))
-    decreases(bs.length)
 
     t match { case InnerNode(_, t1, t2) => { bs match {
       case hd :: tl => {
@@ -271,7 +264,7 @@ object HuffmanCode {
     bs match {
       case Nil() => Nil()
       case _ => {
-        canDecodeImpliesCanDecodeAtLeastOneChar(t, bs)(t)
+        canDecodeImpliesCanDecodeAtLeastOneChar(t, bs)
         decodeHelper(t, bs, Nil())
       }
     }

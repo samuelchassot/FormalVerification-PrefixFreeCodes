@@ -1,0 +1,356 @@
+[Internal] Error: Type error: ¬(¬t is InnerNode || (if (¬isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) && get[(Boolean, List[Boolean])](unapply[Boolean](bs))._1 && ¬t.t2 is Leaf) {
+[Internal]   ¬ListPrimitiveSize[Boolean](get[(Boolean, List[Boolean])](unapply[Boolean](bs))._2)
+[Internal] } else {
+[Internal]   ¬0
+[Internal] }) || isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) || @ghost isDefined[(Boolean, List[Boolean])](unapply[Boolean](bs))), expected Boolean, 
+[Internal] found <untyped>
+[Internal] 
+[Internal] Typing explanation:
+[Internal] ¬(¬t is InnerNode || (if (¬isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) && get[(Boolean, List[Boolean])](unapply[Boolean](bs))._1 && ¬t.t2 is Leaf) {
+[Internal]   ¬ListPrimitiveSize[Boolean](get[(Boolean, List[Boolean])](unapply[Boolean](bs))._2)
+[Internal] } else {
+[Internal]   ¬0
+[Internal] }) || isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) || @ghost isDefined[(Boolean, List[Boolean])](unapply[Boolean](bs))) is of type <untyped>
+[Internal]   ¬t is InnerNode || (if (¬isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) && get[(Boolean, List[Boolean])](unapply[Boolean](bs))._1 && ¬t.t2 is Leaf) {
+[Internal]     ¬ListPrimitiveSize[Boolean](get[(Boolean, List[Boolean])](unapply[Boolean](bs))._2)
+[Internal]   } else {
+[Internal]     ¬0
+[Internal]   }) || isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) || @ghost isDefined[(Boolean, List[Boolean])](unapply[Boolean](bs)) is of type <untyped>
+[Internal]     ¬t is InnerNode is of type Boolean
+[Internal]       t is InnerNode is of type Boolean
+[Internal]         t is of type Tree
+[Internal]     if (¬isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) && get[(Boolean, List[Boolean])](unapply[Boolean](bs))._1 && ¬t.t2 is Leaf) {
+[Internal]       ¬ListPrimitiveSize[Boolean](get[(Boolean, List[Boolean])](unapply[Boolean](bs))._2)
+[Internal]     } else {
+[Internal]       ¬0
+[Internal]     } is of type <untyped>
+[Internal]       ¬isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) && get[(Boolean, List[Boolean])](unapply[Boolean](bs))._1 && ¬t.t2 is Leaf is of type Boolean
+[Internal]         ¬isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) is of type Boolean
+[Internal]           isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) is of type Boolean
+[Internal]             unapply[Boolean](bs) is of type Option[(Boolean, List[Boolean])]
+[Internal]               bs is of type List[Boolean] because unapply was instantiated with A:=Boolean with type (List[A]) => Option[(A, List[A])] because isEmpty was instantiated with T:=(Boolean, List[Boolean]) with type (Option[T]) => Boolean
+[Internal]         get[(Boolean, List[Boolean])](unapply[Boolean](bs))._1 is of type Boolean
+[Internal]           get[(Boolean, List[Boolean])](unapply[Boolean](bs)) is of type (Boolean, List[Boolean])
+[Internal]             unapply[Boolean](bs) is of type Option[(Boolean, List[Boolean])]
+[Internal]               bs is of type List[Boolean] because unapply was instantiated with A:=Boolean with type (List[A]) => Option[(A, List[A])] because get was instantiated with T:=(Boolean, List[Boolean]) with type (Option[T]) => T
+[Internal]         ¬t.t2 is Leaf is of type Boolean
+[Internal]           t.t2 is Leaf is of type Boolean
+[Internal]             t.t2 is of type Tree
+[Internal]               t is of type Tree
+[Internal]       ¬ListPrimitiveSize[Boolean](get[(Boolean, List[Boolean])](unapply[Boolean](bs))._2) is of type <untyped>
+[Internal]         ListPrimitiveSize[Boolean](get[(Boolean, List[Boolean])](unapply[Boolean](bs))._2) is of type BigInt
+[Internal]           get[(Boolean, List[Boolean])](unapply[Boolean](bs))._2 is of type List[Boolean]
+[Internal]             get[(Boolean, List[Boolean])](unapply[Boolean](bs)) is of type (Boolean, List[Boolean])
+[Internal]               unapply[Boolean](bs) is of type Option[(Boolean, List[Boolean])]
+[Internal]                 bs is of type List[Boolean] because unapply was instantiated with A:=Boolean with type (List[A]) => Option[(A, List[A])] because get was instantiated with T:=(Boolean, List[Boolean]) with type (Option[T]) => T because ListPrimitiveSize was instantiated with T:=Boolean with type (List[T]) => BigInt
+[Internal]       ¬0 is of type <untyped>
+[Internal]         0 is of type BigInt
+[Internal]     isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) is of type Boolean
+[Internal]       unapply[Boolean](bs) is of type Option[(Boolean, List[Boolean])]
+[Internal]         bs is of type List[Boolean] because unapply was instantiated with A:=Boolean with type (List[A]) => Option[(A, List[A])] because isEmpty was instantiated with T:=(Boolean, List[Boolean]) with type (Option[T]) => Boolean
+[Internal]     @ghost isDefined[(Boolean, List[Boolean])](unapply[Boolean](bs)) is of type Boolean
+[Internal]       isDefined[(Boolean, List[Boolean])](unapply[Boolean](bs)) is of type Boolean
+[Internal]         unapply[Boolean](bs) is of type Option[(Boolean, List[Boolean])]
+[Internal]           bs is of type List[Boolean] because unapply was instantiated with A:=Boolean with type (List[A]) => Option[(A, List[A])] because isDefined was instantiated with T:=(Boolean, List[Boolean]) with type (Option[T]) => Boolean. Trace:
+[Internal] - inox.ast.TypeOps$TypeErrorException$.apply(TypeOps.scala:29)
+[Internal] - inox.ast.TypeOps.typeCheck(TypeOps.scala:89)
+[Internal] - inox.ast.TypeOps.typeCheck$(TypeOps.scala:85)
+[Internal] - inox.ast.SimpleSymbols$SimpleSymbols.typeCheck(SimpleSymbols.scala:12)
+[Internal] - inox.solvers.unrolling.AbstractUnrollingSolver.$anonfun$assertCnstr$2(UnrollingSolver.scala:168)
+[Internal] - scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.java:23)
+[Internal] - scala.util.Try$.apply(Try.scala:213)
+[Internal] - inox.utils.TimerStorage.runAndGetTime(Timer.scala:93)
+[Internal] - inox.utils.TimerStorage.run(Timer.scala:88)
+[Internal] - inox.solvers.unrolling.AbstractUnrollingSolver.$anonfun$assertCnstr$1(UnrollingSolver.scala:166)
+[Internal] - scala.util.Try$.apply(Try.scala:213)
+[Internal] - inox.utils.TimerStorage.runAndGetTime(Timer.scala:93)
+[Internal] - inox.utils.TimerStorage.run(Timer.scala:88)
+[Internal] - inox.solvers.unrolling.AbstractUnrollingSolver.assertCnstr(UnrollingSolver.scala:165)
+[Internal] - inox.solvers.unrolling.AbstractUnrollingSolver.assertCnstr$(UnrollingSolver.scala:165)
+[Internal] - inox.solvers.SolverFactory$$anon$6.inox$tip$TipDebugger$$super$assertCnstr(SolverFactory.scala:200)
+[Internal] - inox.tip.TipDebugger.assertCnstr(TipDebugger.scala:91)
+[Internal] - inox.tip.TipDebugger.assertCnstr$(TipDebugger.scala:89)
+[Internal] - inox.solvers.SolverFactory$$anon$6.assertCnstr(SolverFactory.scala:200)
+[Internal] - inox.solvers.SolverFactory$$anon$6.assertCnstr(SolverFactory.scala:200)
+[Internal] - stainless.verification.VerificationChecker.$anonfun$checkVC$2(VerificationChecker.scala:232)
+[Internal] - scala.util.Try$.apply(Try.scala:213)
+[Internal] - inox.utils.TimerStorage.runAndGetTime(Timer.scala:93)
+[Internal] - stainless.verification.VerificationChecker.checkVC(VerificationChecker.scala:228)
+[Internal] - stainless.verification.VerificationChecker.checkVC$(VerificationChecker.scala:214)
+[Internal] - stainless.verification.VerificationChecker$$anon$1.stainless$verification$VerificationCache$$super$checkVC(VerificationChecker.scala:345)
+[Internal] - stainless.verification.VerificationCache.$anonfun$checkVC$1(VerificationCache.scala:87)
+[Internal] - scala.util.Try$.apply(Try.scala:213)
+[Internal] - inox.utils.TimerStorage.runAndGetTime(Timer.scala:93)
+[Internal] - stainless.verification.VerificationCache.checkVC(VerificationCache.scala:52)
+[Internal] - stainless.verification.VerificationCache.checkVC$(VerificationCache.scala:42)
+[Internal] - stainless.verification.VerificationChecker$$anon$1.checkVC(VerificationChecker.scala:345)
+[Internal] - stainless.verification.VerificationChecker.$anonfun$checkVCs$2(VerificationChecker.scala:107)
+[Internal] - scala.concurrent.Future$.$anonfun$traverse$1(Future.scala:850)
+[Internal] - scala.collection.TraversableOnce.$anonfun$foldLeft$1(TraversableOnce.scala:160)
+[Internal] - scala.collection.TraversableOnce.$anonfun$foldLeft$1$adapted(TraversableOnce.scala:160)
+[Internal] - scala.collection.Iterator.foreach(Iterator.scala:941)
+[Internal] - scala.collection.Iterator.foreach$(Iterator.scala:941)
+[Internal] - scala.collection.AbstractIterator.foreach(Iterator.scala:1429)
+[Internal] - scala.collection.IterableLike.foreach(IterableLike.scala:74)
+[Internal] - scala.collection.IterableLike.foreach$(IterableLike.scala:73)
+[Internal] - scala.collection.AbstractIterable.foreach(Iterable.scala:56)
+[Internal] - scala.collection.TraversableOnce.foldLeft(TraversableOnce.scala:160)
+[Internal] - scala.collection.TraversableOnce.foldLeft$(TraversableOnce.scala:158)
+[Internal] - scala.collection.AbstractTraversable.foldLeft(Traversable.scala:108)
+[Internal] - scala.concurrent.Future$.traverse(Future.scala:850)
+[Internal] - stainless.verification.VerificationChecker.checkVCs(VerificationChecker.scala:97)
+[Internal] - stainless.verification.VerificationChecker.checkVCs$(VerificationChecker.scala:90)
+[Internal] - stainless.verification.VerificationChecker$Checker$1.checkVCs(VerificationChecker.scala:336)
+[Internal] - stainless.verification.VerificationChecker.verify(VerificationChecker.scala:81)
+[Internal] - stainless.verification.VerificationChecker.verify$(VerificationChecker.scala:77)
+[Internal] - stainless.verification.VerificationChecker$Checker$1.verify(VerificationChecker.scala:336)
+[Internal] - stainless.verification.VerificationChecker$.verify(VerificationChecker.scala:350)
+[Internal] - stainless.verification.VerificationRun.execute(VerificationComponent.scala:118)
+[Internal] - stainless.verification.VerificationRun.execute(VerificationComponent.scala:49)
+[Internal] - stainless.ComponentRun.apply(Component.scala:105)
+[Internal] - stainless.ComponentRun.apply$(Component.scala:97)
+[Internal] - stainless.verification.VerificationRun.apply(VerificationComponent.scala:49)
+[Internal] - stainless.frontend.SplitCallBack.$anonfun$processFunctionsSymbols$2(SplitCallBack.scala:190)
+[Internal] - scala.collection.TraversableLike.$anonfun$map$1(TraversableLike.scala:238)
+[Internal] - scala.collection.immutable.List.foreach(List.scala:392)
+[Internal] - scala.collection.TraversableLike.map(TraversableLike.scala:238)
+[Internal] - scala.collection.TraversableLike.map$(TraversableLike.scala:231)
+[Internal] - scala.collection.immutable.List.map(List.scala:298)
+[Internal] - stainless.frontend.SplitCallBack.processFunctionsSymbols(SplitCallBack.scala:189)
+[Internal] - stainless.frontend.SplitCallBack.$anonfun$processFunctions$5(SplitCallBack.scala:164)
+[Internal] - stainless.extraction.utils.ConcurrentCache.getOrElseUpdate(ConcurrentCaches.scala:15)
+[Internal] - stainless.frontend.SplitCallBack.processFunctions(SplitCallBack.scala:164)
+[Internal] - stainless.frontend.SplitCallBack.$anonfun$processSymbols$4(SplitCallBack.scala:149)
+[Internal] - stainless.frontend.SplitCallBack.$anonfun$processSymbols$4$adapted(SplitCallBack.scala:148)
+[Internal] - scala.collection.Iterator.foreach(Iterator.scala:941)
+[Internal] - scala.collection.Iterator.foreach$(Iterator.scala:941)
+[Internal] - scala.collection.AbstractIterator.foreach(Iterator.scala:1429)
+[Internal] - scala.collection.MapLike$DefaultKeySet.foreach(MapLike.scala:181)
+[Internal] - stainless.frontend.SplitCallBack.processSymbols(SplitCallBack.scala:148)
+[Internal] - stainless.frontend.SplitCallBack.endExtractions(SplitCallBack.scala:70)
+[Internal] - stainless.frontend.ThreadedFrontend$$anon$1.run(ThreadedFrontend.scala:39)
+[Internal] - java.base/java.lang.Thread.run(Thread.java:835)
+[Internal] Type error: ¬(¬t is InnerNode || (if (¬isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) && get[(Boolean, List[Boolean])](unapply[Boolean](bs))._1 && ¬t.t2 is Leaf) {
+[Internal]   ¬ListPrimitiveSize[Boolean](get[(Boolean, List[Boolean])](unapply[Boolean](bs))._2)
+[Internal] } else {
+[Internal]   ¬0
+[Internal] }) || isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) || @ghost isDefined[(Boolean, List[Boolean])](unapply[Boolean](bs))), expected Boolean, 
+[Internal] found <untyped>
+[Internal] 
+[Internal] Typing explanation:
+[Internal] ¬(¬t is InnerNode || (if (¬isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) && get[(Boolean, List[Boolean])](unapply[Boolean](bs))._1 && ¬t.t2 is Leaf) {
+[Internal]   ¬ListPrimitiveSize[Boolean](get[(Boolean, List[Boolean])](unapply[Boolean](bs))._2)
+[Internal] } else {
+[Internal]   ¬0
+[Internal] }) || isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) || @ghost isDefined[(Boolean, List[Boolean])](unapply[Boolean](bs))) is of type <untyped>
+[Internal]   ¬t is InnerNode || (if (¬isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) && get[(Boolean, List[Boolean])](unapply[Boolean](bs))._1 && ¬t.t2 is Leaf) {
+[Internal]     ¬ListPrimitiveSize[Boolean](get[(Boolean, List[Boolean])](unapply[Boolean](bs))._2)
+[Internal]   } else {
+[Internal]     ¬0
+[Internal]   }) || isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) || @ghost isDefined[(Boolean, List[Boolean])](unapply[Boolean](bs)) is of type <untyped>
+[Internal]     ¬t is InnerNode is of type Boolean
+[Internal]       t is InnerNode is of type Boolean
+[Internal]         t is of type Tree
+[Internal]     if (¬isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) && get[(Boolean, List[Boolean])](unapply[Boolean](bs))._1 && ¬t.t2 is Leaf) {
+[Internal]       ¬ListPrimitiveSize[Boolean](get[(Boolean, List[Boolean])](unapply[Boolean](bs))._2)
+[Internal]     } else {
+[Internal]       ¬0
+[Internal]     } is of type <untyped>
+[Internal]       ¬isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) && get[(Boolean, List[Boolean])](unapply[Boolean](bs))._1 && ¬t.t2 is Leaf is of type Boolean
+[Internal]         ¬isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) is of type Boolean
+[Internal]           isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) is of type Boolean
+[Internal]             unapply[Boolean](bs) is of type Option[(Boolean, List[Boolean])]
+[Internal]               bs is of type List[Boolean] because unapply was instantiated with A:=Boolean with type (List[A]) => Option[(A, List[A])] because isEmpty was instantiated with T:=(Boolean, List[Boolean]) with type (Option[T]) => Boolean
+[Internal]         get[(Boolean, List[Boolean])](unapply[Boolean](bs))._1 is of type Boolean
+[Internal]           get[(Boolean, List[Boolean])](unapply[Boolean](bs)) is of type (Boolean, List[Boolean])
+[Internal]             unapply[Boolean](bs) is of type Option[(Boolean, List[Boolean])]
+[Internal]               bs is of type List[Boolean] because unapply was instantiated with A:=Boolean with type (List[A]) => Option[(A, List[A])] because get was instantiated with T:=(Boolean, List[Boolean]) with type (Option[T]) => T
+[Internal]         ¬t.t2 is Leaf is of type Boolean
+[Internal]           t.t2 is Leaf is of type Boolean
+[Internal]             t.t2 is of type Tree
+[Internal]               t is of type Tree
+[Internal]       ¬ListPrimitiveSize[Boolean](get[(Boolean, List[Boolean])](unapply[Boolean](bs))._2) is of type <untyped>
+[Internal]         ListPrimitiveSize[Boolean](get[(Boolean, List[Boolean])](unapply[Boolean](bs))._2) is of type BigInt
+[Internal]           get[(Boolean, List[Boolean])](unapply[Boolean](bs))._2 is of type List[Boolean]
+[Internal]             get[(Boolean, List[Boolean])](unapply[Boolean](bs)) is of type (Boolean, List[Boolean])
+[Internal]               unapply[Boolean](bs) is of type Option[(Boolean, List[Boolean])]
+[Internal]                 bs is of type List[Boolean] because unapply was instantiated with A:=Boolean with type (List[A]) => Option[(A, List[A])] because get was instantiated with T:=(Boolean, List[Boolean]) with type (Option[T]) => T because ListPrimitiveSize was instantiated with T:=Boolean with type (List[T]) => BigInt
+[Internal]       ¬0 is of type <untyped>
+[Internal]         0 is of type BigInt
+[Internal]     isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) is of type Boolean
+[Internal]       unapply[Boolean](bs) is of type Option[(Boolean, List[Boolean])]
+[Internal]         bs is of type List[Boolean] because unapply was instantiated with A:=Boolean with type (List[A]) => Option[(A, List[A])] because isEmpty was instantiated with T:=(Boolean, List[Boolean]) with type (Option[T]) => Boolean
+[Internal]     @ghost isDefined[(Boolean, List[Boolean])](unapply[Boolean](bs)) is of type Boolean
+[Internal]       isDefined[(Boolean, List[Boolean])](unapply[Boolean](bs)) is of type Boolean
+[Internal]         unapply[Boolean](bs) is of type Option[(Boolean, List[Boolean])]
+[Internal]           bs is of type List[Boolean] because unapply was instantiated with A:=Boolean with type (List[A]) => Option[(A, List[A])] because isDefined was instantiated with T:=(Boolean, List[Boolean]) with type (Option[T]) => Boolean
+[Internal] Please inform the authors of Inox about this message
+[Internal] Error: Type error: ¬(¬t is InnerNode || (if (¬isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) && get[(Boolean, List[Boolean])](unapply[Boolean](bs))._1 && ¬t.t2 is Leaf) {
+[Internal]   ¬ListPrimitiveSize[Boolean](get[(Boolean, List[Boolean])](unapply[Boolean](bs))._2)
+[Internal] } else {
+[Internal]   ¬0
+[Internal] }) || isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) || @ghost isDefined[(Boolean, List[Boolean])](unapply[Boolean](bs))), expected Boolean, 
+[Internal] found <untyped>
+[Internal] 
+[Internal] Typing explanation:
+[Internal] ¬(¬t is InnerNode || (if (¬isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) && get[(Boolean, List[Boolean])](unapply[Boolean](bs))._1 && ¬t.t2 is Leaf) {
+[Internal]   ¬ListPrimitiveSize[Boolean](get[(Boolean, List[Boolean])](unapply[Boolean](bs))._2)
+[Internal] } else {
+[Internal]   ¬0
+[Internal] }) || isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) || @ghost isDefined[(Boolean, List[Boolean])](unapply[Boolean](bs))) is of type <untyped>
+[Internal]   ¬t is InnerNode || (if (¬isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) && get[(Boolean, List[Boolean])](unapply[Boolean](bs))._1 && ¬t.t2 is Leaf) {
+[Internal]     ¬ListPrimitiveSize[Boolean](get[(Boolean, List[Boolean])](unapply[Boolean](bs))._2)
+[Internal]   } else {
+[Internal]     ¬0
+[Internal]   }) || isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) || @ghost isDefined[(Boolean, List[Boolean])](unapply[Boolean](bs)) is of type <untyped>
+[Internal]     ¬t is InnerNode is of type Boolean
+[Internal]       t is InnerNode is of type Boolean
+[Internal]         t is of type Tree
+[Internal]     if (¬isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) && get[(Boolean, List[Boolean])](unapply[Boolean](bs))._1 && ¬t.t2 is Leaf) {
+[Internal]       ¬ListPrimitiveSize[Boolean](get[(Boolean, List[Boolean])](unapply[Boolean](bs))._2)
+[Internal]     } else {
+[Internal]       ¬0
+[Internal]     } is of type <untyped>
+[Internal]       ¬isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) && get[(Boolean, List[Boolean])](unapply[Boolean](bs))._1 && ¬t.t2 is Leaf is of type Boolean
+[Internal]         ¬isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) is of type Boolean
+[Internal]           isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) is of type Boolean
+[Internal]             unapply[Boolean](bs) is of type Option[(Boolean, List[Boolean])]
+[Internal]               bs is of type List[Boolean] because unapply was instantiated with A:=Boolean with type (List[A]) => Option[(A, List[A])] because isEmpty was instantiated with T:=(Boolean, List[Boolean]) with type (Option[T]) => Boolean
+[Internal]         get[(Boolean, List[Boolean])](unapply[Boolean](bs))._1 is of type Boolean
+[Internal]           get[(Boolean, List[Boolean])](unapply[Boolean](bs)) is of type (Boolean, List[Boolean])
+[Internal]             unapply[Boolean](bs) is of type Option[(Boolean, List[Boolean])]
+[Internal]               bs is of type List[Boolean] because unapply was instantiated with A:=Boolean with type (List[A]) => Option[(A, List[A])] because get was instantiated with T:=(Boolean, List[Boolean]) with type (Option[T]) => T
+[Internal]         ¬t.t2 is Leaf is of type Boolean
+[Internal]           t.t2 is Leaf is of type Boolean
+[Internal]             t.t2 is of type Tree
+[Internal]               t is of type Tree
+[Internal]       ¬ListPrimitiveSize[Boolean](get[(Boolean, List[Boolean])](unapply[Boolean](bs))._2) is of type <untyped>
+[Internal]         ListPrimitiveSize[Boolean](get[(Boolean, List[Boolean])](unapply[Boolean](bs))._2) is of type BigInt
+[Internal]           get[(Boolean, List[Boolean])](unapply[Boolean](bs))._2 is of type List[Boolean]
+[Internal]             get[(Boolean, List[Boolean])](unapply[Boolean](bs)) is of type (Boolean, List[Boolean])
+[Internal]               unapply[Boolean](bs) is of type Option[(Boolean, List[Boolean])]
+[Internal]                 bs is of type List[Boolean] because unapply was instantiated with A:=Boolean with type (List[A]) => Option[(A, List[A])] because get was instantiated with T:=(Boolean, List[Boolean]) with type (Option[T]) => T because ListPrimitiveSize was instantiated with T:=Boolean with type (List[T]) => BigInt
+[Internal]       ¬0 is of type <untyped>
+[Internal]         0 is of type BigInt
+[Internal]     isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) is of type Boolean
+[Internal]       unapply[Boolean](bs) is of type Option[(Boolean, List[Boolean])]
+[Internal]         bs is of type List[Boolean] because unapply was instantiated with A:=Boolean with type (List[A]) => Option[(A, List[A])] because isEmpty was instantiated with T:=(Boolean, List[Boolean]) with type (Option[T]) => Boolean
+[Internal]     @ghost isDefined[(Boolean, List[Boolean])](unapply[Boolean](bs)) is of type Boolean
+[Internal]       isDefined[(Boolean, List[Boolean])](unapply[Boolean](bs)) is of type Boolean
+[Internal]         unapply[Boolean](bs) is of type Option[(Boolean, List[Boolean])]
+[Internal]           bs is of type List[Boolean] because unapply was instantiated with A:=Boolean with type (List[A]) => Option[(A, List[A])] because isDefined was instantiated with T:=(Boolean, List[Boolean]) with type (Option[T]) => Boolean. Trace:
+[Internal] - inox.Reporter.onFatal(Reporter.scala:39)
+[Internal] - inox.Reporter.internalError(Reporter.scala:57)
+[Internal] - inox.Reporter.internalError(Reporter.scala:100)
+[Internal] - inox.Reporter.internalError(Reporter.scala:103)
+[Internal] - stainless.verification.VerificationChecker.checkVC(VerificationChecker.scala:277)
+[Internal] - stainless.verification.VerificationChecker.checkVC$(VerificationChecker.scala:214)
+[Internal] - stainless.verification.VerificationChecker$$anon$1.stainless$verification$VerificationCache$$super$checkVC(VerificationChecker.scala:345)
+[Internal] - stainless.verification.VerificationCache.$anonfun$checkVC$1(VerificationCache.scala:87)
+[Internal] - scala.util.Try$.apply(Try.scala:213)
+[Internal] - inox.utils.TimerStorage.runAndGetTime(Timer.scala:93)
+[Internal] - stainless.verification.VerificationCache.checkVC(VerificationCache.scala:52)
+[Internal] - stainless.verification.VerificationCache.checkVC$(VerificationCache.scala:42)
+[Internal] - stainless.verification.VerificationChecker$$anon$1.checkVC(VerificationChecker.scala:345)
+[Internal] - stainless.verification.VerificationChecker.$anonfun$checkVCs$2(VerificationChecker.scala:107)
+[Internal] - scala.concurrent.Future$.$anonfun$traverse$1(Future.scala:850)
+[Internal] - scala.collection.TraversableOnce.$anonfun$foldLeft$1(TraversableOnce.scala:160)
+[Internal] - scala.collection.TraversableOnce.$anonfun$foldLeft$1$adapted(TraversableOnce.scala:160)
+[Internal] - scala.collection.Iterator.foreach(Iterator.scala:941)
+[Internal] - scala.collection.Iterator.foreach$(Iterator.scala:941)
+[Internal] - scala.collection.AbstractIterator.foreach(Iterator.scala:1429)
+[Internal] - scala.collection.IterableLike.foreach(IterableLike.scala:74)
+[Internal] - scala.collection.IterableLike.foreach$(IterableLike.scala:73)
+[Internal] - scala.collection.AbstractIterable.foreach(Iterable.scala:56)
+[Internal] - scala.collection.TraversableOnce.foldLeft(TraversableOnce.scala:160)
+[Internal] - scala.collection.TraversableOnce.foldLeft$(TraversableOnce.scala:158)
+[Internal] - scala.collection.AbstractTraversable.foldLeft(Traversable.scala:108)
+[Internal] - scala.concurrent.Future$.traverse(Future.scala:850)
+[Internal] - stainless.verification.VerificationChecker.checkVCs(VerificationChecker.scala:97)
+[Internal] - stainless.verification.VerificationChecker.checkVCs$(VerificationChecker.scala:90)
+[Internal] - stainless.verification.VerificationChecker$Checker$1.checkVCs(VerificationChecker.scala:336)
+[Internal] - stainless.verification.VerificationChecker.verify(VerificationChecker.scala:81)
+[Internal] - stainless.verification.VerificationChecker.verify$(VerificationChecker.scala:77)
+[Internal] - stainless.verification.VerificationChecker$Checker$1.verify(VerificationChecker.scala:336)
+[Internal] - stainless.verification.VerificationChecker$.verify(VerificationChecker.scala:350)
+[Internal] - stainless.verification.VerificationRun.execute(VerificationComponent.scala:118)
+[Internal] - stainless.verification.VerificationRun.execute(VerificationComponent.scala:49)
+[Internal] - stainless.ComponentRun.apply(Component.scala:105)
+[Internal] - stainless.ComponentRun.apply$(Component.scala:97)
+[Internal] - stainless.verification.VerificationRun.apply(VerificationComponent.scala:49)
+[Internal] - stainless.frontend.SplitCallBack.$anonfun$processFunctionsSymbols$2(SplitCallBack.scala:190)
+[Internal] - scala.collection.TraversableLike.$anonfun$map$1(TraversableLike.scala:238)
+[Internal] - scala.collection.immutable.List.foreach(List.scala:392)
+[Internal] - scala.collection.TraversableLike.map(TraversableLike.scala:238)
+[Internal] - scala.collection.TraversableLike.map$(TraversableLike.scala:231)
+[Internal] - scala.collection.immutable.List.map(List.scala:298)
+[Internal] - stainless.frontend.SplitCallBack.processFunctionsSymbols(SplitCallBack.scala:189)
+[Internal] - stainless.frontend.SplitCallBack.$anonfun$processFunctions$5(SplitCallBack.scala:164)
+[Internal] - stainless.extraction.utils.ConcurrentCache.getOrElseUpdate(ConcurrentCaches.scala:15)
+[Internal] - stainless.frontend.SplitCallBack.processFunctions(SplitCallBack.scala:164)
+[Internal] - stainless.frontend.SplitCallBack.$anonfun$processSymbols$4(SplitCallBack.scala:149)
+[Internal] - stainless.frontend.SplitCallBack.$anonfun$processSymbols$4$adapted(SplitCallBack.scala:148)
+[Internal] - scala.collection.Iterator.foreach(Iterator.scala:941)
+[Internal] - scala.collection.Iterator.foreach$(Iterator.scala:941)
+[Internal] - scala.collection.AbstractIterator.foreach(Iterator.scala:1429)
+[Internal] - scala.collection.MapLike$DefaultKeySet.foreach(MapLike.scala:181)
+[Internal] - stainless.frontend.SplitCallBack.processSymbols(SplitCallBack.scala:148)
+[Internal] - stainless.frontend.SplitCallBack.endExtractions(SplitCallBack.scala:70)
+[Internal] - stainless.frontend.ThreadedFrontend$$anon$1.run(ThreadedFrontend.scala:39)
+[Internal] - java.base/java.lang.Thread.run(Thread.java:835)
+[Internal] Type error: ¬(¬t is InnerNode || (if (¬isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) && get[(Boolean, List[Boolean])](unapply[Boolean](bs))._1 && ¬t.t2 is Leaf) {
+[Internal]   ¬ListPrimitiveSize[Boolean](get[(Boolean, List[Boolean])](unapply[Boolean](bs))._2)
+[Internal] } else {
+[Internal]   ¬0
+[Internal] }) || isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) || @ghost isDefined[(Boolean, List[Boolean])](unapply[Boolean](bs))), expected Boolean, 
+[Internal] found <untyped>
+[Internal] 
+[Internal] Typing explanation:
+[Internal] ¬(¬t is InnerNode || (if (¬isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) && get[(Boolean, List[Boolean])](unapply[Boolean](bs))._1 && ¬t.t2 is Leaf) {
+[Internal]   ¬ListPrimitiveSize[Boolean](get[(Boolean, List[Boolean])](unapply[Boolean](bs))._2)
+[Internal] } else {
+[Internal]   ¬0
+[Internal] }) || isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) || @ghost isDefined[(Boolean, List[Boolean])](unapply[Boolean](bs))) is of type <untyped>
+[Internal]   ¬t is InnerNode || (if (¬isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) && get[(Boolean, List[Boolean])](unapply[Boolean](bs))._1 && ¬t.t2 is Leaf) {
+[Internal]     ¬ListPrimitiveSize[Boolean](get[(Boolean, List[Boolean])](unapply[Boolean](bs))._2)
+[Internal]   } else {
+[Internal]     ¬0
+[Internal]   }) || isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) || @ghost isDefined[(Boolean, List[Boolean])](unapply[Boolean](bs)) is of type <untyped>
+[Internal]     ¬t is InnerNode is of type Boolean
+[Internal]       t is InnerNode is of type Boolean
+[Internal]         t is of type Tree
+[Internal]     if (¬isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) && get[(Boolean, List[Boolean])](unapply[Boolean](bs))._1 && ¬t.t2 is Leaf) {
+[Internal]       ¬ListPrimitiveSize[Boolean](get[(Boolean, List[Boolean])](unapply[Boolean](bs))._2)
+[Internal]     } else {
+[Internal]       ¬0
+[Internal]     } is of type <untyped>
+[Internal]       ¬isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) && get[(Boolean, List[Boolean])](unapply[Boolean](bs))._1 && ¬t.t2 is Leaf is of type Boolean
+[Internal]         ¬isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) is of type Boolean
+[Internal]           isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) is of type Boolean
+[Internal]             unapply[Boolean](bs) is of type Option[(Boolean, List[Boolean])]
+[Internal]               bs is of type List[Boolean] because unapply was instantiated with A:=Boolean with type (List[A]) => Option[(A, List[A])] because isEmpty was instantiated with T:=(Boolean, List[Boolean]) with type (Option[T]) => Boolean
+[Internal]         get[(Boolean, List[Boolean])](unapply[Boolean](bs))._1 is of type Boolean
+[Internal]           get[(Boolean, List[Boolean])](unapply[Boolean](bs)) is of type (Boolean, List[Boolean])
+[Internal]             unapply[Boolean](bs) is of type Option[(Boolean, List[Boolean])]
+[Internal]               bs is of type List[Boolean] because unapply was instantiated with A:=Boolean with type (List[A]) => Option[(A, List[A])] because get was instantiated with T:=(Boolean, List[Boolean]) with type (Option[T]) => T
+[Internal]         ¬t.t2 is Leaf is of type Boolean
+[Internal]           t.t2 is Leaf is of type Boolean
+[Internal]             t.t2 is of type Tree
+[Internal]               t is of type Tree
+[Internal]       ¬ListPrimitiveSize[Boolean](get[(Boolean, List[Boolean])](unapply[Boolean](bs))._2) is of type <untyped>
+[Internal]         ListPrimitiveSize[Boolean](get[(Boolean, List[Boolean])](unapply[Boolean](bs))._2) is of type BigInt
+[Internal]           get[(Boolean, List[Boolean])](unapply[Boolean](bs))._2 is of type List[Boolean]
+[Internal]             get[(Boolean, List[Boolean])](unapply[Boolean](bs)) is of type (Boolean, List[Boolean])
+[Internal]               unapply[Boolean](bs) is of type Option[(Boolean, List[Boolean])]
+[Internal]                 bs is of type List[Boolean] because unapply was instantiated with A:=Boolean with type (List[A]) => Option[(A, List[A])] because get was instantiated with T:=(Boolean, List[Boolean]) with type (Option[T]) => T because ListPrimitiveSize was instantiated with T:=Boolean with type (List[T]) => BigInt
+[Internal]       ¬0 is of type <untyped>
+[Internal]         0 is of type BigInt
+[Internal]     isEmpty[(Boolean, List[Boolean])](unapply[Boolean](bs)) is of type Boolean
+[Internal]       unapply[Boolean](bs) is of type Option[(Boolean, List[Boolean])]
+[Internal]         bs is of type List[Boolean] because unapply was instantiated with A:=Boolean with type (List[A]) => Option[(A, List[A])] because isEmpty was instantiated with T:=(Boolean, List[Boolean]) with type (Option[T]) => Boolean
+[Internal]     @ghost isDefined[(Boolean, List[Boolean])](unapply[Boolean](bs)) is of type Boolean
+[Internal]       isDefined[(Boolean, List[Boolean])](unapply[Boolean](bs)) is of type Boolean
+[Internal]         unapply[Boolean](bs) is of type Option[(Boolean, List[Boolean])]
+[Internal]           bs is of type List[Boolean] because unapply was instantiated with A:=Boolean with type (List[A]) => Option[(A, List[A])] because isDefined was instantiated with T:=(Boolean, List[Boolean]) with type (Option[T]) => Boolean
+[Internal] Please inform the authors of Inox about this message
+
