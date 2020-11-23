@@ -247,7 +247,6 @@ object HuffmanCode {
   def canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t: InnerNode, bs: List[Boolean]): Unit = {
     require(canDecode(t, bs)(t))
 
-    equals(t, t)
     isSubTreeReflexivity(t)
     canDecodeImpliesCanDecodeAtLeastOneChar(t, bs)(t)
 
