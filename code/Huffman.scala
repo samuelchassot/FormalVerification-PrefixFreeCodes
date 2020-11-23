@@ -40,6 +40,35 @@ object HuffmanCode {
     case Leaf(w, c) => w
   }
 
+  def equals(t1: Tree, t2: Tree):Boolean = t1 match {
+    case Leaf(_, c1) => t2 match {
+      case Leaf(_, c2) if(c1 == c2) => true
+      case _ => false 
+    }
+    case InnerNode(_, t11, t12) => t2 match {
+      case InnerNode(_, t21, t22) => equals(t11, t21) && equals(t12, t22)
+      case _ => false
+    }
+  }
+
+  /**
+    * Return true iif t1 is a subtree of t
+    *
+    * @param t
+    * @param t1
+    * @return true iif t1 is a subtree of t
+    */
+  def isSubTree(t: Tree, tt: Tree): Boolean = t match {
+    case Leaf(w, c) => tt match {
+      case Leaf(ww, cc) if(w == ww) => true
+      case _ => false 
+    }
+    case InnerNode(w, t1, t2) => tt match {
+      case InnerNode(w, tt1, tt2) => equals(t1, tt1) && equals(t1, tt1) || isSubTree(t1, tt) || isSubTree(t1, tt)
+      case Leaf(_, cc) => isSubTree(t1, tt) || isSubTree(t1, tt)
+    }
+  }
+  
   // merge two Tree in one by adding an InnerNode-------------------------------
   def uniteTrees(t1: Tree, t2: Tree): Tree = InnerNode(cachedWeight(t1) + cachedWeight(t2), t1, t2)
 
