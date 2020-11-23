@@ -53,16 +53,17 @@ object HuffmanCode {
       case _ => false 
     }
     case InnerNode(w, t1, t2) => st match {
-      case InnerNode(sw, st1, st2) => w == sw && equals(t1, st1) && equals(t2, st2) || isSubTree(t1, st) || isSubTree(t2, st)
-      case Leaf(_, _) => isSubTree(t1, st) || isSubTree(t2, st)
+      case InnerNode(sw, st1, st2) => equals(t, st) || isSubTree(t1, st) || isSubTree(t2, st)
+      case _ => isSubTree(t1, st) || isSubTree(t2, st)
     }
   }
 
   // prove isSubTree is a reflexive relation------------------------------------
-  def isSubTreeReflexivity(t: Tree): Unit = {
+  def isSubTreeReflexivity(t1: Tree, t2: Tree): Unit = {
+    require(equals(t1, t2))
+
     ()
-    //TODO
-  }.ensuring(_ => isSubTree(t, t))
+  }.ensuring(_ => isSubTree(t1, t2))
 
   // prove isSubTree is a transitive relation-----------------------------------
   def isSubTreeTransitivity(t: Tree, st: Tree, sst: Tree): Unit = {
@@ -237,7 +238,7 @@ object HuffmanCode {
   def canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t: InnerNode, bs: List[Boolean]): Unit = {
     require(canDecode(t, bs)(t))
 
-    isSubTreeReflexivity(t)
+    isSubTreeReflexivity(t, t)
     canDecodeImpliesCanDecodeAtLeastOneChar(t, bs)(t)
 
     //TODO
@@ -290,7 +291,7 @@ object HuffmanCode {
     bs match {
       case Nil() => Nil()
       case _ => {
-        isSubTreeReflexivity(t)
+        isSubTreeReflexivity(t, t)
         canDecodeImpliesCanDecodeAtLeastOneChar(t, bs)(t)
         decodeHelper(t, bs, Nil())
       }
