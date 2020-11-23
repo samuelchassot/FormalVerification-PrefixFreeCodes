@@ -168,9 +168,18 @@ object HuffmanCode {
   def canDecodeImpliesCanDecodeAtLeastOneChar(t: InnerNode, bs: List[Boolean]): Unit = {
     require(canDecode(t, bs)(t))
 
-    ()
-
-    //TODO
+    t match { case InnerNode(_, t1, t2) => { bs match {
+      case hd :: tl => {
+        if (!hd) t1 match {
+          case Leaf(_, c) => ()
+          case InnerNode(_, _, _) => //TODO
+        } else t2 match {
+          case Leaf(_, c) => ()
+          case InnerNode(_, _, _) => //TODO
+        }
+      }
+      case Nil() => ()
+    }}}
   }.ensuring(_ => canDecodeAtLeastOneChar(t, bs))
 
   // prove that can decode implies that we can decode the remaining bits--------
