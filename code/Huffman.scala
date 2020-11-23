@@ -58,6 +58,13 @@ object HuffmanCode {
     }
   }
 
+  // prove isSubTree is a reflexive relation------------------------------------
+  def isSubTreeReflexivity(t: Tree): Unit = {
+    ()
+    //TODO
+  }.ensuring(_ => isSubTree(t, t))
+
+  // prove isSubTree is a transitive relation-----------------------------------
   def isSubTreeTransitivity(t: Tree, st: Tree, sst: Tree): Unit = {
     require(isSubTree(t, st) && isSubTree(st, sst))
 
@@ -65,6 +72,7 @@ object HuffmanCode {
     //TODO
   }.ensuring(_ => isSubTree(t, sst))
 
+  // prove children of a node are subtrees or the node itself-------------------
   def childrenAreSubTrees(t: InnerNode): Unit = {
     ()
     //TODO
@@ -229,6 +237,7 @@ object HuffmanCode {
   def canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t: InnerNode, bs: List[Boolean]): Unit = {
     require(canDecode(t, bs)(t))
 
+    isSubTreeReflexivity(t)
     canDecodeImpliesCanDecodeAtLeastOneChar(t, bs)(t)
 
     //TODO
@@ -281,6 +290,7 @@ object HuffmanCode {
     bs match {
       case Nil() => Nil()
       case _ => {
+        isSubTreeReflexivity(t)
         canDecodeImpliesCanDecodeAtLeastOneChar(t, bs)(t)
         decodeHelper(t, bs, Nil())
       }
