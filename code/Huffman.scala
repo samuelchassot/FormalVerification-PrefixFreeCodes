@@ -53,6 +53,35 @@ object HuffmanCode {
     }
   }
 
+  def equals(t1: Tree, t2: Tree):Boolean = t1 match {
+    case Leaf(_, c1) => t2 match {
+      case Leaf(_, c2) if(c1 == c2) => true
+      case _ => false 
+    }
+    case InnerNode(_, t11, t12) => t2 match {
+      case InnerNode(_, t21, t22) => equals(t11, t21) && equals(t12, t22)
+      case _ => false
+    }
+  }
+
+  /**
+    * Return true iif t1 is a subtree of t
+    *
+    * @param t
+    * @param t1
+    * @return true iif t1 is a subtree of t
+    */
+  def isSubTree(t: Tree, tt: Tree): Boolean = t match {
+    case Leaf(w, c) => tt match {
+      case Leaf(ww, cc) if(w == ww) => true
+      case _ => false 
+    }
+    case InnerNode(w, t1, t2) => tt match {
+      case InnerNode(w, tt1, tt2) => equals(t1, tt1) && equals(t1, tt1) || isSubTree(t1, tt) || isSubTree(t1, tt)
+      case Leaf(_, cc) => isSubTree(t1, tt) || isSubTree(t1, tt)
+    }
+  }
+
   // prove insortTree increases the Forest size by 1----------------------------
   def insortTreeLength(t: Tree, f: Forest): Unit = {
     f match {
@@ -165,17 +194,33 @@ object HuffmanCode {
   }
 
   // prove that canDecode implies canDecodeAtLeastOneChar-----------------------
-  def canDecodeImpliesCanDecodeAtLeastOneChar(t: InnerNode, bs: List[Boolean]): Unit = {
-    require(canDecode(t, bs)(t))
-
+  def canDecodeImpliesCanDecodeAtLeastOneChar(t: InnerNode, bs: List[Boolean])(implicit root: InnerNode): Unit = {
+    require(canDecode(t, bs)(root) && isSubTree(root, t))
+    decreases(bs.length)
     t match { case InnerNode(_, t1, t2) => { bs match {
       case hd :: tl => {
         if (!hd) t1 match {
           case Leaf(_, c) => ()
-          case InnerNode(_, _, _) => //TODO
+          case tt1@InnerNode(_, _, _) => {
+            isSubTree(root, t)
+            isSubTree(t, tt1)
+            if(isSubTree(root, tt1)){
+              canDecodeImpliesCanDecodeAtLeastOneChar(tt1, tl)
+            }else{
+              ()
+            }
+          }
         } else t2 match {
           case Leaf(_, c) => ()
-          case InnerNode(_, _, _) => //TODO
+          case tt2@InnerNode(_, _, _) => {
+            isSubTree(root, t)
+            isSubTree(t, tt2)
+            if(isSubTree(root, tt2)){
+              canDecodeImpliesCanDecodeAtLeastOneChar(tt2, tl)
+            }else{
+              ()
+            }
+          }
         }
       }
       case Nil() => ()
@@ -187,7 +232,7 @@ object HuffmanCode {
   def canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t: InnerNode, bs: List[Boolean]): Unit = {
     require(canDecode(t, bs)(t))
 
-    canDecodeImpliesCanDecodeAtLeastOneChar(t, bs)
+    canDecodeImpliesCanDecodeAtLeastOneChar(t, bs)(t)
 
     //TODO
   }.ensuring(_ => decodeChar(t, bs) match { case(_, nBs) => if (nBs.isEmpty) true else canDecode(t, nBs)(t) })
@@ -238,7 +283,7 @@ object HuffmanCode {
     bs match {
       case Nil() => Nil()
       case _ => {
-        canDecodeImpliesCanDecodeAtLeastOneChar(t, bs)
+        canDecodeImpliesCanDecodeAtLeastOneChar(t, bs)(t)
         decodeHelper(t, bs, Nil())
       }
     }
