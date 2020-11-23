@@ -53,10 +53,22 @@ object HuffmanCode {
       case _ => false 
     }
     case InnerNode(w, t1, t2) => st match {
-      case InnerNode(w, st1, st2) => equals(t1, st1) && equals(t2, st2) || isSubTree(t1, st) || isSubTree(t2, st)
+      case InnerNode(sw, st1, st2) => w == sw && equals(t1, st1) && equals(t2, st2) || isSubTree(t1, st) || isSubTree(t2, st)
       case Leaf(_, _) => isSubTree(t1, st) || isSubTree(t2, st)
     }
   }
+
+  def isSubTreeTransitivity(t: Tree, st: Tree, sst: Tree): Unit = {
+    require(isSubTree(t, st) && isSubTree(st, sst))
+
+    ()
+    //TODO
+  }.ensuring(_ => isSubTree(t, sst))
+
+  def childrenAreSubTrees(t: InnerNode): Unit = {
+    ()
+    //TODO
+  }.ensuring(_ => t match { case InnerNode(_, t1, t2) => isSubTree(t, t1) && isSubTree(t, t2)})
 
   // return the weight of a Tree------------------------------------------------
   def cachedWeight(t: Tree): BigInt = t match {
@@ -187,22 +199,25 @@ object HuffmanCode {
 
   // prove that canDecode implies canDecodeAtLeastOneChar-----------------------
   def canDecodeImpliesCanDecodeAtLeastOneChar(s: InnerNode, bs: List[Boolean])(implicit t: InnerNode): Unit = {
-    require(canDecode(t, bs)(t))
+    require(canDecode(s, bs)(t) && isSubTree(t, s))
     decreases(bs.length)
-    t match { case InnerNode(_, t1, t2) => { bs match {
+
+    s match { case InnerNode(_, t1, t2) => { bs match {
       case hd :: tl => {
         if (!hd) t1 match {
           case Leaf(_, c) => ()
-          case t1@InnerNode(_, tt1, tt2) => (
-            canDecode(t, bs)(t)                               ==:| trivial |:
-            canDecode(t1, tl)(t)                              ==:| canDecodeImpliesCanDecodeAtLeastOneChar(t1, tl) |:
-            canDecodeAtLeastOneChar(t1, tl)                   ==:| trivial |:
-            
-            canDecodeAtLeastOneChar(s, bs)
-          ).qed
+          case t1@InnerNode(_, _, _) => {
+            childrenAreSubTrees(s)
+            isSubTreeTransitivity(t, s, t1)
+            canDecodeImpliesCanDecodeAtLeastOneChar(t1, tl)
+          }
         } else t2 match {
           case Leaf(_, c) => ()
-          case InnerNode(_, _, _) => //TODO
+          case t2@InnerNode(_, _, _) => {
+            childrenAreSubTrees(s)
+            isSubTreeTransitivity(t, s, t2)
+            canDecodeImpliesCanDecodeAtLeastOneChar(t2, tl)
+          }
         }
       }
       case Nil() => ()
