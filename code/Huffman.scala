@@ -34,39 +34,34 @@ object HuffmanCode {
     case Leaf(_, _) => true
   }
 
-  // return the weight of a Tree------------------------------------------------
-  def cachedWeight(t: Tree): BigInt = t match {
-    case InnerNode(w, t1, t2) => w
-    case Leaf(w, c) => w
-  }
-
-  def equals(t1: Tree, t2: Tree):Boolean = t1 match {
-    case Leaf(_, c1) => t2 match {
-      case Leaf(_, c2) if(c1 == c2) => true
+  // return true iff two trees are the same-------------------------------------
+  def equals(t1: Tree, t2: Tree): Boolean = t1 match {
+    case Leaf(w1, c1) => t2 match {
+      case Leaf(w2, c2) if (w1 == w2 && c1 == c2) => true
       case _ => false 
     }
-    case InnerNode(_, t11, t12) => t2 match {
-      case InnerNode(_, t21, t22) => equals(t11, t21) && equals(t12, t22)
+    case InnerNode(w1, t11, t12) => t2 match {
+      case InnerNode(w2, t21, t22) => w1 == w2 && equals(t11, t21) && equals(t12, t22)
       case _ => false
     }
   }
 
-  /**
-    * Return true iif t1 is a subtree of t
-    *
-    * @param t
-    * @param t1
-    * @return true iif t1 is a subtree of t
-    */
-  def isSubTree(t: Tree, tt: Tree): Boolean = t match {
-    case Leaf(w, c) => tt match {
-      case Leaf(ww, cc) if(w == ww) => true
+  // return true if st is a substree of t---------------------------------------
+  def isSubTree(t: Tree, st: Tree): Boolean = t match {
+    case Leaf(w, c) => st match {
+      case Leaf(ww, cc) if (w == ww && c == cc) => true
       case _ => false 
     }
-    case InnerNode(w, t1, t2) => tt match {
-      case InnerNode(w, tt1, tt2) => equals(t1, tt1) && equals(t1, tt1) || isSubTree(t1, tt) || isSubTree(t1, tt)
-      case Leaf(_, cc) => isSubTree(t1, tt) || isSubTree(t1, tt)
+    case InnerNode(w, t1, t2) => st match {
+      case InnerNode(w, st1, st2) => equals(t1, st1) && equals(t2, st2) || isSubTree(t1, st) || isSubTree(t2, st)
+      case Leaf(_, _) => isSubTree(t1, st) || isSubTree(t2, st)
     }
+  }
+
+  // return the weight of a Tree------------------------------------------------
+  def cachedWeight(t: Tree): BigInt = t match {
+    case InnerNode(w, t1, t2) => w
+    case Leaf(w, c) => w
   }
 
   // merge two Tree in one by adding an InnerNode-------------------------------
