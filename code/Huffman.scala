@@ -290,14 +290,35 @@ object HuffmanCode {
 
   // prove that can decode implies that we can decode the remaining bits--------
   // after having decoded the first decodable character-------------------------
-  def canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t: InnerNode, bs: List[Boolean]): Unit = {
-    require(canDecode(t, bs)(t))
-
+  def canDecodeImpliesCanDecodeTailAfterOneCharDecoded(s: InnerNode, bs: List[Boolean])(implicit t: InnerNode): Unit = {
+    require(canDecode(s, bs)(t) && isSubTree(t, s))
+    decreases(bs.length)
     isSubTreeReflexivity(t)
-    canDecodeImpliesCanDecodeAtLeastOneChar(t, bs)(t)
-
-    //TODO
-  }.ensuring(_ => decodeChar(t, bs) match { case(_, nBs) => if (nBs.isEmpty) true else canDecode(t, nBs)(t) })
+    canDecodeImpliesCanDecodeAtLeastOneChar(s, bs)(t)
+    bs match {
+      case Nil() => ()
+      case head :: tl => {
+           s match {
+              case InnerNode(_, s1, s2) => {
+                if(!head){
+                  s1 match {
+                    case s1Inner@InnerNode(_, t1, t2) => canDecodeImpliesCanDecodeTailAfterOneCharDecoded(s1Inner, tl)(t)
+                    case Leaf(_, c) => ()
+                  }
+                }else{
+                  s2 match {
+                    case s2Inner@InnerNode(_, t1, t2) => canDecodeImpliesCanDecodeTailAfterOneCharDecoded(s2Inner, tl)(t)
+                    case Leaf(_, c) => ()
+                  }
+                }
+              }
+              case _ => ()
+            }
+      }
+    }
+   
+    
+  }.ensuring(_ => decodeChar(s, bs) match { case(_, nBs) => if (nBs.isEmpty) true else canDecode(s, nBs)(t) })
 
   // decode a single character from a list of bits with a given tree------------
   def decodeChar(t: InnerNode, bs: List[Boolean]): (Char, List[Boolean]) = {
@@ -321,9 +342,28 @@ object HuffmanCode {
   // the first decodable character is smaller than the original list of bits----
   def decodeCharLength(t: InnerNode, bs: List[Boolean]): Unit = {
     require(canDecodeAtLeastOneChar(t, bs))
+    
+    t match {
+      case InnerNode(_, t1, t2) => {
+        bs match {
+          case head :: tl => {
+            if(!head){
+              t1 match {
+                case t1Inner@InnerNode(_, t11, t12) => decodeCharLength(t1Inner, tl)
+                case Leaf(_, _) => ()
+              }
+            } else{
+              t2 match {
+                case t2Inner@InnerNode(_, t11, t12) => decodeCharLength(t2Inner, tl)
+                case Leaf(_, _) => ()
+              }
+            }
+          }
+          case Nil() => ()
+        }
+      } 
+    }
 
-    ()
-    //TODO
   }.ensuring(_ => decodeChar(t, bs) match { case (_, nBs) => nBs.length < bs.length })
 
   // decode a list of bits with a given tree recursively------------------------
@@ -331,7 +371,7 @@ object HuffmanCode {
     require(!bs.isEmpty && canDecode(t, bs)(t))
     decreases(bs.length)
 
-    canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t, bs)
+    canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t, bs)(t)
     decodeCharLength(t, bs)
 
     decodeChar(t, bs) match { case(c, nBs) => if (nBs.isEmpty) acc else decodeHelper(t, nBs, acc ++ List(c)) }
