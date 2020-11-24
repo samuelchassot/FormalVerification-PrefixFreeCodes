@@ -35,26 +35,31 @@ object HuffmanCode {
   }
 
   // return true iff two trees are the same-------------------------------------
-  def equals(t1: Tree, t2: Tree): Boolean = t1 match {
+  def isSameTree(t1: Tree, t2: Tree): Boolean = t1 match {
     case Leaf(w1, c1) => t2 match {
       case Leaf(w2, c2) if (w1 == w2 && c1 == c2) => true
       case _ => false 
     }
     case InnerNode(w1, t11, t12) => t2 match {
-      case InnerNode(w2, t21, t22) => w1 == w2 && equals(t11, t21) && equals(t12, t22)
+      case InnerNode(w2, t21, t22) => w1 == w2 && isSameTree(t11, t21) && isSameTree(t12, t22)
       case _ => false
     }
   }
 
-  def equalsReflexivity(t: Tree): Unit = {
-
-    ()
-    //TODO
-  }.ensuring(_ => equals(t, t))
+  // prove that isSameTree is a reflexive relation------------------------------
+  def isSameTreeReflexivity(t: Tree): Unit = {
+    t match {
+      case Leaf(w, c) => ()
+      case InnerNode(w, t1, t2) => {
+        isSameTreeReflexivity(t1)
+        isSameTreeReflexivity(t2)
+      }
+    }
+  }.ensuring(_ => isSameTree(t, t))
 
   // return true if st is a substree of t---------------------------------------
   def isSubTree(t: Tree, st: Tree): Boolean = {
-    if (equals(t, st)) true
+    if (isSameTree(t, st)) true
     else t match {
       case Leaf(_, _) => false
       case InnerNode(_, t1, t2) => st match { case _ => isSubTree(t1, st) || isSubTree(t2, st) }
@@ -63,7 +68,7 @@ object HuffmanCode {
 
   // prove isSubTree is a reflexive relation------------------------------------
   def isSubTreeReflexivity(t: Tree): Unit = {
-    equalsReflexivity(t)
+    isSameTreeReflexivity(t)
   }.ensuring(_ => isSubTree(t, t))
 
   // prove isSubTree is a transitive relation-----------------------------------
