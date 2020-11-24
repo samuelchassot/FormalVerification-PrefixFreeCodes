@@ -57,6 +57,13 @@ object HuffmanCode {
     }
   }.ensuring(_ => isSameTree(t, t))
 
+  def isSameTreeTransitivity(t1: Tree, t2: Tree, t3: Tree): Unit = {
+    require(isSameTree(t1, t2) && isSameTree(t2, t3))
+
+    ()
+    //TODO
+  }.ensuring(_ => isSameTree(t1, t3))
+
   // return true if st is a substree of t---------------------------------------
   def isSubTree(t: Tree, st: Tree): Boolean = {
     if (isSameTree(t, st)) true
@@ -80,13 +87,9 @@ object HuffmanCode {
       case t@InnerNode(tw, t1, t2) => st match {
         case Leaf(_, _) => ()
         case InnerNode(stw, st1, st2) => {
-          if (isSameTree(t, st)) {
-            isSameSubTree(t, st, sst)
-          } else if (isSubTree(t1, st)) {
-            isSubTreeTransitivity(t1, st, sst)
-          } else if (isSubTree(t2, st)) {
-            isSubTreeTransitivity(t2, st, sst)
-          }
+          if (isSameTree(t, st)) isSameSubTree(t, st, sst)
+          else if (isSubTree(t1, st)) isSubTreeTransitivity(t1, st, sst)
+          else if (isSubTree(t2, st)) isSubTreeTransitivity(t2, st, sst)
         }
       }
     }
@@ -97,8 +100,15 @@ object HuffmanCode {
   def isSameSubTree(t1: Tree, t2: Tree, st: Tree): Unit = {
     require(isSameTree(t1, t2) && isSubTree(t2, st))
 
-    ()
-    //TODO
+    if (isSameTree(t2, st)) {
+      isSameTreeTransitivity(t1, t2, st)
+    } else t2 match {
+      case Leaf(_, _) => ()
+      case InnerNode(_, t21, t22) => t1 match { case InnerNode(_, t11, t12) => {
+        if (isSubTree(t21, st)) isSameSubTree(t11, t21, st)
+        else if (isSubTree(t22, st)) isSameSubTree(t12, t22, st)
+      }}
+    }
   }.ensuring(_ => isSubTree(t1, st))
 
   // prove children of a node are subtrees or the node itself-------------------
@@ -296,7 +306,6 @@ object HuffmanCode {
     require(canDecodeAtLeastOneChar(t, bs))
 
     ()
-
     //TODO
   }.ensuring(_ => decodeChar(t, bs) match { case (_, nBs) => nBs.length < bs.length })
 
