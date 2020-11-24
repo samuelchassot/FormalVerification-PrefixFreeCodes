@@ -10,6 +10,8 @@ import stainless.lang._
 import stainless.annotation._
 import stainless.equations._
 import stainless.proof.check
+import HuffmanCode.InnerNode
+import HuffmanCode.Leaf
 
 object HuffmanCode {
 
@@ -125,8 +127,11 @@ object HuffmanCode {
 
   // prove children of a node are subtrees or the node itself-------------------
   def childrenAreSubTrees(t: InnerNode): Unit = {
-    ()
-    //TODO
+    t match {
+      case InnerNode(_, t1, t2) => {
+        isSubTreeReflexivity(t)
+      }
+    }
   }.ensuring(_ => t match { case InnerNode(_, t1, t2) => isSubTree(t, t1) && isSubTree(t, t2)})
 
   // return the weight of a Tree------------------------------------------------
