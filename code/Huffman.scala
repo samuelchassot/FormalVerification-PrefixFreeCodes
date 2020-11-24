@@ -60,8 +60,20 @@ object HuffmanCode {
   def isSameTreeTransitivity(t1: Tree, t2: Tree, t3: Tree): Unit = {
     require(isSameTree(t1, t2) && isSameTree(t2, t3))
 
-    ()
-    //TODO
+    t1 match {
+      case InnerNode(_, t11, t12) => t2 match {
+        case InnerNode(w, t21, t22) => t3 match {
+          case InnerNode(w, t31, t32) => {
+            isSameTreeTransitivity(t11, t21, t31)
+            isSameTreeTransitivity(t12, t22, t32)
+            }
+          case Leaf(w3, c3) => ()
+        }
+        case _ => ()
+      }
+      case _ => ()
+    }
+    
   }.ensuring(_ => isSameTree(t1, t3))
 
   // return true if st is a substree of t---------------------------------------
