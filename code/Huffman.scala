@@ -184,9 +184,8 @@ object HuffmanCode {
   def generateSortedForest(s: List[Char]): Forest = {
     sortForest(generateUnsortedForest(s))
   }
-
-  // generate Huffman code's Tree given a Forest--------------------------------
-  def huffmansAlgorithm(f: Forest): Tree = {
+  
+  def huffmansAlgorithmHelper(f: Forest): Tree = {
     require(!f.isEmpty)
     decreases(f.length)
 
@@ -197,6 +196,11 @@ object HuffmanCode {
       }
       case t :: _ => t
     }
+  }
+  // generate Huffman code's Tree given a Forest--------------------------------
+  def huffmansAlgorithm(f: Forest): Tree = {
+    require(!f.isEmpty && f.length > 1)
+    huffmansAlgorithmHelper(f)
   }.ensuring(t => isInnerNode(t))
 
   // encode/decode--------------------------------------------------------------
