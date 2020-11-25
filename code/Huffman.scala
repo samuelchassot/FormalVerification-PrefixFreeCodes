@@ -312,13 +312,10 @@ object HuffmanCode {
                   }
                 }
               }
-              case _ => ()
             }
       }
     }
-   
-    
-  }.ensuring(_ => decodeChar(s, bs) match { case(_, nBs) => if (nBs.isEmpty) true else canDecode(s, nBs)(t) })
+  }.ensuring(_ => decodeChar(s, bs) match { case(_, nBs) => nBs.isEmpty || canDecode(t, nBs)(t) })
 
   // decode a single character from a list of bits with a given tree------------
   def decodeChar(t: InnerNode, bs: List[Boolean]): (Char, List[Boolean]) = {
@@ -370,7 +367,8 @@ object HuffmanCode {
   def decodeHelper(t: InnerNode, bs: List[Boolean], acc: List[Char]): List[Char] = {
     require(!bs.isEmpty && canDecode(t, bs)(t))
     decreases(bs.length)
-
+    
+    isSubTreeReflexivity(t)
     canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t, bs)(t)
     decodeCharLength(t, bs)
 
