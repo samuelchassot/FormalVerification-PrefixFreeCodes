@@ -197,7 +197,7 @@ object HuffmanCode {
       }
       case t :: _ => t
     }
-  }
+  }.ensuring(t => isInnerNode(t))
 
   // encode/decode--------------------------------------------------------------
 
@@ -402,11 +402,6 @@ object HuffmanCode {
       }
     }
   }
-  
-  def treeProducedByHuffmanIsInnerNode(f: Forest): Tree = {
-    require(!f.isEmpty)
-    huffmansAlgorithm(f)
-  }.ensuring(t => isInnerNode(t))
 
   // main-----------------------------------------------------------------------
   @extern
