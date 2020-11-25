@@ -226,6 +226,19 @@ object HuffmanCode {
   def encode(t: InnerNode, s: List[Char]): List[Boolean] = {
     encodeHelper(t, s)
   }
+
+  def canEncode(t: InnerNode, c: Char): Boolean = t match {
+    case InnerNode(_, t1, t2) => {
+      (t1 match {
+        case t1Inner@InnerNode(_, t11, t12) => canEncode(t1Inner, c)
+        case Leaf(_, c1) => c1 == c
+      }) ||
+      (t2 match {
+          case t2Inner@InnerNode(_, t21, t22) => canEncode(t2Inner, c)
+          case Leaf(_, c2) => c == c2
+        })
+    }
+  }
   
   // check if at least one character can be decoded-----------------------------
   def canDecodeAtLeastOneChar(t: InnerNode, bs: List[Boolean]): Boolean = {
@@ -367,7 +380,7 @@ object HuffmanCode {
   def decodeHelper(t: InnerNode, bs: List[Boolean], acc: List[Char]): List[Char] = {
     require(!bs.isEmpty && canDecode(t, bs)(t))
     decreases(bs.length)
-    
+
     isSubTreeReflexivity(t)
     canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t, bs)(t)
     decodeCharLength(t, bs)
@@ -390,6 +403,11 @@ object HuffmanCode {
     }
   }
   
+  def treeProducedByHuffmanIsInnerNode(f: Forest): Tree = {
+    require(!f.isEmpty)
+    huffmansAlgorithm(f)
+  }.ensuring(t => isInnerNode(t))
+
   // main-----------------------------------------------------------------------
   @extern
   def main(args: Array[String]): Unit = {
