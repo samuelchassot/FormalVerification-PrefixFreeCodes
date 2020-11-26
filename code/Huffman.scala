@@ -172,20 +172,19 @@ object HuffmanCode {
   
   // generate Huffman code's Tree recursively given a Forest--------------------
   def huffmansAlgorithmHelper(f: Forest): Tree = {
-    require(!f.isEmpty)
+    require(f.length == 1 && isInnerNode(f(0)) || f.length > 1 )
     decreases(f.length)
 
     f match {
       case t1 :: t2 :: tl => huffmansAlgorithmHelper(insortTree(uniteTrees(t1, t2), tl))
       case t :: _ => t
     }
-  }
+  }.ensuring(t => isInnerNode(t))
 
   // generate Huffman code's Tree given a Forest--------------------------------
   def huffmansAlgorithm(f: Forest): Tree = {
     require(f.length > 1)
     huffmansAlgorithmHelper(f)
-    //TODO
   }.ensuring(t => isInnerNode(t))
 
   // encode/decode--------------------------------------------------------------
@@ -430,6 +429,6 @@ object HuffmanCode {
     val t = generateHuffmanCodeTree(s)
     val e = encode(t, s)
     val d = decode(t, e)
-    e.length == d.length && s.zip(d).forall(t => t._1 == t._2)
+    s == d
   })
 }
