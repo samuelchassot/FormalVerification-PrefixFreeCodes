@@ -10,8 +10,6 @@ import stainless.lang._
 import stainless.annotation._
 import stainless.equations._
 import stainless.proof.check
-import HuffmanCode.InnerNode
-import HuffmanCode.Leaf
 
 object HuffmanCode {
 
@@ -151,6 +149,8 @@ object HuffmanCode {
 
   // prove insortTree increases the Forest size by 1----------------------------
   def insortTreeLength(t: Tree, f: Forest): Unit = {
+    decreases(f.length)
+
     f match {
       case Nil() => ()
       case hd :: tl if (cachedWeight(t) <= cachedWeight(hd)) => ()
@@ -235,6 +235,8 @@ object HuffmanCode {
   
   // check if at least one character can be decoded-----------------------------
   def canDecodeAtLeastOneChar(t: InnerNode, bs: List[Boolean]): Boolean = {
+    decreases(bs.length)
+
     t match { case InnerNode(_, t1, t2) => { bs match {
       case hd :: tl => {
         if (!hd) t1 match {
@@ -345,6 +347,7 @@ object HuffmanCode {
   // the first decodable character is smaller than the original list of bits----
   def decodeCharLength(t: InnerNode, bs: List[Boolean]): Unit = {
     require(canDecodeAtLeastOneChar(t, bs))
+    decreases(bs.length)
     
     t match {
       case InnerNode(_, t1, t2) => {
