@@ -195,30 +195,34 @@ object HuffmanCode {
   // in the tree----------------------------------------------------------------
   def canEncodeCharUniquely(t: Tree, c: Char): Boolean = countChar(t, c) == 1
 
-  // prove that if a character is uniquely encodable implies that---------------
-  // its encoding is not empty--------------------------------------------------
-  def canEncodeCharUniquelyImpliesNonEmptyEncoding(t: Tree, c: Char): Unit = {
-    require(isInnerNode(t) && canEncodeCharUniquely(t, c))
-    //TODO
-  }.ensuring(_ => !encodeCharHelper(t, c, Nil()).isEmpty)
-
   // encode functions-----------------------------------------------------------
 
   // encode a character as a list of bits recursively with a given tree---------
-  def encodeCharHelper(t: Tree, c: Char, acc: List[Boolean]): List[Boolean] = {
-    t match {
-      case Leaf(_, lC) => if (lC == c) acc else Nil()
-      case InnerNode(_, t1, t2) => encodeCharHelper(t1, c, acc ++ List(false)) ++ encodeCharHelper(t2, c, acc ++ List(true))
-    }
-  }
+  def encodeCharHelper(t: Tree, c: Char): List[Boolean] = {
+    require(isInnerNode(t))
+
+    t match { case InnerNode(_, t1, t2) => {
+      (t1, t2) match {
+        case (Leaf(_, lC), _) if (lC == c) => List(false)
+        case (_, Leaf(_, lC)) if (lC == c) => List(true)
+        case (t1@InnerNode(_, _, _), t2@InnerNode(_, _, _)) => encodeCharHelper(t1, c) match {
+          case Nil() => encodeCharHelper(t2, c)
+          case l => l
+        }
+        case (t1@InnerNode(_, _, _), _) => encodeCharHelper(t1, c)
+        case (_, t2@InnerNode(_, _, _)) => encodeCharHelper(t2, c)
+        case _ => Nil[Boolean]()
+      }
+    }}
+  }.ensuring(bs => canEncodeCharUniquely(t, c) && decodeChar(t, bs)._1 == c && decodeChar(t, bs)._2.isEmpty || !canEncodeCharUniquely(t, c)) 
 
   // encode a character as a list of bits with a given tree---------------------
   def encodeChar(t: Tree, c: Char): List[Boolean] = {
     require(isInnerNode(t) && canEncodeCharUniquely(t, c))
 
-    canEncodeCharUniquelyImpliesNonEmptyEncoding(t, c)
-    encodeCharHelper(t, c, Nil())
-  }.ensuring(bs => !bs.isEmpty)
+    encodeCharHelper(t, c)
+  }.ensuring(bs => canDecodeAtLeastOneChar(t, bs))
+  // }.ensuring(bs => canDecodeAtLeastOneChar(t, bs) && decodeChar(t, bs)._1 == c && decodeChar(t, bs)._2.isEmpty)
 
   // encode a list of chararcters with a given tree recursively-----------------
   def encodeHelper(t: Tree, s: List[Char]) : List[Boolean] = {
