@@ -184,9 +184,8 @@ object HuffmanCode {
   def generateSortedForest(s: List[Char]): Forest = {
     sortForest(generateUnsortedForest(s))
   }
-
-  // generate Huffman code's Tree given a Forest--------------------------------
-  def huffmansAlgorithm(f: Forest): Tree = {
+  
+  def huffmansAlgorithmHelper(f: Forest): Tree = {
     require(!f.isEmpty)
     decreases(f.length)
 
@@ -198,6 +197,11 @@ object HuffmanCode {
       case t :: _ => t
     }
   }
+  // generate Huffman code's Tree given a Forest--------------------------------
+  def huffmansAlgorithm(f: Forest): Tree = {
+    require(!f.isEmpty && f.length > 1)
+    huffmansAlgorithmHelper(f)
+  }.ensuring(t => isInnerNode(t))
 
   // encode/decode--------------------------------------------------------------
 
@@ -225,6 +229,19 @@ object HuffmanCode {
   // encode a list of characters as list of bits with a given tree--------------
   def encode(t: InnerNode, s: List[Char]): List[Boolean] = {
     encodeHelper(t, s)
+  }
+
+  def canEncode(t: InnerNode, c: Char): Boolean = t match {
+    case InnerNode(_, t1, t2) => {
+      (t1 match {
+        case t1Inner@InnerNode(_, t11, t12) => canEncode(t1Inner, c)
+        case Leaf(_, c1) => c1 == c
+      }) ||
+      (t2 match {
+          case t2Inner@InnerNode(_, t21, t22) => canEncode(t2Inner, c)
+          case Leaf(_, c2) => c == c2
+        })
+    }
   }
   
   // check if at least one character can be decoded-----------------------------
@@ -312,13 +329,10 @@ object HuffmanCode {
                   }
                 }
               }
-              case _ => ()
             }
       }
     }
-   
-    
-  }.ensuring(_ => decodeChar(s, bs) match { case(_, nBs) => if (nBs.isEmpty) true else canDecode(s, nBs)(t) })
+  }.ensuring(_ => decodeChar(s, bs) match { case(_, nBs) => nBs.isEmpty || canDecode(t, nBs)(t) })
 
   // decode a single character from a list of bits with a given tree------------
   def decodeChar(t: InnerNode, bs: List[Boolean]): (Char, List[Boolean]) = {
@@ -371,6 +385,7 @@ object HuffmanCode {
     require(!bs.isEmpty && canDecode(t, bs)(t))
     decreases(bs.length)
 
+    isSubTreeReflexivity(t)
     canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t, bs)(t)
     decodeCharLength(t, bs)
 
@@ -391,7 +406,7 @@ object HuffmanCode {
       }
     }
   }
-  
+
   // main-----------------------------------------------------------------------
   @extern
   def main(args: Array[String]): Unit = {
