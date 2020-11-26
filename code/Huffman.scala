@@ -406,43 +406,4 @@ object HuffmanCode {
       }
     }
  }
-
-  // main-----------------------------------------------------------------------
-  @extern
-  def main(args: Array[String]): Unit = {
- 
-    def scalaListToStainlessList[T](l: scala.collection.immutable.List[T]): List[T] = l match {
-      case scala.collection.immutable.Nil => Nil()
-      case scala.collection.immutable.::(x, xs) => Cons(x, scalaListToStainlessList(xs))
-    }
- 
-    def stainlessListToScalaList[T](l: List[T]): scala.collection.immutable.List[T] = l match {
-      case Nil()        => scala.collection.immutable.Nil
-      case Cons(x, xs)  => scala.collection.immutable.::(x, stainlessListToScalaList(xs))
-    }
-
-    def printHuffmanCode(t: Tree): Unit = {
-      def printHuffmanCodeHelper(t: Tree, cw: String): Unit = t match {
-        case InnerNode(_, t1, t2) => {
-          printHuffmanCodeHelper(t2, cw.concat("1"))
-          printHuffmanCodeHelper(t1, cw.concat("0"))
-        }
-        case Leaf(_, c) => {
-          println(s"$c : $cw")
-        }
-      }
-
-      printHuffmanCodeHelper(t, "")
-    }
-
-    if (args.size != 1) {
-      println("This expects only one String")
-      return
-    }
-
-    val f: Forest = generateSortedForest(scalaListToStainlessList(args(0).toList))
-    val t: Tree = huffmansAlgorithm(f)
-
-    printHuffmanCode(t)
-  }
 }
