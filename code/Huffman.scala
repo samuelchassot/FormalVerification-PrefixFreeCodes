@@ -34,6 +34,12 @@ object HuffmanCode {
     case Leaf(_, _) => true
   }
 
+  // return the number of leaves with a given character in the given tree-------
+  def countChar(t: Tree, c: Char): BigInt = t match {
+    case Leaf(_, lC) => if (lC == c) 1 else 0
+    case InnerNode(_, t1, t2) => countChar(t1, c) + countChar(t2, c)
+  }
+
   // return true iff two trees are the same-------------------------------------
   def isSameTree(t1: Tree, t2: Tree): Boolean = t1 match {
     case Leaf(w1, c1) => t2 match {
@@ -67,7 +73,7 @@ object HuffmanCode {
           case InnerNode(w, t31, t32) => {
             isSameTreeTransitivity(t11, t21, t31)
             isSameTreeTransitivity(t12, t22, t32)
-            }
+          }
           case _ => ()
         }
         case _ => ()
@@ -145,18 +151,7 @@ object HuffmanCode {
       case Nil() => List(t)
       case hd :: tl => if (cachedWeight(t) <= cachedWeight(hd)) t :: f else hd :: insortTree(t, tl)
     }
-  }
-
-  // prove insortTree increases the Forest size by 1----------------------------
-  def insortTreeLength(t: Tree, f: Forest): Unit = {
-    decreases(f.length)
-
-    f match {
-      case Nil() => ()
-      case hd :: tl if (cachedWeight(t) <= cachedWeight(hd)) => ()
-      case hd :: tl => insortTreeLength(t, tl)
-    }
-  }.ensuring(_ => insortTree(t, f).length == f.length+1)
+  }.ensuring(r => r.length == f.length+1)
 
   // generate the Forest of Leaf for a given list of characters-----------------
   def generateUnsortedForest(s: List[Char]): Forest = {
@@ -180,10 +175,7 @@ object HuffmanCode {
     decreases(f.length)
 
     f match {
-      case t1 :: t2 :: tl => {
-        insortTreeLength(uniteTrees(t1, t2), tl)
-        huffmansAlgorithmHelper(insortTree(uniteTrees(t1, t2), tl))
-      }
+      case t1 :: t2 :: tl => huffmansAlgorithmHelper(insortTree(uniteTrees(t1, t2), tl))
       case t :: _ => t
     }
   }
@@ -192,46 +184,61 @@ object HuffmanCode {
   def huffmansAlgorithm(f: Forest): Tree = {
     require(f.length > 1)
     huffmansAlgorithmHelper(f)
+    //TODO
   }.ensuring(t => isInnerNode(t))
 
   // encode/decode--------------------------------------------------------------
 
-  // encode a character as a list of bits with a given tree---------------------
-  def encodeChar(t: Tree, c: Char, acc: List[Boolean]): List[Boolean] = {
+  // encode lemmas--------------------------------------------------------------
+
+  // define that a character is uniquely encodable iff it appears once----------
+  // in the tree----------------------------------------------------------------
+  def canEncodeCharUniquely(t: Tree, c: Char): Boolean = countChar(t, c) == 1
+
+  // prove that if a character is uniquely encodable implies that---------------
+  // its encoding is not empty--------------------------------------------------
+  def canEncodeCharUniquelyImpliesNonEmptyEncoding(t: InnerNode, c: Char): Unit = {
+    require(canEncodeCharUniquely(t, c))
+
+    //TODO
+  }.ensuring(_ => !encodeCharHelper(t, c, Nil()).isEmpty)
+
+  // encode functions-----------------------------------------------------------
+
+  // encode a character as a list of bits recursively with a given tree---------
+  def encodeCharHelper(t: Tree, c: Char, acc: List[Boolean]): List[Boolean] = {
     t match {
       case Leaf(_, lC) => if (lC == c) acc else Nil()
-      case InnerNode(_, t1, t2) => { encodeChar(t1, c, acc ++ List(false)) match {
-        case Nil() => encodeChar(t2, c, acc ++ List(true))
-        case l => l
-      }}
+      case InnerNode(_, t1, t2) => encodeCharHelper(t1, c, acc ++ List(false)) ++ encodeCharHelper(t2, c, acc ++ List(true))
     }
   }
 
+  // encode a character as a list of bits with a given tree---------------------
+  def encodeChar(t: InnerNode, c: Char): List[Boolean] = {
+    require(canEncodeCharUniquely(t, c))
+
+    canEncodeCharUniquelyImpliesNonEmptyEncoding(t, c)
+    encodeCharHelper(t, c, Nil())
+  }.ensuring(bs => !bs.isEmpty)
+
   // encode a list of chararcters with a given tree recursively-----------------
   def encodeHelper(t: InnerNode, s: List[Char]) : List[Boolean] = {
+    require(s.forall(c => canEncodeCharUniquely(t, c)))
+
     s match {
       case Nil() => Nil()
-      case hd :: tl => encodeChar(t, hd, Nil()) ++ encodeHelper(t, tl)
+      case hd :: tl => encodeChar(t, hd) ++ encodeHelper(t, tl)
     }
   }
 
   // encode a list of characters as list of bits with a given tree--------------
   def encode(t: InnerNode, s: List[Char]): List[Boolean] = {
+    require(s.forall(c => canEncodeCharUniquely(t, c)))
+
     encodeHelper(t, s)
   }
 
-  def canEncode(t: InnerNode, c: Char): Boolean = t match {
-    case InnerNode(_, t1, t2) => {
-      (t1 match {
-        case t1@InnerNode(_, t11, t12) => canEncode(t1, c)
-        case Leaf(_, c1) => c1 == c
-      }) ||
-      (t2 match {
-          case t2@InnerNode(_, t21, t22) => canEncode(t2, c)
-          case Leaf(_, c2) => c == c2
-        })
-    }
-  }
+  // decode lemmas--------------------------------------------------------------
   
   // check if at least one character can be decoded-----------------------------
   def canDecodeAtLeastOneChar(t: InnerNode, bs: List[Boolean]): Boolean = {
@@ -250,6 +257,7 @@ object HuffmanCode {
       case Nil() => false
     }}}
   }
+
 
   // check if the whole list of bits can be correctly decoded-------------------
   def canDecode(s: InnerNode, bs: List[Boolean])(implicit t: InnerNode): Boolean = {
@@ -325,6 +333,8 @@ object HuffmanCode {
     }
   }.ensuring(_ => decodeChar(s, bs) match { case(_, nBs) => nBs.isEmpty || canDecode(t, nBs)(t) })
 
+  // decode functions-----------------------------------------------------------
+
   // decode a single character from a list of bits with a given tree------------
   def decodeChar(t: InnerNode, bs: List[Boolean]): (Char, List[Boolean]) = {
     require(canDecodeAtLeastOneChar(t, bs))
@@ -349,27 +359,24 @@ object HuffmanCode {
     require(canDecodeAtLeastOneChar(t, bs))
     decreases(bs.length)
     
-    t match {
-      case InnerNode(_, t1, t2) => {
-        bs match {
-          case head :: tl => {
-            if(!head){
-              t1 match {
-                case t1@InnerNode(_, t11, t12) => decodeCharLength(t1, tl)
-                case Leaf(_, _) => ()
-              }
-            } else{
-              t2 match {
-                case t2@InnerNode(_, t11, t12) => decodeCharLength(t2, tl)
-                case Leaf(_, _) => ()
-              }
+    t match { case InnerNode(_, t1, t2) => {
+      bs match {
+        case head :: tl => {
+          if (!head) {
+            t1 match {
+              case t1@InnerNode(_, t11, t12) => decodeCharLength(t1, tl)
+              case Leaf(_, _) => ()
+            }
+          } else{
+            t2 match {
+              case t2@InnerNode(_, t11, t12) => decodeCharLength(t2, tl)
+              case Leaf(_, _) => ()
             }
           }
-          case Nil() => ()
         }
-      } 
-    }
-
+        case Nil() => ()
+      }
+    }}
   }.ensuring(_ => decodeChar(t, bs) match { case (_, nBs) => nBs.length < bs.length })
 
   // decode a list of bits with a given tree recursively------------------------
