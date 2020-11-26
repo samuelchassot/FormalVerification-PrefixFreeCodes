@@ -192,7 +192,7 @@ object HuffmanCode {
     f match {
       case t1 :: t2 :: tl => {
         insortTreeLength(uniteTrees(t1, t2), tl)
-        huffmansAlgorithm(insortTree(uniteTrees(t1, t2), tl))
+        huffmansAlgorithmHelper(insortTree(uniteTrees(t1, t2), tl))
       }
       case t :: _ => t
     }
@@ -405,7 +405,7 @@ object HuffmanCode {
         decodeHelper(t, bs, Nil())
       }
     }
-  }
+ }
 
   // main-----------------------------------------------------------------------
   @extern
