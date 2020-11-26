@@ -130,7 +130,8 @@ object HuffmanCode {
   }.ensuring(_ => isSubTree(t1, st))
 
   // prove children of a node are subtrees or the node itself-------------------
-  def childrenAreSubTrees(t: InnerNode): Unit = {
+  def childrenAreSubTrees(t: Tree): Unit = {
+    require(isInnerNode(t))
     isSubTreeReflexivity(t)
   }.ensuring(_ => t match { case InnerNode(_, t1, t2) => isSubTree(t, t1) && isSubTree(t, t2) })
 
@@ -197,9 +198,8 @@ object HuffmanCode {
 
   // prove that if a character is uniquely encodable implies that---------------
   // its encoding is not empty--------------------------------------------------
-  def canEncodeCharUniquelyImpliesNonEmptyEncoding(t: InnerNode, c: Char): Unit = {
-    require(canEncodeCharUniquely(t, c))
-
+  def canEncodeCharUniquelyImpliesNonEmptyEncoding(t: Tree, c: Char): Unit = {
+    require(isInnerNode(t) && canEncodeCharUniquely(t, c))
     //TODO
   }.ensuring(_ => !encodeCharHelper(t, c, Nil()).isEmpty)
 
@@ -214,16 +214,16 @@ object HuffmanCode {
   }
 
   // encode a character as a list of bits with a given tree---------------------
-  def encodeChar(t: InnerNode, c: Char): List[Boolean] = {
-    require(canEncodeCharUniquely(t, c))
+  def encodeChar(t: Tree, c: Char): List[Boolean] = {
+    require(isInnerNode(t) && canEncodeCharUniquely(t, c))
 
     canEncodeCharUniquelyImpliesNonEmptyEncoding(t, c)
     encodeCharHelper(t, c, Nil())
   }.ensuring(bs => !bs.isEmpty)
 
   // encode a list of chararcters with a given tree recursively-----------------
-  def encodeHelper(t: InnerNode, s: List[Char]) : List[Boolean] = {
-    require(s.forall(c => canEncodeCharUniquely(t, c)))
+  def encodeHelper(t: Tree, s: List[Char]) : List[Boolean] = {
+    require(isInnerNode(t) && s.forall(c => canEncodeCharUniquely(t, c)))
 
     s match {
       case Nil() => Nil()
@@ -232,16 +232,17 @@ object HuffmanCode {
   }
 
   // encode a list of characters as list of bits with a given tree--------------
-  def encode(t: InnerNode, s: List[Char]): List[Boolean] = {
-    require(s.forall(c => canEncodeCharUniquely(t, c)))
-
+  def encode(t: Tree, s: List[Char]): List[Boolean] = {
+    require(isInnerNode(t) && s.forall(c => canEncodeCharUniquely(t, c)))
     encodeHelper(t, s)
-  }
+    //TODO
+  }.ensuring(bs => bs.isEmpty || !bs.isEmpty && canDecode(t, bs)(t))
 
   // decode lemmas--------------------------------------------------------------
   
   // check if at least one character can be decoded-----------------------------
-  def canDecodeAtLeastOneChar(t: InnerNode, bs: List[Boolean]): Boolean = {
+  def canDecodeAtLeastOneChar(t: Tree, bs: List[Boolean]): Boolean = {
+    require(isInnerNode(t))
     decreases(bs.length)
 
     t match { case InnerNode(_, t1, t2) => { bs match {
@@ -260,7 +261,8 @@ object HuffmanCode {
 
 
   // check if the whole list of bits can be correctly decoded-------------------
-  def canDecode(s: InnerNode, bs: List[Boolean])(implicit t: InnerNode): Boolean = {
+  def canDecode(s: Tree, bs: List[Boolean])(implicit t: Tree): Boolean = {
+    require(isInnerNode(s) && isInnerNode(t))
     decreases(bs.length)
 
     s match { case InnerNode(_, t1, t2) => { bs match {
@@ -278,8 +280,8 @@ object HuffmanCode {
   }
 
   // prove that canDecode implies canDecodeAtLeastOneChar-----------------------
-  def canDecodeImpliesCanDecodeAtLeastOneChar(s: InnerNode, bs: List[Boolean])(implicit t: InnerNode): Unit = {
-    require(canDecode(s, bs)(t) && isSubTree(t, s))
+  def canDecodeImpliesCanDecodeAtLeastOneChar(s: Tree, bs: List[Boolean])(implicit t: Tree): Unit = {
+    require(isInnerNode(s) && isInnerNode(t) && canDecode(s, bs)(t) && isSubTree(t, s))
     decreases(bs.length)
 
     s match { case InnerNode(_, t1, t2) => { bs match {
@@ -306,8 +308,8 @@ object HuffmanCode {
 
   // prove that can decode implies that we can decode the remaining bits--------
   // after having decoded the first decodable character-------------------------
-  def canDecodeImpliesCanDecodeTailAfterOneCharDecoded(s: InnerNode, bs: List[Boolean])(implicit t: InnerNode): Unit = {
-    require(canDecode(s, bs)(t) && isSubTree(t, s))
+  def canDecodeImpliesCanDecodeTailAfterOneCharDecoded(s: Tree, bs: List[Boolean])(implicit t: Tree): Unit = {
+    require(isInnerNode(s) && isInnerNode(t) && canDecode(s, bs)(t) && isSubTree(t, s))
     decreases(bs.length)
 
     isSubTreeReflexivity(t)
@@ -336,8 +338,8 @@ object HuffmanCode {
   // decode functions-----------------------------------------------------------
 
   // decode a single character from a list of bits with a given tree------------
-  def decodeChar(t: InnerNode, bs: List[Boolean]): (Char, List[Boolean]) = {
-    require(canDecodeAtLeastOneChar(t, bs))
+  def decodeChar(t: Tree, bs: List[Boolean]): (Char, List[Boolean]) = {
+    require(isInnerNode(t) && canDecodeAtLeastOneChar(t, bs))
     decreases(bs.length)
 
     t match { case InnerNode(_, t1, t2) => { bs match {
@@ -355,8 +357,8 @@ object HuffmanCode {
 
   // prove that the length of the remaining list of bits after decoding---------
   // the first decodable character is smaller than the original list of bits----
-  def decodeCharLength(t: InnerNode, bs: List[Boolean]): Unit = {
-    require(canDecodeAtLeastOneChar(t, bs))
+  def decodeCharLength(t: Tree, bs: List[Boolean]): Unit = {
+    require(isInnerNode(t) && canDecodeAtLeastOneChar(t, bs))
     decreases(bs.length)
     
     t match { case InnerNode(_, t1, t2) => {
@@ -380,8 +382,8 @@ object HuffmanCode {
   }.ensuring(_ => decodeChar(t, bs) match { case (_, nBs) => nBs.length < bs.length })
 
   // decode a list of bits with a given tree recursively------------------------
-  def decodeHelper(t: InnerNode, bs: List[Boolean], acc: List[Char]): List[Char] = {
-    require(!bs.isEmpty && canDecode(t, bs)(t))
+  def decodeHelper(t: Tree, bs: List[Boolean], acc: List[Char]): List[Char] = {
+    require(isInnerNode(t) && !bs.isEmpty && canDecode(t, bs)(t))
     decreases(bs.length)
 
     isSubTreeReflexivity(t)
@@ -392,8 +394,8 @@ object HuffmanCode {
   }
 
   // decode a list of bits as a list of characters with a given tree------------
-  def decode(t: InnerNode, bs: List[Boolean]): List[Char] = {
-    require(canDecode(t, bs)(t))
+  def decode(t: Tree, bs: List[Boolean]): List[Char] = {
+    require(isInnerNode(t) && canDecode(t, bs)(t))
     decreases(bs.length)
 
     bs match {
@@ -405,4 +407,29 @@ object HuffmanCode {
       }
     }
   }
+
+  // final theorem--------------------------------------------------------------
+
+  // return true if the given list of characters contains-----------------------
+  // more than two different ones-----------------------------------------------
+  def containsAtLeastTwoDifferentCharacters(s: List[Char]): Boolean = {
+    s.foldLeft[List[Char]](Nil())((l, c) => if (l.contains(c)) l else (c :: l)).length >= 2
+  }
+
+  def generateHuffmanCodeTree(s: List[Char]): Tree = {
+    require(containsAtLeastTwoDifferentCharacters(s))
+    huffmansAlgorithm(generateSortedForest(s))
+    //TODO
+  }.ensuring(t => isInnerNode(t) && s.forall(c => canEncodeCharUniquely(t, c)))
+
+  // prove that decode(encode(x)) is equal to x using Huffman's algorithm-------
+  def decodeEncodedString(s: List[Char]): Unit = {
+    require(containsAtLeastTwoDifferentCharacters(s))
+    //TODO
+  }.ensuring(_ => {
+    val t = generateHuffmanCodeTree(s)
+    val e = encode(t, s)
+    val d = decode(t, e)
+    e.length == d.length && s.zip(d).forall(t => t._1 == t._2)
+  })
 }
