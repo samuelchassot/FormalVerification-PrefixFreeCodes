@@ -244,10 +244,10 @@ object HuffmanCode {
       case hd :: tl => {
         if (!hd) t1 match {
           case Leaf(_, _) => true
-          case tt1@InnerNode(_, _, _) => canDecodeAtLeastOneChar(tt1, tl)
+          case t1@InnerNode(_, _, _) => canDecodeAtLeastOneChar(t1, tl)
         } else t2 match {
           case Leaf(_, _) => true
-          case tt2@InnerNode(_, _, _) => canDecodeAtLeastOneChar(tt2, tl)
+          case t2@InnerNode(_, _, _) => canDecodeAtLeastOneChar(t2, tl)
         }
       }
       case Nil() => false
@@ -264,10 +264,10 @@ object HuffmanCode {
       case hd :: tl => {
         if (!hd) t1 match {
           case Leaf(_, c) => if (tl.isEmpty) true else canDecode(t, tl)
-          case tt1@InnerNode(_, _, _) => canDecode(tt1, tl)
+          case t1@InnerNode(_, _, _) => canDecode(t1, tl)
         } else t2 match {
           case Leaf(_, c) => if (tl.isEmpty) true else canDecode(t, tl)
-          case tt2@InnerNode(_, _, _) => canDecode(tt2, tl)
+          case t2@InnerNode(_, _, _) => canDecode(t2, tl)
         }
       }
       case Nil() => false
