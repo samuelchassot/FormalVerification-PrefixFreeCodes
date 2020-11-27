@@ -447,7 +447,6 @@ object HuffmanCode {
   // prove that decode(encode(x)) is equal to x using Huffman's algorithm-------
   def decodeEncodedString(s: List[Char]): Unit = {
     require(containsAtLeastTwoDifferentCharacters(s))
-    //TODO
   }.ensuring(_ => {
     val t = generateHuffmanCodeTree(s)
     val e = encode(t, s)
