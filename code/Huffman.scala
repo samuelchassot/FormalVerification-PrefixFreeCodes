@@ -13,7 +13,7 @@ import stainless.proof.check
 
 object HuffmanCode {
 
-  // functional implemantion of Huffman's Algorithm-----------------------------
+  // functional implemention of Huffman's Algorithm-----------------------------
   
   // datatypes------------------------------------------------------------------
   sealed abstract class Tree
@@ -200,16 +200,16 @@ object HuffmanCode {
   def canEncodeCharUniquelyImpliesCanEncodeCharUniquelyOneChild(t: Tree, c: Char): Unit = {
     require(isInnerNode(t) && canEncodeCharUniquely(t, c))
     //TODO
-  }.ensuring(_ => t match { case InnerNode(_, t1, t2) => canEncodeCharUniquely(t1, c) && !canEncodeCharUniquely(t2, c) || !canEncodeCharUniquely(t1, c) && canEncodeCharUniquely(t2, c) })
+  }.ensuring(_ => t match { case InnerNode(_, t1, t2) => canEncodeCharUniquely(t1, c) ^ canEncodeCharUniquely(t2, c) })
 
   // encode functions-----------------------------------------------------------
 
   // encode a character as a list of bits recursively with a given tree---------
-  def encodeChar(s: Tree, c: Char)(implicit t: Tree): List[Boolean] = {
-    require(isInnerNode(s) && canEncodeCharUniquely(s, c))
+  def encodeChar(t: Tree, c: Char): List[Boolean] = {
+    require(isInnerNode(t) && canEncodeCharUniquely(t, c))
 
-    s match { case InnerNode(_, t1, t2) => {
-      canEncodeCharUniquelyImpliesCanEncodeCharUniquelyOneChild(s, c)
+    t match { case InnerNode(_, t1, t2) => {
+      canEncodeCharUniquelyImpliesCanEncodeCharUniquelyOneChild(t, c)
       if (canEncodeCharUniquely(t1, c)) t1 match {
         case Leaf(_, _) => List(false)
         case t1@InnerNode(_, _, _) => List(false) ++ encodeChar(t1, c)
@@ -219,7 +219,7 @@ object HuffmanCode {
         case t2@InnerNode(_, _, _) => List(true) ++ encodeChar(t2, c)
       }
     }}
-  }.ensuring(bs => canDecodeAtLeastOneChar(s, bs) && decodeChar(s, bs)._1 == c && decodeChar(s, bs)._2.isEmpty)
+  }.ensuring(bs => canDecodeAtLeastOneChar(t, bs) && decodeChar(t, bs)._1 == c && decodeChar(t, bs)._2.isEmpty)
 
   // encode a list of characters as list of bits with a given tree--------------
   def encode(t: Tree, s: List[Char]): List[Boolean] = {
@@ -227,7 +227,7 @@ object HuffmanCode {
 
     s match {
       case Nil() => Nil[Boolean]()
-      case hd :: tl => encodeChar(t, hd)(t) ++ encode(t, tl)
+      case hd :: tl => encodeChar(t, hd) ++ encode(t, tl)
     }
     //TODO
     // maybe this is not the postcondition we want
