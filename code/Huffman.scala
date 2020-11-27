@@ -432,6 +432,9 @@ object HuffmanCode {
     s.foldLeft[List[Char]](Nil())((l, c) => if (l.contains(c)) l else (c :: l)).length >= 2
   }
 
+  // return the Huffman code tree for a given list of characters that contains--
+  // at least two different characters otherwise there is no meaningful---------
+  // encoding for this----------------------------------------------------------
   def generateHuffmanCodeTree(s: List[Char]): Tree = {
     require(containsAtLeastTwoDifferentCharacters(s))
     huffmansAlgorithm(generateSortedForest(s))
