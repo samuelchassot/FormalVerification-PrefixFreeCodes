@@ -35,10 +35,12 @@ object HuffmanCode {
   }
 
   // return the number of leaves with a given character in the given tree-------
-  def countChar(t: Tree, c: Char): BigInt = t match {
-    case Leaf(_, lC) => if (lC == c) 1 else 0
-    case InnerNode(_, t1, t2) => countChar(t1, c) + countChar(t2, c)
-  }
+  def countChar(t: Tree, c: Char): BigInt = {
+    t match {
+      case Leaf(_, lC) => if (lC == c) BigInt(1) else BigInt(0)
+      case InnerNode(_, t1, t2) => countChar(t1, c) + countChar(t2, c)
+    }
+  }.ensuring(r => r >= 0)
 
   // return true iff two trees are the same-------------------------------------
   def isSameTree(t1: Tree, t2: Tree): Boolean = t1 match {
@@ -193,14 +195,7 @@ object HuffmanCode {
 
   // define that a character is uniquely encodable iff it appears once----------
   // in the tree----------------------------------------------------------------
-  def canEncodeCharUniquely(t: Tree, c: Char): Boolean = countChar(t, c) == 1
-
-  // prove that if we can encode uniquely a character using an innernode--------
-  // then it means we can encode with only one of its children------------------
-  def canEncodeCharUniquelyImpliesCanEncodeCharUniquelyOneChild(t: Tree, c: Char): Unit = {
-    require(isInnerNode(t) && canEncodeCharUniquely(t, c))
-    //TODO
-  }.ensuring(_ => t match { case InnerNode(_, t1, t2) => canEncodeCharUniquely(t1, c) ^ canEncodeCharUniquely(t2, c) })
+  def canEncodeCharUniquely(t: Tree, c: Char): Boolean = (countChar(t, c) == 1)
 
   // prove that if we encode a character with a given tree then we can----------
   // decode it and get back the correct character-------------------------------
@@ -231,7 +226,6 @@ object HuffmanCode {
     require(isInnerNode(t) && canEncodeCharUniquely(t, c))
 
     t match { case InnerNode(_, t1, t2) => {
-      canEncodeCharUniquelyImpliesCanEncodeCharUniquelyOneChild(t, c)
       if (canEncodeCharUniquely(t1, c)) t1 match {
         case Leaf(_, _) => List(false)
         case t1@InnerNode(_, _, _) => List(false) ++ encodeChar(t1, c)
