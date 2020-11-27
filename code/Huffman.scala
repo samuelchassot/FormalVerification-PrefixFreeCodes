@@ -202,6 +202,28 @@ object HuffmanCode {
     //TODO
   }.ensuring(_ => t match { case InnerNode(_, t1, t2) => canEncodeCharUniquely(t1, c) ^ canEncodeCharUniquely(t2, c) })
 
+  // prove that if we encode a character with a given tree then we can----------
+  // decode it and get back the correct character-------------------------------
+  def encodeCharIsDecodableAndCorrect(t: Tree, c: Char): Unit = {
+    require(isInnerNode(t) && canEncodeCharUniquely(t, c))
+    //TODO
+  }.ensuring(_ => {
+    val bs = encodeChar(t, c)
+    canDecode(t, bs)(t) && decode(t, bs) == List(c)
+  })
+
+  // prove that if we encode a character with a given tree then we can still----
+  // decode its encoding concatenated to some other list of booleans------------
+  // and it is decoded to the concatenation of the inital character and---------
+  // and the decoding of the list of booleans-----------------------------------
+  def concatDecodableEncodingsIsStillDecodableAndCorrect(t: Tree, hd: Char, tl: List[Char], tlBs: List[Boolean]): Unit = {
+    require(isInnerNode(t) && canEncodeCharUniquely(t, hd) && canDecode(t, tlBs)(t) && decode(t, tlBs) == tl)
+    //TODO
+  }.ensuring(_ => {
+    val hdBs = encodeChar(t, hd)
+    canDecode(t, hdBs ++ tlBs)(t) && decode(t, hdBs ++ tlBs) == hd :: tl
+  })
+
   // encode functions-----------------------------------------------------------
 
   // encode a character as a list of bits recursively with a given tree---------
@@ -219,19 +241,25 @@ object HuffmanCode {
         case t2@InnerNode(_, _, _) => List(true) ++ encodeChar(t2, c)
       }
     }}
-  }.ensuring(bs => canDecodeAtLeastOneChar(t, bs) && decodeChar(t, bs)._1 == c && decodeChar(t, bs)._2.isEmpty)
+  }.ensuring(bs => canDecodeAtLeastOneChar(t, bs) && decodeChar(t, bs) == (c, Nil[Boolean]()))
 
   // encode a list of characters as list of bits with a given tree--------------
   def encode(t: Tree, s: List[Char]): List[Boolean] = {
-    require(isInnerNode(t) && s.forall(c => canEncodeCharUniquely(t, c)))
+    require(isInnerNode(t) && !s.isEmpty && s.forall(c => canEncodeCharUniquely(t, c)))
+    decreases(s.length)
 
-    s match {
-      case Nil() => Nil[Boolean]()
-      case hd :: tl => encodeChar(t, hd) ++ encode(t, tl)
-    }
-    //TODO
-    // maybe this is not the postcondition we want
-  }.ensuring(bs => bs.isEmpty || !bs.isEmpty && canDecode(t, bs)(t))
+    s match { case hd :: tl => {
+      if (tl.isEmpty) {
+        encodeCharIsDecodableAndCorrect(t, hd)
+        encodeChar(t, hd)
+      }
+      else {
+        val tlBs = encode(t, tl)
+        concatDecodableEncodingsIsStillDecodableAndCorrect(t, hd, tl, tlBs)
+        encodeChar(t, hd) ++ tlBs
+      }
+    }}
+  }.ensuring(bs => canDecode(t, bs)(t) && decode(t, bs) == s)
 
   // decode lemmas--------------------------------------------------------------
   
@@ -253,7 +281,6 @@ object HuffmanCode {
       case Nil() => false
     }}}
   }
-
 
   // check if the whole list of bits can be correctly decoded-------------------
   def canDecode(s: Tree, bs: List[Boolean])(implicit t: Tree): Boolean = {
