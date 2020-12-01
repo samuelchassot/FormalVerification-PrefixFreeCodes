@@ -10,11 +10,8 @@ import stainless.lang._
 import stainless.annotation._
 import stainless.equations._
 import stainless.proof.check
-import HuffmanCode.InnerNode
-import HuffmanCode.Leaf
 
 object HuffmanCode {
-
   // functional implemention of Huffman's Algorithm-----------------------------
   
   // datatypes------------------------------------------------------------------
@@ -24,13 +21,13 @@ object HuffmanCode {
 
   type Forest = List[Tree]
 
-  // return true if Tree is an InnerNode----------------------------------------
+  // return true if tree is an InnerNode----------------------------------------
   def isInnerNode(t: Tree): Boolean = t match {
     case InnerNode(_, _, _) => true
     case Leaf(_, _) => false
   }
 
-  // return true if Tree is a Leaf----------------------------------------------
+  // return true if tree is a Leaf----------------------------------------------
   def isLeaf(t: Tree): Boolean = t match {
     case InnerNode(_, _, _) => false
     case Leaf(_, _) => true
