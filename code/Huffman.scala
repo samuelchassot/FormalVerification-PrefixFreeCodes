@@ -190,14 +190,29 @@ object HuffmanCode {
   // in the tree----------------------------------------------------------------
   def canEncodeCharUniquely(t: Tree, c: Char): Boolean = (countChar(t, c) == 1)
 
-  def encodeCharIsDecodable(t: Tree, c: Char): Unit = {
-    require(isInnerNode(t) && canEncodeCharUniquely(t, c))
-    //TODO
-  }.ensuring(_ => canDecode(t, encodeChar(t, c))(t))
+  // prove than if we can exactly decode one character a binary string----------
+  // with a given tree then we can decode the binary string---------------------
+  def canDecodeExactlyOneCharImpliesCanDecode(s: Tree, bs: List[Boolean])(implicit t: Tree): Unit = {
+    require(isInnerNode(s) && isInnerNode(t) && canDecodeAtLeastOneChar(s, bs) && decodeChar(s, bs)._2 ==  Nil())
+    decreases(bs.length)
+
+    s match { case InnerNode(_, t1, t2) => { bs match {
+      case hd :: tl => {
+        if (!hd) t1 match {
+          case Leaf(_, _) => ()
+          case t1@InnerNode(_, _, _) => canDecodeExactlyOneCharImpliesCanDecode(t1, tl)
+        } else t2 match {
+          case Leaf(_, _) => ()
+          case t2@InnerNode(_, _, _) => canDecodeExactlyOneCharImpliesCanDecode(t2, tl)
+        }
+      }
+      case Nil() => ()
+    }}}
+  }.ensuring(_ => canDecode(s, bs)(t))
 
   def decodeEncodedCharImpliesCorrectDecode(t: Tree, c: Char): Unit = {
     require(isInnerNode(t) && canEncodeCharUniquely(t, c) && decodeChar(t, encodeChar(t, c)) == (c, Nil()))
-    encodeCharIsDecodable(t, c)
+    canDecodeExactlyOneCharImpliesCanDecode(t, encodeChar(t, c))(t)
     //TODO
   }.ensuring(_ => decode(t, encodeChar(t, c)) == List(c))
 
