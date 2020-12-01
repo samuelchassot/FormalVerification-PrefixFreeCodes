@@ -68,16 +68,10 @@ object HuffmanCode {
   def isSameTreeTransitivity(t1: Tree, t2: Tree, t3: Tree): Unit = {
     require(isSameTree(t1, t2) && isSameTree(t2, t3))
 
-    t1 match {
-      case InnerNode(_, t11, t12) => t2 match {
-        case InnerNode(w, t21, t22) => t3 match {
-          case InnerNode(w, t31, t32) => {
-            isSameTreeTransitivity(t11, t21, t31)
-            isSameTreeTransitivity(t12, t22, t32)
-          }
-          case _ => ()
-        }
-        case _ => ()
+    (t1, t2, t3) match {
+      case (InnerNode(_, t11, t12), InnerNode(_, t21, t22), InnerNode(_, t31, t32)) => {
+        isSameTreeTransitivity(t11, t21, t31)
+        isSameTreeTransitivity(t12, t22, t32)
       }
       case _ => ()
     }
@@ -206,8 +200,8 @@ object HuffmanCode {
           case (Leaf(_, c1), t2@InnerNode(_, _, _)) if(c1 != c) => encodeCharIsDecodableAndCorrect(t2, c)
           case (t1@InnerNode(_, _, _), Leaf(_, c2)) if(c2 != c) => encodeCharIsDecodableAndCorrect(t1, c)
           case (t1@InnerNode(_, t11, t12), t2@InnerNode(_, t21, t22)) => if(canEncodeCharUniquely(t1, c)) encodeCharIsDecodableAndCorrect(t1, c) else encodeCharIsDecodableAndCorrect(t2, c)
-          case (_, Leaf(_, c2)) if(c2 == c) => ()
-          case (Leaf(_, c1), _) if(c1 == c) => ()         
+          case (_, Leaf(_, c2)) if(c2 == c) => () //TODO
+          case (Leaf(_, c1), _) if(c1 == c) => () //TODO
         }
       }
     }
@@ -342,22 +336,19 @@ object HuffmanCode {
 
     bs match {
       case Nil() => ()
-      case head :: tl => {
-           s match { case InnerNode(_, s1, s2) => {
-             if (!head) {
-               s1 match {
-                 case s1@InnerNode(_, _, _) => canDecodeImpliesCanDecodeTailAfterOneCharDecoded(s1, tl)(t)
-                 case Leaf(_, c) => ()
-               }
-             } else {
-               s2 match {
-                 case s2@InnerNode(_, _, _) => canDecodeImpliesCanDecodeTailAfterOneCharDecoded(s2, tl)(t)
-                 case Leaf(_, c) => ()
-               }
-             }
-           }}
-      }
-    }
+      case head :: tl => { s match { case InnerNode(_, s1, s2) => {
+        if (!head) {
+          s1 match {
+            case s1@InnerNode(_, _, _) => canDecodeImpliesCanDecodeTailAfterOneCharDecoded(s1, tl)(t)
+            case Leaf(_, c) => ()
+          }
+        } else {
+          s2 match {
+            case s2@InnerNode(_, _, _) => canDecodeImpliesCanDecodeTailAfterOneCharDecoded(s2, tl)(t)
+            case Leaf(_, c) => ()
+          }
+        }
+    }}}}
   }.ensuring(_ => decodeChar(s, bs) match { case(_, nBs) => nBs.isEmpty || canDecode(t, nBs)(t) })
 
   // decode functions-----------------------------------------------------------
@@ -367,17 +358,15 @@ object HuffmanCode {
     require(isInnerNode(t) && canDecodeAtLeastOneChar(t, bs))
     decreases(bs.length)
 
-    t match { case InnerNode(_, t1, t2) => { bs match {
-      case hd :: tl => {
-        if (!hd) t1 match {
-          case Leaf(_, c) => (c, tl)
-          case t1@InnerNode(_, _, _) => decodeChar(t1, tl)
-        } else t2 match {
-          case Leaf(_, c) => (c, tl)
-          case t2@InnerNode(_, _, _) => decodeChar(t2, tl)
-        }
+    (t, bs) match { case (InnerNode(_, t1, t2), hd :: tl) => {
+      if (!hd) t1 match {
+        case Leaf(_, c) => (c, tl)
+        case t1@InnerNode(_, _, _) => decodeChar(t1, tl)
+      } else t2 match {
+        case Leaf(_, c) => (c, tl)
+        case t2@InnerNode(_, _, _) => decodeChar(t2, tl)
       }
-    }}}
+    }}
   }
 
   // prove that the length of the remaining list of bits after decoding---------
@@ -386,15 +375,14 @@ object HuffmanCode {
     require(isInnerNode(t) && canDecodeAtLeastOneChar(t, bs))
     decreases(bs.length)
     
-    t match { case InnerNode(_, t1, t2) => {
-      bs match {
+    t match { case InnerNode(_, t1, t2) => { bs match {
         case head :: tl => {
           if (!head) {
             t1 match {
               case t1@InnerNode(_, t11, t12) => decodeCharLength(t1, tl)
               case Leaf(_, _) => ()
             }
-          } else{
+          } else {
             t2 match {
               case t2@InnerNode(_, t11, t12) => decodeCharLength(t2, tl)
               case Leaf(_, _) => ()
@@ -402,8 +390,7 @@ object HuffmanCode {
           }
         }
         case Nil() => ()
-      }
-    }}
+    }}}
   }.ensuring(_ => decodeChar(t, bs) match { case (_, nBs) => nBs.length < bs.length })
 
   // decode a list of bits with a given tree recursively------------------------
