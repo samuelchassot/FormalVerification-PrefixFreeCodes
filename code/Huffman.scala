@@ -210,11 +210,11 @@ object HuffmanCode {
     }}}
   }.ensuring(_ => canDecode(s, bs)(t))
 
-  def decodeEncodedCharImpliesCorrectDecode(t: Tree, c: Char): Unit = {
-    require(isInnerNode(t) && canEncodeCharUniquely(t, c) && decodeChar(t, encodeChar(t, c)) == (c, Nil()))
-    canDecodeExactlyOneCharImpliesCanDecode(t, encodeChar(t, c))(t)
+  def decodeEncodedCharImpliesCorrectDecode(t: Tree, bs: List[Boolean], c: Char): Unit = {
+    require(isInnerNode(t) && canEncodeCharUniquely(t, c) && canDecodeAtLeastOneChar(t, bs) && decodeChar(t, bs)._1 == c && decodeChar(t, bs)._2 == Nil())
+    canDecodeExactlyOneCharImpliesCanDecode(t, bs)(t)
     //TODO
-  }.ensuring(_ => decode(t, encodeChar(t, c)) == List(c))
+  }.ensuring(_ => decode(t, bs) == List(c))
 
   // prove that if we encode a character with a given tree then we can----------
   // decode it and get back the correct character-------------------------------
@@ -226,8 +226,8 @@ object HuffmanCode {
           case (Leaf(_, c1), t2@InnerNode(_, _, _)) if (c1 != c) => encodeCharIsDecodableAndCorrect(t2, c)
           case (t1@InnerNode(_, _, _), Leaf(_, c2)) if (c2 != c) => encodeCharIsDecodableAndCorrect(t1, c)
           case (t1@InnerNode(_, t11, t12), t2@InnerNode(_, t21, t22)) => if (canEncodeCharUniquely(t1, c)) encodeCharIsDecodableAndCorrect(t1, c) else encodeCharIsDecodableAndCorrect(t2, c)
-          case (Leaf(_, c1), _) if (c1 == c) => decodeEncodedCharImpliesCorrectDecode(t, c)
-          case (_, Leaf(_, c2)) if (c2 == c) => decodeEncodedCharImpliesCorrectDecode(t, c)
+          case (Leaf(_, c1), _) if (c1 == c) => decodeEncodedCharImpliesCorrectDecode(t, encodeChar(t, c), c)
+          case (_, Leaf(_, c2)) if (c2 == c) => decodeEncodedCharImpliesCorrectDecode(t, encodeChar(t, c), c)
         }
       }
     }
