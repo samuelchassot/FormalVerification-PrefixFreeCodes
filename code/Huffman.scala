@@ -190,6 +190,17 @@ object HuffmanCode {
   // in the tree----------------------------------------------------------------
   def canEncodeCharUniquely(t: Tree, c: Char): Boolean = (countChar(t, c) == 1)
 
+  def encodeCharIsDecodable(t: Tree, c: Char): Unit = {
+    require(isInnerNode(t) && canEncodeCharUniquely(t, c))
+    //TODO
+  }.ensuring(_ => canDecode(t, encodeChar(t, c))(t))
+
+  def decodeEncodedCharImpliesCorrectDecode(t: Tree, c: Char): Unit = {
+    require(isInnerNode(t) && canEncodeCharUniquely(t, c) && decodeChar(t, encodeChar(t, c)) == (c, Nil()))
+    encodeCharIsDecodable(t, c)
+    //TODO
+  }.ensuring(_ => decode(t, encodeChar(t, c)) == List(c))
+
   // prove that if we encode a character with a given tree then we can----------
   // decode it and get back the correct character-------------------------------
   def encodeCharIsDecodableAndCorrect(t: Tree, c: Char): Unit = {
@@ -197,11 +208,11 @@ object HuffmanCode {
     
     t match { case InnerNode(_, t1, t2) => {
         (t1, t2) match {
-          case (Leaf(_, c1), t2@InnerNode(_, _, _)) if(c1 != c) => encodeCharIsDecodableAndCorrect(t2, c)
-          case (t1@InnerNode(_, _, _), Leaf(_, c2)) if(c2 != c) => encodeCharIsDecodableAndCorrect(t1, c)
-          case (t1@InnerNode(_, t11, t12), t2@InnerNode(_, t21, t22)) => if(canEncodeCharUniquely(t1, c)) encodeCharIsDecodableAndCorrect(t1, c) else encodeCharIsDecodableAndCorrect(t2, c)
-          case (_, Leaf(_, c2)) if(c2 == c) => () //TODO
-          case (Leaf(_, c1), _) if(c1 == c) => () //TODO
+          case (Leaf(_, c1), t2@InnerNode(_, _, _)) if (c1 != c) => encodeCharIsDecodableAndCorrect(t2, c)
+          case (t1@InnerNode(_, _, _), Leaf(_, c2)) if (c2 != c) => encodeCharIsDecodableAndCorrect(t1, c)
+          case (t1@InnerNode(_, t11, t12), t2@InnerNode(_, t21, t22)) => if (canEncodeCharUniquely(t1, c)) encodeCharIsDecodableAndCorrect(t1, c) else encodeCharIsDecodableAndCorrect(t2, c)
+          case (Leaf(_, c1), _) if (c1 == c) => decodeEncodedCharImpliesCorrectDecode(t, c)
+          case (_, Leaf(_, c2)) if (c2 == c) => decodeEncodedCharImpliesCorrectDecode(t, c)
         }
       }
     }
