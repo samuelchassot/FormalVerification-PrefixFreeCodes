@@ -217,6 +217,7 @@ object HuffmanCode {
     canDecodeExactlyOneCharImpliesCanDecode(t, bs)(t)
 
     //TODO
+    //get inspiration from decodeHelper definition
   }.ensuring(_ => decodeHelper(t, bs, Nil()) == List(c))
 
   // prove that if we encode a character with a given tree then we can----------
