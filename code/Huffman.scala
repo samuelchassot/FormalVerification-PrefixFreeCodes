@@ -211,10 +211,13 @@ object HuffmanCode {
   }.ensuring(_ => canDecode(s, bs)(t))
 
   def decodeEncodedCharImpliesCorrectDecode(t: Tree, bs: List[Boolean], c: Char): Unit = {
-    require(isInnerNode(t) && canEncodeCharUniquely(t, c) && canDecodeAtLeastOneChar(t, bs) && decodeChar(t, bs)._1 == c && decodeChar(t, bs)._2 == Nil())
+    require(isInnerNode(t) && !bs.isEmpty && canEncodeCharUniquely(t, c) && canDecodeAtLeastOneChar(t, bs) && decodeChar(t, bs)._1 == c && decodeChar(t, bs)._2 == Nil())
+    decreases(bs.length)
+
     canDecodeExactlyOneCharImpliesCanDecode(t, bs)(t)
+
     //TODO
-  }.ensuring(_ => decode(t, bs) == List(c))
+  }.ensuring(_ => decodeHelper(t, bs, Nil()) == List(c))
 
   // prove that if we encode a character with a given tree then we can----------
   // decode it and get back the correct character-------------------------------
