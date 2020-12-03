@@ -190,18 +190,41 @@ object HuffmanCode {
   // in the tree----------------------------------------------------------------
   def canEncodeCharUniquely(t: Tree, c: Char): Boolean = (countChar(t, c) == 1)
 
+  // prove than if we can exactly decode exactly one character from ------------
+  // a binary string with a given tree then we can decode the binary string-----
+  def canDecodeExactlyOneCharImpliesCanDecode(s: Tree, bs: List[Boolean])(implicit t: Tree): Unit = {
+    require(isInnerNode(s) && isInnerNode(t) && canDecodeAtLeastOneChar(s, bs) && decodeChar(s, bs)._2 ==  Nil())
+    decreases(bs.length)
+
+    s match { case InnerNode(_, t1, t2) => { bs match {
+      case hd :: tl => {
+        if (!hd) t1 match {
+          case Leaf(_, _) => ()
+          case t1@InnerNode(_, _, _) => canDecodeExactlyOneCharImpliesCanDecode(t1, tl)
+        } else t2 match {
+          case Leaf(_, _) => ()
+          case t2@InnerNode(_, _, _) => canDecodeExactlyOneCharImpliesCanDecode(t2, tl)
+        }
+      }
+      case Nil() => ()
+    }}}
+  }.ensuring(_ => canDecode(s, bs)(t))
+
   // prove that if we encode a character with a given tree then we can----------
   // decode it and get back the correct character-------------------------------
   def encodeCharIsDecodableAndCorrect(t: Tree, c: Char): Unit = {
     require(isInnerNode(t) && canEncodeCharUniquely(t, c))
+    decreases(encodeChar(t, c).length)
+
+    canDecodeExactlyOneCharImpliesCanDecode(t, encodeChar(t, c))(t)
     
     t match { case InnerNode(_, t1, t2) => {
         (t1, t2) match {
-          case (Leaf(_, c1), t2@InnerNode(_, _, _)) if(c1 != c) => encodeCharIsDecodableAndCorrect(t2, c)
-          case (t1@InnerNode(_, _, _), Leaf(_, c2)) if(c2 != c) => encodeCharIsDecodableAndCorrect(t1, c)
-          case (t1@InnerNode(_, t11, t12), t2@InnerNode(_, t21, t22)) => if(canEncodeCharUniquely(t1, c)) encodeCharIsDecodableAndCorrect(t1, c) else encodeCharIsDecodableAndCorrect(t2, c)
-          case (_, Leaf(_, c2)) if(c2 == c) => () //TODO
-          case (Leaf(_, c1), _) if(c1 == c) => () //TODO
+          case (Leaf(_, c1), t2@InnerNode(_, _, _)) if (c1 != c) => encodeCharIsDecodableAndCorrect(t2, c)
+          case (t1@InnerNode(_, _, _), Leaf(_, c2)) if (c2 != c) => encodeCharIsDecodableAndCorrect(t1, c)
+          case (t1@InnerNode(_, t11, t12), t2@InnerNode(_, t21, t22)) => if (canEncodeCharUniquely(t1, c)) encodeCharIsDecodableAndCorrect(t1, c) else encodeCharIsDecodableAndCorrect(t2, c)
+          case (Leaf(_, c1), _) if (c1 == c) => ()
+          case (_, Leaf(_, c2)) if (c2 == c) => ()
         }
       }
     }
@@ -238,7 +261,7 @@ object HuffmanCode {
         case t2@InnerNode(_, _, _) => List(true) ++ encodeChar(t2, c)
       }
     }}
-  }.ensuring(bs => canDecodeAtLeastOneChar(t, bs) && decodeChar(t, bs) == (c, Nil[Boolean]()))
+  }.ensuring(bs => canDecodeAtLeastOneChar(t, bs) && decodeChar(t, bs) == (List(c), Nil[Boolean]()))
 
   // encode a list of characters as list of bits with a given tree--------------
   def encode(t: Tree, s: List[Char]): List[Boolean] = {
@@ -354,20 +377,20 @@ object HuffmanCode {
   // decode functions-----------------------------------------------------------
 
   // decode a single character from a list of bits with a given tree------------
-  def decodeChar(t: Tree, bs: List[Boolean]): (Char, List[Boolean]) = {
+  def decodeChar(t: Tree, bs: List[Boolean]): (List[Char], List[Boolean]) = {
     require(isInnerNode(t) && canDecodeAtLeastOneChar(t, bs))
     decreases(bs.length)
 
     (t, bs) match { case (InnerNode(_, t1, t2), hd :: tl) => {
       if (!hd) t1 match {
-        case Leaf(_, c) => (c, tl)
+        case Leaf(_, c) => (List(c), tl)
         case t1@InnerNode(_, _, _) => decodeChar(t1, tl)
       } else t2 match {
-        case Leaf(_, c) => (c, tl)
+        case Leaf(_, c) => (List(c), tl)
         case t2@InnerNode(_, _, _) => decodeChar(t2, tl)
       }
     }}
-  }
+  }.ensuring(r => r._1.length == 1)
 
   // prove that the length of the remaining list of bits after decoding---------
   // the first decodable character is smaller than the original list of bits----
@@ -402,7 +425,7 @@ object HuffmanCode {
     canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t, bs)(t)
     decodeCharLength(t, bs)
 
-    decodeChar(t, bs) match { case(c, nBs) => if (nBs.isEmpty) acc else decodeHelper(t, nBs, acc ++ List(c)) }
+    decodeChar(t, bs) match { case(c, nBs) => if (nBs.isEmpty) acc ++ c else decodeHelper(t, nBs, acc ++ c) }
   }
 
   // decode a list of bits as a list of characters with a given tree------------
