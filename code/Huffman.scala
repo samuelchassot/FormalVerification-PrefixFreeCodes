@@ -210,6 +210,13 @@ object HuffmanCode {
     }}}
   }.ensuring(_ => canDecode(s, bs)(t))
 
+  def canDecodeExactlyOneCharAndRemainingImpliesCanDecode(t: Tree, bs: List[Boolean]): Unit = {
+    require(isInnerNode(t) && canDecodeAtLeastOneChar(t, bs) && {
+      val (_, nBs) = decodeChar(t, bs)
+      !nBs.isEmpty && canDecode(t, nBs)(t)
+    })
+  }.ensuring(_ => canDecode(t, bs)(t))
+
   // prove that if we encode a character with a given tree then we can----------
   // decode it and get back the correct character-------------------------------
   def encodeCharIsDecodableAndCorrect(t: Tree, c: Char): Unit = {
@@ -232,21 +239,6 @@ object HuffmanCode {
     val bs = encodeChar(t, c)
     canDecode(t, bs)(t) && decode(t, bs) == List(c)
   })
-
-  // prove that we can still decode the concatenation---------------------------
-  // of two character-decodable string and it decodes to their concatenation----
-  def concatDecodableCharactersEncodingsIsStillDecodableAndCorrect(t: Tree, c1: List[Char], c2: List[Char], bs1: List[Boolean], bs2: List[Boolean]): Unit = {
-    require(isInnerNode(t) && canDecodeAtLeastOneChar(t, bs1) && decodeChar(t, bs1) == (c1, Nil[Boolean]()) && canDecodeAtLeastOneChar(t, bs2) && decodeChar(t, bs2) == (c2, Nil[Boolean]()))
-    //TODO
-  }.ensuring(_ => canDecode(t, bs1 ++ bs2)(t) && decode(t, bs1 ++ bs2) == c1 ++ c2)
-
-  // prove that if we concatenate a decodable character and a decodable string--
-  // then the result is still decodable and decoded to the concatenation of the-
-  // two decodings--------------------------------------------------------------
-  def concatDecodableEncodingsIsStillDecodableAndCorrect(t: Tree, hd: Char, tl: List[Char], hdBs: List[Boolean], tlBs: List[Boolean]): Unit = {
-    require(isInnerNode(t) && canDecodeAtLeastOneChar(t, hdBs) && decodeChar(t, hdBs) == (List(hd), Nil[Boolean]()) && canDecode(t, tlBs)(t) && decode(t, tlBs) == tl)
-    //TODO
-  }.ensuring(_ => canDecode(t, hdBs ++ tlBs)(t) && decode(t, hdBs ++ tlBs) == hd :: tl)
 
   // encode functions-----------------------------------------------------------
 
@@ -311,18 +303,12 @@ object HuffmanCode {
     require(isInnerNode(s) && isInnerNode(t))
     decreases(bs.length)
 
-    s match { case InnerNode(_, t1, t2) => { bs match {
-      case hd :: tl => {
-        if (!hd) t1 match {
-          case Leaf(_, c) => if (tl.isEmpty) true else canDecode(t, tl)
-          case t1@InnerNode(_, _, _) => canDecode(t1, tl)
-        } else t2 match {
-          case Leaf(_, c) => if (tl.isEmpty) true else canDecode(t, tl)
-          case t2@InnerNode(_, _, _) => canDecode(t2, tl)
-        }
-      }
-      case Nil() => false
-    }}}
+
+    canDecodeAtLeastOneChar(s, bs) && {
+      decodeCharLength(s, bs)
+      val (_, nBs) = decodeChar(s, bs)
+      nBs.isEmpty || canDecode(t, nBs)
+    }
   }
 
   // prove that canDecode implies canDecodeAtLeastOneChar-----------------------
