@@ -233,11 +233,19 @@ object HuffmanCode {
     canDecode(t, bs)(t) && decode(t, bs) == List(c)
   })
 
+  // prove that we can still decode the concatenation---------------------------
+  // of two character-decodable string and it decodes to their concatenation----
+  def concatDecodableCharactersEncodingsIsStillDecodableAndCorrect(t: Tree, c1: List[Char], c2: List[Char], bs1: List[Boolean], bs2: List[Boolean]): Unit = {
+    require(isInnerNode(t) && canDecodeAtLeastOneChar(t, bs1) && decodeChar(t, bs1) == (c1, Nil[Boolean]()) && canDecodeAtLeastOneChar(t, bs2) && decodeChar(t, bs2) == (c2, Nil[Boolean]()))
+    //TODO
+  }.ensuring(_ => canDecode(t, bs1 ++ bs2)(t) && decode(t, bs1 ++ bs2) == c1 ++ c2)
+
   // prove that if we concatenate a decodable character and a decodable string--
   // then the result is still decodable and decoded to the concatenation of the-
   // two decodings--------------------------------------------------------------
   def concatDecodableEncodingsIsStillDecodableAndCorrect(t: Tree, hd: Char, tl: List[Char], hdBs: List[Boolean], tlBs: List[Boolean]): Unit = {
     require(isInnerNode(t) && canDecodeAtLeastOneChar(t, hdBs) && decodeChar(t, hdBs) == (List(hd), Nil[Boolean]()) && canDecode(t, tlBs)(t) && decode(t, tlBs) == tl)
+    //TODO
   }.ensuring(_ => canDecode(t, hdBs ++ tlBs)(t) && decode(t, hdBs ++ tlBs) == hd :: tl)
 
   // encode functions-----------------------------------------------------------
