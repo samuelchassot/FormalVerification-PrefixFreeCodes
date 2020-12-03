@@ -233,20 +233,12 @@ object HuffmanCode {
     canDecode(t, bs)(t) && decode(t, bs) == List(c)
   })
 
-  // prove that we can still decode the concatenation---------------------------
-  // of two character-decodable string and it decodes to their concatenation----
-  def concatDecodableCharactersEncodingsIsStillDecodableAndCorrect(t: Tree, c1: List[Char], c2: List[Char], bs1: List[Boolean], bs2: List[Boolean]): Unit = {
-    require(isInnerNode(t) && canDecodeAtLeastOneChar(t, bs1) && decodeChar(t, bs1) == (c1, Nil[Boolean]()) && canDecodeAtLeastOneChar(t, bs2) && decodeChar(t, bs2) == (c2, Nil[Boolean]()))
+  // prove that the concatenation of two decodable strings are still decodable--
+  // and that decodes to the concatenation--------------------------------------
+  def concatDecodableEncodingsIsStillDecodableAndCorrect(t: Tree, s1: List[Char], s2: List[Char], bs1: List[Boolean], bs2: List[Boolean]): Unit = {
+    require(isInnerNode(t) && s1.length >= 1 && canDecode(t, bs1)(t) && decode(t, bs1) == s1 && s2.length >= 1 && canDecode(t, bs2)(t) && decode(t, bs2) == s2)
     //TODO
-  }.ensuring(_ => canDecode(t, bs1 ++ bs2)(t) && decode(t, bs1 ++ bs2) == c1 ++ c2)
-
-  // prove that if we concatenate a decodable character and a decodable string--
-  // then the result is still decodable and decoded to the concatenation of the-
-  // two decodings--------------------------------------------------------------
-  def concatDecodableEncodingsIsStillDecodableAndCorrect(t: Tree, hd: Char, tl: List[Char], hdBs: List[Boolean], tlBs: List[Boolean]): Unit = {
-    require(isInnerNode(t) && canDecodeAtLeastOneChar(t, hdBs) && decodeChar(t, hdBs) == (List(hd), Nil[Boolean]()) && canDecode(t, tlBs)(t) && decode(t, tlBs) == tl)
-    //TODO
-  }.ensuring(_ => canDecode(t, hdBs ++ tlBs)(t) && decode(t, hdBs ++ tlBs) == hd :: tl)
+  }.ensuring(_ => canDecode(t, bs1 ++ bs2)(t) && decode(t, bs1 ++ bs2) == s1 ++ s2)
 
   // encode functions-----------------------------------------------------------
 
@@ -279,7 +271,8 @@ object HuffmanCode {
       else {
         val hdBs = encodeChar(t, hd)
         val tlBs = encode(t, tl)
-        concatDecodableEncodingsIsStillDecodableAndCorrect(t, hd, tl, hdBs, tlBs)
+        canDecodeExactlyOneCharImpliesCanDecode(t, hdBs)(t)
+        concatDecodableEncodingsIsStillDecodableAndCorrect(t, List(hd), tl, hdBs, tlBs)
         hdBs ++ tlBs
       }
     }}
