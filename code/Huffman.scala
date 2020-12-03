@@ -271,7 +271,6 @@ object HuffmanCode {
       else {
         val hdBs = encodeChar(t, hd)
         val tlBs = encode(t, tl)
-        concatDecodableEncodingsIsStillDecodableAndCorrect(t, hd, tl, hdBs, tlBs)
         hdBs ++ tlBs
       }
     }}
@@ -349,8 +348,8 @@ object HuffmanCode {
 
     bs match {
       case Nil() => ()
-      case head :: tl => { s match { case InnerNode(_, s1, s2) => {
-        if (!head) {
+      case hd :: tl => { s match { case InnerNode(_, s1, s2) => {
+        if (!hd) {
           s1 match {
             case s1@InnerNode(_, _, _) => canDecodeImpliesCanDecodeTailAfterOneCharDecoded(s1, tl)(t)
             case Leaf(_, c) => ()
@@ -389,8 +388,8 @@ object HuffmanCode {
     decreases(bs.length)
     
     t match { case InnerNode(_, t1, t2) => { bs match {
-        case head :: tl => {
-          if (!head) {
+        case hd :: tl => {
+          if (!hd) {
             t1 match {
               case t1@InnerNode(_, t11, t12) => decodeCharLength(t1, tl)
               case Leaf(_, _) => ()
