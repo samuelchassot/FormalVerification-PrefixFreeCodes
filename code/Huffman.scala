@@ -210,12 +210,23 @@ object HuffmanCode {
     }}}
   }.ensuring(_ => canDecode(s, bs)(t))
 
-  def canDecodeExactlyOneCharAndRemainingImpliesCanDecode(t: Tree, bs: List[Boolean]): Unit = {
-    require(isInnerNode(t) && canDecodeAtLeastOneChar(t, bs) && {
-      val (_, nBs) = decodeChar(t, bs)
-      !nBs.isEmpty && canDecode(t, nBs)(t)
-    })
-  }.ensuring(_ => canDecode(t, bs)(t))
+  def canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcatenation(s: Tree, bs1: List[Boolean], bs2: List[Boolean])(implicit t: Tree): Unit = {
+    require(isInnerNode(s) && isInnerNode(t) && (bs1.isEmpty && t == s || canDecodeAtLeastOneChar(s, bs1) && decodeChar(s, bs1)._2 == Nil[Boolean]()) && canDecode(t, bs2)(t))
+    decreases(bs1.length)
+
+    s match { case InnerNode(_, t1, t2) => bs1 match {
+      case hd :: tl => {
+        if (!hd) t1 match {
+          case Leaf(_, c) => canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcatenation(t, Nil(), bs2)
+          case t1@InnerNode(_, _, _) => canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcatenation(t1, tl, bs2)
+        } else t2 match {
+          case Leaf(_, c) => canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcatenation(t, Nil(), bs2)
+          case t2@InnerNode(_, _, _) => canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcatenation(t2, tl, bs2)
+        }
+      }
+      case Nil() => ()
+    }}
+  }.ensuring(_ => canDecode(s, bs1 ++ bs2)(t))
 
   // prove that if we encode a character with a given tree then we can----------
   // decode it and get back the correct character-------------------------------
@@ -271,6 +282,8 @@ object HuffmanCode {
       else {
         val hdBs = encodeChar(t, hd)
         val tlBs = encode(t, tl)
+        canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcatenation(t, hdBs, tlBs)(t)
+        //TODO prove the correctness of the decoding
         hdBs ++ tlBs
       }
     }}
