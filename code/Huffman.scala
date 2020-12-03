@@ -233,17 +233,12 @@ object HuffmanCode {
     canDecode(t, bs)(t) && decode(t, bs) == List(c)
   })
 
-  // prove that if we encode a character with a given tree then we can still----
-  // decode its encoding concatenated to some other list of booleans------------
-  // and it is decoded to the concatenation of the inital character and---------
-  // and the decoding of the list of booleans-----------------------------------
-  def concatDecodableEncodingsIsStillDecodableAndCorrect(t: Tree, hd: Char, tl: List[Char], tlBs: List[Boolean]): Unit = {
-    require(isInnerNode(t) && canEncodeCharUniquely(t, hd) && canDecode(t, tlBs)(t) && decode(t, tlBs) == tl)
-    //TODO
-  }.ensuring(_ => {
-    val hdBs = encodeChar(t, hd)
-    canDecode(t, hdBs ++ tlBs)(t) && decode(t, hdBs ++ tlBs) == hd :: tl
-  })
+  // prove that if we concatenate a decodable character and a decodable string--
+  // then the result is still decodable and decoded to the concatenation of the-
+  // two decodings--------------------------------------------------------------
+  def concatDecodableEncodingsIsStillDecodableAndCorrect(t: Tree, hd: Char, tl: List[Char], hdBs: List[Boolean], tlBs: List[Boolean]): Unit = {
+    require(isInnerNode(t) && canDecodeAtLeastOneChar(t, hdBs) && decodeChar(t, hdBs) == (List(hd), Nil[Boolean]()) && canDecode(t, tlBs)(t) && decode(t, tlBs) == tl)
+  }.ensuring(_ => canDecode(t, hdBs ++ tlBs)(t) && decode(t, hdBs ++ tlBs) == hd :: tl)
 
   // encode functions-----------------------------------------------------------
 
@@ -274,9 +269,10 @@ object HuffmanCode {
         encodeChar(t, hd)
       }
       else {
+        val hdBs = encodeChar(t, hd)
         val tlBs = encode(t, tl)
-        concatDecodableEncodingsIsStillDecodableAndCorrect(t, hd, tl, tlBs)
-        encodeChar(t, hd) ++ tlBs
+        concatDecodableEncodingsIsStillDecodableAndCorrect(t, hd, tl, hdBs, tlBs)
+        hdBs ++ tlBs
       }
     }}
   }.ensuring(bs => canDecode(t, bs)(t) && decode(t, bs) == s)
