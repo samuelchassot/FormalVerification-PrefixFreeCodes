@@ -233,6 +233,7 @@ object HuffmanCode {
     canDecode(t, bs)(t) && decode(t, bs) == List(c)
   })
 
+  //TODO comment this
   def canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcatenation(s: Tree, bs1: List[Boolean], bs2: List[Boolean])(implicit t: Tree): Unit = {
     require(isInnerNode(s) && isInnerNode(t) && (bs1.isEmpty && t == s || canDecodeAtLeastOneChar(s, bs1) && decodeChar(s, bs1)._2 == Nil[Boolean]()) && canDecode(t, bs2)(t))
     decreases(bs1.length)
@@ -251,13 +252,21 @@ object HuffmanCode {
     }}
   }.ensuring(_ => canDecode(s, bs1 ++ bs2)(t))
 
+  //TODO comment this and rename
   def temp(t: Tree, bs1: List[Boolean], bs2: List[Boolean], s1: List[Char], s2: List[Char], acc: List[Char]): Unit = {
-    require(isInnerNode(t) && (bs1.isEmpty || canDecodeAtLeastOneChar(t, bs1) && decodeChar(t, bs1) == (s1, Nil[Boolean]())) && canDecode(t, bs2)(t) && decodeHelper(t, bs2, acc) == acc ++ s2 && canDecode(t, bs1 ++ bs2)(t))
+    require(isInnerNode(t) && (bs1.isEmpty && s1.isEmpty || canDecodeAtLeastOneChar(t, bs1) && decodeChar(t, bs1) == (s1, Nil[Boolean]())) && canDecode(t, bs2)(t) && decodeHelper(t, bs2, acc) == acc ++ s2 && canDecode(t, bs1 ++ bs2)(t))
     decreases(bs1.length)
 
-    //TODO
+    if (!(bs1.isEmpty && s1.isEmpty)) {
+      //TODO make a lemma to prove the following assert, to be used for ensuring too
+      assert(decodeHelper(t, bs2, s1) == s1 ++ s2)
+      temp(t, Nil(), bs2, Nil(), s2, s1)
+      assert(decodeHelper(t, Nil() ++ bs2, s1) == s1 ++ s2)
+      assert(decodeHelper(t, Nil() ++ bs2, s1) == s1 ++ Nil() ++ s2)
+    }
+
   }.ensuring(_ => {
-    decodeHelper(t, bs1 ++ bs2, Nil()) == s1 ++ s2
+    decodeHelper(t, bs1 ++ bs2, acc) == acc ++ s1 ++ s2
   })
 
   // encode functions-----------------------------------------------------------
