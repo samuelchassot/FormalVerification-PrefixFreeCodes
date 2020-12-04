@@ -269,12 +269,13 @@ object HuffmanCode {
     }}
   }.ensuring(bs => canDecodeAtLeastOneChar(t, bs) && decodeChar(t, bs) == (List(c), Nil[Boolean]()))
 
-  def canDecodeConcatenationImpliesCorrectDecoding(t: Tree, hd: Char, tl: List[Char], hdBs: List[Boolean], tlBs: List[Boolean]): Unit = {
-    require(isInnerNode(t) && canDecodeAtLeastOneChar(t, hdBs) && decodeChar(t, hdBs) == (List(hd), Nil[Boolean]()) && canDecode(t, tlBs)(t) && decode(t, tlBs) == tl)
+  def canDecodeConcatenationImpliesCorrectDecoding(t: Tree, hd: List[Char], tl: List[Char], hdBs: List[Boolean], tlBs: List[Boolean]): Unit = {
+    require(isInnerNode(t) && canDecodeAtLeastOneChar(t, hdBs) && decodeChar(t, hdBs) == (hd, Nil[Boolean]()) && canDecode(t, tlBs)(t) && decode(t, tlBs) == tl)
+    decreases(hdBs.length)
     //TODO
   }.ensuring(_ => {
-        canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcatenation(t, hdBs, tlBs)(t)
-        canDecode(t, hdBs ++ tlBs)(t) == hd :: tl
+    canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcatenation(t, hdBs, tlBs)(t)
+    decode(t, hdBs ++ tlBs) == hd ++ tl
   })
 
   // encode a list of characters as list of bits with a given tree--------------
@@ -290,7 +291,7 @@ object HuffmanCode {
       else {
         val hdBs = encodeChar(t, hd)
         val tlBs = encode(t, tl)
-        canDecodeConcatenationImpliesCorrectDecoding(t, hd, tl, hdBs, tlBs)
+        canDecodeConcatenationImpliesCorrectDecoding(t, List(hd), tl, hdBs, tlBs)
         hdBs ++ tlBs
       }
     }}
