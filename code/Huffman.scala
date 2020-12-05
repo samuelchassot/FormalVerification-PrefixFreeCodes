@@ -438,18 +438,6 @@ object HuffmanCode {
     }}}
   }.ensuring(_ => decodeChar(t, bs) match { case (_, nBs) => nBs.length < bs.length })
 
-  // decode a list of bits with a given tree recursively------------------------
-  def decodeHelper(t: Tree, bs: List[Boolean], acc: List[Char]): List[Char] = {
-    require(isInnerNode(t) && !bs.isEmpty && canDecode(t, bs)(t))
-    decreases(bs.length)
-
-    isSubTreeReflexivity(t)
-    canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t, bs)(t)
-    decodeCharLength(t, bs)
-
-    decodeChar(t, bs) match { case(c, nBs) => if (nBs.isEmpty) acc ++ c else decodeHelper(t, nBs, acc ++ c) }
-  }
-
   // decode a list of bits as a list of characters with a given tree------------
   def decode(t: Tree, bs: List[Boolean]): List[Char] = {
     require(isInnerNode(t) && canDecode(t, bs)(t))
@@ -460,7 +448,10 @@ object HuffmanCode {
       case _ => {
         isSubTreeReflexivity(t)
         canDecodeImpliesCanDecodeAtLeastOneChar(t, bs)(t)
-        decodeHelper(t, bs, Nil())
+        canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t, bs)(t)
+
+        val (c, nBs) = decodeChar(t, bs)
+        if (nBs.isEmpty) c else c ++ decode(t, nBs)
       }
     }
   }
@@ -491,4 +482,17 @@ object HuffmanCode {
     val d = decode(t, e)
     s == d
   })
+
+  @extern
+  def main(args: Array[String]) = {
+    val s = List('a', 'a', 'b', 'c')
+
+    val t = generateHuffmanCodeTree(s)
+    val e = encode(t, s)
+    val d = decode(t, e)
+
+    println(t)
+    println(e)
+    println(d)
+  }
 }
