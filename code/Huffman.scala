@@ -15,6 +15,7 @@ object HuffmanCode {
   // functional implemention of Huffman's Algorithm-----------------------------
   
   // datatypes------------------------------------------------------------------
+
   sealed abstract class Tree
   case class InnerNode(w: BigInt, t1: Tree, t2: Tree) extends Tree
   case class Leaf(w: BigInt, c: Char) extends Tree
@@ -190,26 +191,6 @@ object HuffmanCode {
   // in the tree----------------------------------------------------------------
   def canEncodeCharUniquely(t: Tree, c: Char): Boolean = (countChar(t, c) == 1)
 
-  // prove than if we can exactly decode exactly one character from ------------
-  // a binary string with a given tree then we can decode the binary string-----
-  def canDecodeExactlyOneCharImpliesCanDecode(s: Tree, bs: List[Boolean])(implicit t: Tree): Unit = {
-    require(isInnerNode(s) && isInnerNode(t) && canDecodeAtLeastOneChar(s, bs) && decodeChar(s, bs)._2 ==  Nil())
-    decreases(bs.length)
-
-    s match { case InnerNode(_, t1, t2) => { bs match {
-      case hd :: tl => {
-        if (!hd) t1 match {
-          case Leaf(_, _) => ()
-          case t1@InnerNode(_, _, _) => canDecodeExactlyOneCharImpliesCanDecode(t1, tl)
-        } else t2 match {
-          case Leaf(_, _) => ()
-          case t2@InnerNode(_, _, _) => canDecodeExactlyOneCharImpliesCanDecode(t2, tl)
-        }
-      }
-      case Nil() => ()
-    }}}
-  }.ensuring(_ => canDecode(s, bs)(t))
-
   // prove that if we encode a character with a given tree then we can----------
   // decode it and get back the correct character-------------------------------
   def encodeCharIsDecodableAndCorrect(t: Tree, c: Char): Unit = {
@@ -228,38 +209,7 @@ object HuffmanCode {
         }
       }
     }
-  }.ensuring(_ => {
-    val bs = encodeChar(t, c)
-    canDecode(t, bs)(t) && decode(t, bs) == List(c)
-  })
-
-  // prove that if we can decode exactly one char and can decode an other-------
-  // string then we can decode their concatenation------------------------------
-  def canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcatenation(s: Tree, bs1: List[Boolean], bs2: List[Boolean])(implicit t: Tree): Unit = {
-    require(isInnerNode(s) && isInnerNode(t) && (bs1.isEmpty && t == s || canDecodeAtLeastOneChar(s, bs1) && decodeChar(s, bs1)._2 == Nil[Boolean]()) && canDecode(t, bs2)(t))
-    decreases(bs1.length)
-
-    s match { case InnerNode(_, t1, t2) => bs1 match {
-      case hd :: tl => {
-        if (!hd) t1 match {
-          case Leaf(_, c) => canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcatenation(t, Nil(), bs2)
-          case t1@InnerNode(_, _, _) => canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcatenation(t1, tl, bs2)
-        } else t2 match {
-          case Leaf(_, c) => canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcatenation(t, Nil(), bs2)
-          case t2@InnerNode(_, _, _) => canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcatenation(t2, tl, bs2)
-        }
-      }
-      case Nil() => ()
-    }}
-  }.ensuring(_ => canDecode(s, bs1 ++ bs2)(t))
-
-  // prove that we can stil decode the concatenation of two binary strings------
-  // and the result is correct--------------------------------------------------
-  def decodableConcatenationIsDecodableAndCorect(t: Tree, bs1: List[Boolean], bs2: List[Boolean], s1: List[Char], s2: List[Char]): Unit = {
-    require(isInnerNode(t) && canDecodeAtLeastOneChar(t, bs1 ++ bs2) && decodeChar(t, bs1 ++ bs2) == (s1, bs2) && canDecode(t, bs2)(t) && decode(t, bs2) == s2)
-    // this is strange as it is automatically proven but removing this lemma----
-    // prevents the proof from being validated----------------------------------
-  }.ensuring(_ => decode(t, bs1 ++ bs2) == s1 ++ s2)
+  }.ensuring(_ => canDecode(t, encodeChar(t, c))(t) && decode(t, encodeChar(t, c)) == List(c))
 
   // encode functions-----------------------------------------------------------
 
@@ -271,8 +221,7 @@ object HuffmanCode {
       if (canEncodeCharUniquely(t1, c)) t1 match {
         case Leaf(_, _) => List(false)
         case t1@InnerNode(_, _, _) => List(false) ++ encodeChar(t1, c)
-      }
-      else t2 match {
+      } else t2 match {
         case Leaf(_, _) => List(true)
         case t2@InnerNode(_, _, _) => List(true) ++ encodeChar(t2, c)
       }
@@ -310,8 +259,7 @@ object HuffmanCode {
       if (tl.isEmpty) {
         encodeCharIsDecodableAndCorrect(t, hd)
         encodeChar(t, hd)
-      }
-      else {
+      } else {
         val hdBs = encodeChar(t, hd)
         val tlBs = encode(t, tl)
 
@@ -320,12 +268,37 @@ object HuffmanCode {
         canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t, hdBs ++ tlBs)(t)
         canDecodeExactlyImpliesCanDecodeOneCharPlusSomething(t, hd, hdBs, tlBs)
         decodableConcatenationIsDecodableAndCorect(t, hdBs, tlBs, List(hd), tl)
+
         hdBs ++ tlBs
       }
     }}
   }.ensuring(bs => canDecode(t, bs)(t) && decode(t, bs) == s)
 
   // decode lemmas--------------------------------------------------------------
+
+  // prove that the length of the remaining list of bits after decoding---------
+  // the first decodable character is smaller than the original list of bits----
+  def decodeCharLength(t: Tree, bs: List[Boolean]): Unit = {
+    require(isInnerNode(t) && canDecodeAtLeastOneChar(t, bs))
+    decreases(bs.length)
+    
+    t match { case InnerNode(_, t1, t2) => { bs match {
+        case hd :: tl => {
+          if (!hd) {
+            t1 match {
+              case t1@InnerNode(_, t11, t12) => decodeCharLength(t1, tl)
+              case Leaf(_, _) => ()
+            }
+          } else {
+            t2 match {
+              case t2@InnerNode(_, t11, t12) => decodeCharLength(t2, tl)
+              case Leaf(_, _) => ()
+            }
+          }
+        }
+        case Nil() => ()
+    }}}
+  }.ensuring(_ => decodeChar(t, bs) match { case (_, nBs) => nBs.length < bs.length })
   
   // check if at least one character can be decoded-----------------------------
   def canDecodeAtLeastOneChar(t: Tree, bs: List[Boolean]): Boolean = {
@@ -412,6 +385,54 @@ object HuffmanCode {
     }}}}
   }.ensuring(_ => decodeChar(s, bs) match { case(_, nBs) => nBs.isEmpty || canDecode(t, nBs)(t) })
 
+  // prove than if we can exactly decode exactly one character from ------------
+  // a binary string with a given tree then we can decode the binary string-----
+  def canDecodeExactlyOneCharImpliesCanDecode(s: Tree, bs: List[Boolean])(implicit t: Tree): Unit = {
+    require(isInnerNode(s) && isInnerNode(t) && canDecodeAtLeastOneChar(s, bs) && decodeChar(s, bs)._2 ==  Nil())
+    decreases(bs.length)
+
+    s match { case InnerNode(_, t1, t2) => { bs match {
+      case hd :: tl => {
+        if (!hd) t1 match {
+          case Leaf(_, _) => ()
+          case t1@InnerNode(_, _, _) => canDecodeExactlyOneCharImpliesCanDecode(t1, tl)
+        } else t2 match {
+          case Leaf(_, _) => ()
+          case t2@InnerNode(_, _, _) => canDecodeExactlyOneCharImpliesCanDecode(t2, tl)
+        }
+      }
+      case Nil() => ()
+    }}}
+  }.ensuring(_ => canDecode(s, bs)(t))
+
+  // prove that if we can decode exactly one char and can decode an other-------
+  // string then we can decode their concatenation------------------------------
+  def canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcatenation(s: Tree, bs1: List[Boolean], bs2: List[Boolean])(implicit t: Tree): Unit = {
+    require(isInnerNode(s) && isInnerNode(t) && (bs1.isEmpty && t == s || canDecodeAtLeastOneChar(s, bs1) && decodeChar(s, bs1)._2 == Nil[Boolean]()) && canDecode(t, bs2)(t))
+    decreases(bs1.length)
+
+    s match { case InnerNode(_, t1, t2) => bs1 match {
+      case hd :: tl => {
+        if (!hd) t1 match {
+          case Leaf(_, c) => canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcatenation(t, Nil(), bs2)
+          case t1@InnerNode(_, _, _) => canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcatenation(t1, tl, bs2)
+        } else t2 match {
+          case Leaf(_, c) => canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcatenation(t, Nil(), bs2)
+          case t2@InnerNode(_, _, _) => canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcatenation(t2, tl, bs2)
+        }
+      }
+      case Nil() => ()
+    }}
+  }.ensuring(_ => canDecode(s, bs1 ++ bs2)(t))
+
+  // prove that we can stil decode the concatenation of two binary strings------
+  // and the result is correct--------------------------------------------------
+  def decodableConcatenationIsDecodableAndCorect(t: Tree, bs1: List[Boolean], bs2: List[Boolean], s1: List[Char], s2: List[Char]): Unit = {
+    require(isInnerNode(t) && canDecodeAtLeastOneChar(t, bs1 ++ bs2) && decodeChar(t, bs1 ++ bs2) == (s1, bs2) && canDecode(t, bs2)(t) && decode(t, bs2) == s2)
+    // this is strange as it is automatically proven but removing this lemma----
+    // prevents the proof from being validated----------------------------------
+  }.ensuring(_ => decode(t, bs1 ++ bs2) == s1 ++ s2)
+
   // decode functions-----------------------------------------------------------
 
   // decode a single character from a list of bits with a given tree------------
@@ -429,30 +450,6 @@ object HuffmanCode {
       }
     }}
   }.ensuring(r => r._1.length == 1)
-
-  // prove that the length of the remaining list of bits after decoding---------
-  // the first decodable character is smaller than the original list of bits----
-  def decodeCharLength(t: Tree, bs: List[Boolean]): Unit = {
-    require(isInnerNode(t) && canDecodeAtLeastOneChar(t, bs))
-    decreases(bs.length)
-    
-    t match { case InnerNode(_, t1, t2) => { bs match {
-        case hd :: tl => {
-          if (!hd) {
-            t1 match {
-              case t1@InnerNode(_, t11, t12) => decodeCharLength(t1, tl)
-              case Leaf(_, _) => ()
-            }
-          } else {
-            t2 match {
-              case t2@InnerNode(_, t11, t12) => decodeCharLength(t2, tl)
-              case Leaf(_, _) => ()
-            }
-          }
-        }
-        case Nil() => ()
-    }}}
-  }.ensuring(_ => decodeChar(t, bs) match { case (_, nBs) => nBs.length < bs.length })
 
   // decode a list of bits as a list of characters with a given tree------------
   def decode(t: Tree, bs: List[Boolean]): List[Char] = {
