@@ -233,7 +233,8 @@ object HuffmanCode {
     canDecode(t, bs)(t) && decode(t, bs) == List(c)
   })
 
-  //TODO comment this
+  // prove that if we can decode exactly one char and can decode an other-------
+  // string then we can decode their concatenation------------------------------
   def canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcatenation(s: Tree, bs1: List[Boolean], bs2: List[Boolean])(implicit t: Tree): Unit = {
     require(isInnerNode(s) && isInnerNode(t) && (bs1.isEmpty && t == s || canDecodeAtLeastOneChar(s, bs1) && decodeChar(s, bs1)._2 == Nil[Boolean]()) && canDecode(t, bs2)(t))
     decreases(bs1.length)
@@ -252,10 +253,12 @@ object HuffmanCode {
     }}
   }.ensuring(_ => canDecode(s, bs1 ++ bs2)(t))
 
-  //TODO comment this and rename
-  def temp(t: Tree, bs1: List[Boolean], bs2: List[Boolean], s1: List[Char], s2: List[Char]): Unit = {
+  // prove that we can stil decode the concatenation of two binary strings------
+  // and the result is correct--------------------------------------------------
+  def decodableConcatenationIsDecodableAndCorect(t: Tree, bs1: List[Boolean], bs2: List[Boolean], s1: List[Char], s2: List[Char]): Unit = {
     require(isInnerNode(t) && canDecodeAtLeastOneChar(t, bs1 ++ bs2) && decodeChar(t, bs1 ++ bs2) == (s1, bs2) && canDecode(t, bs2)(t) && decode(t, bs2) == s2)
-    //TODO parse next and call recursively on bs2
+    // this is strange as it is automatically proven but removing this lemma----
+    // prevents the proof from being validated----------------------------------
   }.ensuring(_ => decode(t, bs1 ++ bs2) == s1 ++ s2)
 
   // encode functions-----------------------------------------------------------
@@ -293,13 +296,13 @@ object HuffmanCode {
         canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcatenation(t, hdBs, tlBs)(t)
         canDecodeImpliesCanDecodeAtLeastOneChar(t, hdBs ++ tlBs)(t)
         canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t, hdBs ++ tlBs)(t)
-        //TODO add lemma to say that if we can decode exactly one char and add some string then decodechar returns that string
         assert(isInnerNode(t))
         assert(canDecodeAtLeastOneChar(t, hdBs ++ tlBs))
+        //TODO solve the next assertion
         assert(decodeChar(t, hdBs ++ tlBs) == (hd, tlBs))
         assert(canDecode(t, tlBs)(t))
         assert(decode(t, tlBs) == tl)
-        temp(t, hdBs, tlBs, List(hd), tl)
+        decodableConcatenationIsDecodableAndCorect(t, hdBs, tlBs, List(hd), tl)
         hdBs ++ tlBs
       }
     }}
