@@ -279,6 +279,28 @@ object HuffmanCode {
     }}
   }.ensuring(bs => canDecodeAtLeastOneChar(t, bs) && decodeChar(t, bs) == (List(c), Nil[Boolean]()))
 
+  // prove that if we can decode exactly the given character with the given-----
+  // tree from the given binary string then we can concatenate to it------------
+  // anything and decoding the first char will remain the given one and the-----
+  // remaining bits to decode will be the ones that we added to-----------------
+  // the initial string---------------------------------------------------------
+  def canDecodeExactlyImpliesCanDecodeOneCharPlusSomething(t: Tree, c: Char, bs: List[Boolean], tlBs: List[Boolean]): Unit = {
+    require(isInnerNode(t) && canDecodeAtLeastOneChar(t, bs) && decodeChar(t, bs) == (List(c), Nil[Boolean]()) && canDecodeAtLeastOneChar(t, bs ++ tlBs))
+
+    t match { case t@InnerNode(_, t1, t2) => bs match {
+      case hd :: tl => {
+        if (!hd) t1 match {
+          case Leaf(_, _) => ()
+          case InnerNode(_, _, _) => canDecodeExactlyImpliesCanDecodeOneCharPlusSomething(t1, c, tl, tlBs)
+        } else t2 match {
+          case Leaf(_, _) => ()
+          case InnerNode(_, _, _) => canDecodeExactlyImpliesCanDecodeOneCharPlusSomething(t2, c, tl, tlBs)
+        }
+      }
+      case Nil() => ()
+    }}
+  }.ensuring(_ => decodeChar(t, bs ++ tlBs) == (List(c), tlBs))
+
   // encode a list of characters as list of bits with a given tree--------------
   def encode(t: Tree, s: List[Char]): List[Boolean] = {
     require(isInnerNode(t) && !s.isEmpty && s.forall(c => canEncodeCharUniquely(t, c)))
@@ -296,12 +318,7 @@ object HuffmanCode {
         canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcatenation(t, hdBs, tlBs)(t)
         canDecodeImpliesCanDecodeAtLeastOneChar(t, hdBs ++ tlBs)(t)
         canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t, hdBs ++ tlBs)(t)
-        assert(isInnerNode(t))
-        assert(canDecodeAtLeastOneChar(t, hdBs ++ tlBs))
-        //TODO solve the next assertion
-        assert(decodeChar(t, hdBs ++ tlBs) == (hd, tlBs))
-        assert(canDecode(t, tlBs)(t))
-        assert(decode(t, tlBs) == tl)
+        canDecodeExactlyImpliesCanDecodeOneCharPlusSomething(t, hd, hdBs, tlBs)
         decodableConcatenationIsDecodableAndCorect(t, hdBs, tlBs, List(hd), tl)
         hdBs ++ tlBs
       }
