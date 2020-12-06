@@ -294,6 +294,11 @@ object HuffmanCode {
         canDecodeImpliesCanDecodeAtLeastOneChar(t, hdBs ++ tlBs)(t)
         canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t, hdBs ++ tlBs)(t)
         //TODO add lemma to say that if we can decode exactly one char and add some string then decodechar returns that string
+        assert(isInnerNode(t))
+        assert(canDecodeAtLeastOneChar(t, hdBs ++ tlBs))
+        assert(decodeChar(t, hdBs ++ tlBs) == (hd, tlBs))
+        assert(canDecode(t, tlBs)(t))
+        assert(decode(t, tlBs) == tl)
         temp(t, hdBs, tlBs, List(hd), tl)
         hdBs ++ tlBs
       }
