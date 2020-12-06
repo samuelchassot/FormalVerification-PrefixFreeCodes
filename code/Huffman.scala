@@ -276,15 +276,6 @@ object HuffmanCode {
     }}
   }.ensuring(bs => canDecodeAtLeastOneChar(t, bs) && decodeChar(t, bs) == (List(c), Nil[Boolean]()))
 
-//def canDecodeConcatenationImpliesCorrectDecoding(t: Tree, hd: List[Char], tl: List[Char], hdBs: List[Boolean], tlBs: List[Boolean]): Unit = {
-  //  require(isInnerNode(t) && canDecodeAtLeastOneChar(t, hdBs) && decodeChar(t, hdBs) == (hd, Nil[Boolean]()) && canDecode(t, tlBs)(t) && decode(t, tlBs) == tl)
-  //  decreases(hdBs.length)
-  //  //TODO
-  //}.ensuring(_ => {
-  //  canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcatenation(t, hdBs, tlBs)(t)
-  //  decode(t, hdBs ++ tlBs) == hd ++ tl
-  //})
-
   // encode a list of characters as list of bits with a given tree--------------
   def encode(t: Tree, s: List[Char]): List[Boolean] = {
     require(isInnerNode(t) && !s.isEmpty && s.forall(c => canEncodeCharUniquely(t, c)))
