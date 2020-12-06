@@ -324,7 +324,6 @@ object HuffmanCode {
     require(isInnerNode(s) && isInnerNode(t))
     decreases(bs.length)
 
-
     canDecodeAtLeastOneChar(s, bs) && {
       decodeCharLength(s, bs)
       val (_, nBs) = decodeChar(s, bs)
