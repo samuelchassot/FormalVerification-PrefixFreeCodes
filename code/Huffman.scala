@@ -10,6 +10,7 @@ import stainless.lang._
 import stainless.annotation._
 import stainless.equations._
 import stainless.proof.check
+import scala.collection.immutable.ListSet
 
 object HuffmanCode {
   // functional implemention of Huffman's Algorithm-----------------------------
@@ -157,23 +158,98 @@ object HuffmanCode {
       case Nil() => List(t)
       case hd :: tl => if (cachedWeight(t) <= cachedWeight(hd)) t :: f else hd :: insortTree(t, tl)
     }
-  }.ensuring(r => r.length == f.length+1)
+  }.ensuring(r => r.length == f.length+1 && (t::f).content == r.content)
+
+  def removeDuplicates(s: List[Char]): List[Char] = {
+    s match {
+      case Nil() => Nil[Char]()
+      case hd :: tl => {
+        val temp = removeDuplicates(tl)
+        if(temp.contains(hd)) temp else hd :: temp
+      }
+    }
+  }.ensuring(r => ListSpecs.noDuplicate(r))
+
+  def lemmaConcatNoDuplicate(c: (Char, BigInt), l: List[(Char, BigInt)]): Unit = {
+    require(ListSpecs.noDuplicate(l.map(_._1)) && !l.map(_._1).contains(c._1))
+  }.ensuring(ListSpecs.noDuplicate((c::l).map(_._1)))
+
+  def generateOccurencesTuplesHelper(withoutDuplicates: List[Char], s: List[Char]): List[(Char, BigInt)] = {
+    require(ListSpecs.noDuplicate(withoutDuplicates))
+    withoutDuplicates match {
+      case Nil() => Nil[(Char, BigInt)]()
+      case hd :: tl => {
+        val tuple =  (hd, s.count(_ == hd))
+        val tuplesList = generateOccurencesTuplesHelper(tl, s)
+        
+        assert(ListSpecs.noDuplicate(tuplesList.map(_._1)))
+        assert(!tuplesList.map(_._1).contains(tuple._1))
+
+        lemmaConcatNoDuplicate(tuple, tuplesList)
+
+        tuple :: tuplesList
+      } 
+    }
+  }.ensuring(r => ListSpecs.noDuplicate(r.map(_._1)) && r.map(_._1) == withoutDuplicates)
+
+  def generateOccurencesTuples(s: List[Char]): List[(Char, BigInt)] = {
+    val withoutDuplicates = removeDuplicates(s)
+    generateOccurencesTuplesHelper(withoutDuplicates, s)
+
+  }.ensuring(r => ListSpecs.noDuplicate(r.map(_._1)) && r.length == removeDuplicates(s).length)
+  
+  def leavesGen(occ: List[(Char, BigInt)]): Forest = {
+    occ match {
+      case hd :: tl => Leaf(hd._2, hd._1) :: leavesGen(tl)
+      case Nil() => Nil[Tree]()
+    }
+  }.ensuring((r: Forest) => r.forall(isLeaf) && r.length == occ.length)
 
   // generate the Forest of Leaf for a given list of characters-----------------
   def generateUnsortedForest(s: List[Char]): Forest = {
-    s.foldLeft[List[Char]](Nil())((l, c) => if (l.contains(c)) l else (c :: l)).map(c => Leaf(s.count(_ == c), c))
-  }
+    val occurences = generateOccurencesTuples(s)
+    leavesGen(occurences)
+  }.ensuring(r => r.forall(isLeaf) && r.length == generateOccurencesTuples(s).length)
 
   // sort a Forest--------------------------------------------------------------
-  def sortForest(f: Forest): Forest = f match {
-      case Nil() => Nil()
-      case hd :: tl => insortTree(hd, sortForest(tl))
-  }
+  def sortForest(f: Forest): Forest = {
+    require(f.forall(isLeaf))
+    f match {
+          case Nil() => Nil[Tree]()
+          case hd :: tl => {
+            val res = insortTree(hd, sortForest(tl))
+            assert(res.length == f.length)
+            lemmaSameContentImpliesSameForallIsLeaf(f, res)
+            res
+            }
+
+      }
+  }.ensuring(r => r.length == f.length && r.content == f.content && r.forall(isLeaf))
+
+  def lemmaSameContentImpliesSameForallIsLeaf(l1: Forest, l2: Forest): Unit = { 
+    require(l1.forall(isLeaf) && l2.content.subsetOf(l1.content))
+    l2 match {
+      case Nil() => () 
+      case hd :: tl => {
+        assert(l1.contains(hd))
+        ListSpecs.forallContained(l1, isLeaf, hd)
+        assert(isLeaf(hd))
+        lemmaSameContentImpliesSameForallIsLeaf(l1, tl)
+      } 
+    }
+  }.ensuring(l2.forall(isLeaf))
 
   // generate and sort a Forest given a list of characters----------------------
   def generateSortedForest(s: List[Char]): Forest = {
-    sortForest(generateUnsortedForest(s))
-  }
+    require(removeDuplicates(s).length > 1)
+    val unsortedForest = generateUnsortedForest(s)
+    assert(unsortedForest.length > 1)
+    assert(unsortedForest.forall(isLeaf))
+    val res = sortForest(unsortedForest)
+    assert(res.content == unsortedForest.content)
+    lemmaSameContentImpliesSameForallIsLeaf(unsortedForest, res)
+    res
+  }.ensuring(r => r.forall(isLeaf) && r.length > 1)
   
   // generate Huffman code's Tree recursively given a Forest--------------------
   def huffmansAlgorithmHelper(f: Forest): Tree = {
@@ -188,7 +264,7 @@ object HuffmanCode {
 
   // generate Huffman code's Tree given a Forest--------------------------------
   def huffmansAlgorithm(f: Forest): Tree = {
-    require(f.length > 1)
+    require(f.length > 1 && f.forall(isLeaf))
     huffmansAlgorithmHelper(f)
   }.ensuring(t => isInnerNode(t))
 
@@ -489,14 +565,17 @@ object HuffmanCode {
   // at least two different characters otherwise there is no meaningful---------
   // encoding for this----------------------------------------------------------
   def generateHuffmanCodeTree(s: List[Char]): Tree = {
-    require(containsAtLeastTwoDifferentCharacters(s))
-    huffmansAlgorithm(generateSortedForest(s))
+    require(removeDuplicates(s).length > 1)
+    val forest = generateSortedForest(s)
+    assert(forest.size > 1)
+    assert(forest.forall(isLeaf))
+    huffmansAlgorithm(forest)
     //TODO
   }.ensuring(t => isInnerNode(t) && s.forall(c => canEncodeCharUniquely(t, c)))
 
   // prove that decode(encode(x)) is equal to x using Huffman's algorithm-------
   def decodeEncodedString(s: List[Char]): Unit = {
-    require(containsAtLeastTwoDifferentCharacters(s))
+    require(removeDuplicates(s).length > 1)
   }.ensuring(_ => {
     val t = generateHuffmanCodeTree(s)
     val e = encode(t, s)
