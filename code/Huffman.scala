@@ -43,6 +43,13 @@ object HuffmanCode {
     }
   }.ensuring(r => r >= 0)
 
+  def countChar(f: Forest, c: Char): BigInt = {
+    f match {
+      case Nil() => 0
+      case hd :: tl => countChar(hd, c) + countChar(tl, c)
+    }
+  }
+
   // return true iff two trees are the same-------------------------------------
   def isSameTree(t1: Tree, t2: Tree): Boolean = t1 match {
     case Leaf(w1, c1) => t2 match {
