@@ -271,7 +271,7 @@ object HuffmanCode {
 
   // generate Huffman code's Tree given a Forest--------------------------------
   def huffmansAlgorithm(f: Forest): Tree = {
-    require(f.length > 1 && f.forall(isLeaf))
+    require(f.length > 1 && f.forall(isLeaf) && f.forall(t => cachedChars(t).forall(canEncodeCharUniquely(f, _))))
     huffmansAlgorithmHelper(f)
   }.ensuring(t => isInnerNode(t))
 
@@ -282,6 +282,7 @@ object HuffmanCode {
   // define that a character is uniquely encodable iff it appears once----------
   // in the tree----------------------------------------------------------------
   def canEncodeCharUniquely(t: Tree, c: Char): Boolean = (countChar(t, c) == 1)
+  def canEncodeCharUniquely(f: Forest, c: Char): Boolean = (countChar(f, c) == 1)
 
   // prove that if we encode a character with a given tree then we can----------
   // decode it and get back the correct character-------------------------------
