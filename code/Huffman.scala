@@ -140,15 +140,15 @@ object HuffmanCode {
 
   // return the list of chars of the Tree---------------------------------------
   def cachedChars(t: Tree): List[Char] = t match {
-    case InnerNode(_, chars, _, _) => chars
+    case InnerNode(_, chars, t1, t2) => cachedChars(t1) ++ cachedChars(t2)
     case Leaf(_, c) => List(c)
   } 
 
   // merge two Tree in one by adding an InnerNode-------------------------------
   def uniteTrees(t1: Tree, t2: Tree): Tree = {
-    // TODO disjoint chars
+    require(ListSpecs.noDuplicate(cachedChars(t1) ++ cachedChars(t2)))
     InnerNode(cachedWeight(t1) + cachedWeight(t2), cachedChars(t1) ++ cachedChars(t2), t1, t2)
-  }
+  }.ensuring(t => ListSpecs.noDuplicate(cachedChars(t)))
 
   // insert a Tree in a Forest and sort the latter------------------------------
   def insortTree(t: Tree, f: Forest): Forest = {
@@ -567,9 +567,11 @@ object HuffmanCode {
   def generateHuffmanCodeTree(s: List[Char]): Tree = {
     require(removeDuplicates(s).length > 1)
     val forest = generateSortedForest(s)
-    assert(forest.size > 1)
-    assert(forest.forall(isLeaf))
-    huffmansAlgorithm(forest)
+    val huffman = huffmansAlgorithm(forest)
+    assert(s.content == cachedChars(huffman).content)
+    assert(s.forall(c => canEncodeCharUniquely(huffman, c)))
+
+    huffman
     //TODO
   }.ensuring(t => isInnerNode(t) && s.forall(c => canEncodeCharUniquely(t, c)))
 
