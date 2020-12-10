@@ -11,6 +11,8 @@ import stainless.annotation._
 import stainless.equations._
 import stainless.proof.check
 import scala.collection.immutable.ListSet
+import HuffmanCode.InnerNode
+import HuffmanCode.Leaf
 
 object HuffmanCode {
   // functional implemention of Huffman's Algorithm-----------------------------
@@ -47,6 +49,20 @@ object HuffmanCode {
     f match {
       case Nil() => 0
       case hd :: tl => countChar(hd, c) + countChar(tl, c)
+    }
+  }
+
+  def countLeaves(t: Tree): BigInt = {
+    t match {
+      case InnerNode(_, _, t1, t2) => countLeaves(t1) + countLeaves(t2)
+      case Leaf(_, _) => 1
+    }
+  }
+
+  def countLeaves(f: Forest): BigInt = {
+    f match {
+      case Nil() => 0
+      case hd :: tl => countLeaves(hd) + countLeaves(tl)
     }
   }
 
@@ -165,7 +181,7 @@ object HuffmanCode {
       case Nil() => List(t)
       case hd :: tl => if (cachedWeight(t) <= cachedWeight(hd)) t :: f else hd :: insortTree(t, tl)
     }
-  }.ensuring(r => r.length == f.length+1 && (t::f).content == r.content)
+  }.ensuring(r => r.length == f.length+1 && (t::f).content == r.content && countLeaves(t) + countLeaves(f) == countLeaves(r))
 
   def removeDuplicates(s: List[Char]): List[Char] = {
     s match {
@@ -266,13 +282,12 @@ object HuffmanCode {
     assert(unsortedForest.length == removeDuplicates(s).length)
 
     lemmaSameContentImpliesSameForallCanEncodeCharUniquely(unsortedForest, res, s)
-    assert(s.forall(canEncodeCharUniquely(res, _)))
     res
-  }.ensuring(r => r.forall(isLeaf) && s.forall(canEncodeCharUniquely(r, _)) && r.length > 1)
+  }.ensuring(r => r.forall(isLeaf) && s.forall(canEncodeCharUniquely(r, _)) && r.length > 1 && r.length == removeDuplicates(s).length)
   
   // generate Huffman code's Tree recursively given a Forest--------------------
   def huffmansAlgorithmHelper(f: Forest)(implicit s: List[Char]): Tree = {
-    require((f.length == 1 && isInnerNode(f(0)) || f.length > 1 ) && s.forall(canEncodeCharUniquely(f, _)))
+    require((f.length == 1 && isInnerNode(f(0)) || f.length > 1 ) && s.forall(canEncodeCharUniquely(f, _)) && countLeaves(f) == removeDuplicates(s).length)
     decreases(f.length)
 
     f match {
@@ -281,23 +296,15 @@ object HuffmanCode {
         val newTree = uniteTrees(t1, t2)
         val newForest = insortTree(newTree, tl)
 
-        assert(s.forall(canEncodeCharUniquely(f, _)))
-        assert(f.content == newForest.content)
-        assert(f.length == newForest.length)
-        assert(f.forall(isLeaf))
-        assert(newForest.forall(isLeaf))
-        assert(f.length == removeDuplicates(s).length)
-
-        lemmaSameContentImpliesSameForallCanEncodeCharUniquely(f, newForest, s)
         huffmansAlgorithmHelper(newForest)
       }
       case t :: _ => t
     }
-  }.ensuring(t => isInnerNode(t) && s.forall(canEncodeCharUniquely(t, _)))
+  }.ensuring(t => isInnerNode(t) && s.forall(canEncodeCharUniquely(t, _)) && countLeaves(t) == removeDuplicates(s).length)
 
   // generate Huffman code's Tree given a Forest--------------------------------
   def huffmansAlgorithm(f: Forest)(implicit s: List[Char]): Tree = {
-    require(f.length > 1 && f.forall(isLeaf) && s.forall(canEncodeCharUniquely(f, _)))
+    require(f.length > 1 && f.forall(isLeaf) && s.forall(canEncodeCharUniquely(f, _)) && f.length == removeDuplicates(s).length && f.length == countLeaves(f))
     huffmansAlgorithmHelper(f)(s)
   }.ensuring(t => isInnerNode(t) && s.forall(canEncodeCharUniquely(t, _)))
 
@@ -595,12 +602,29 @@ object HuffmanCode {
     s.foldLeft[List[Char]](Nil())((l, c) => if (l.contains(c)) l else (c :: l)).length >= 2
   }
 
+
+  def lemmaIsAllLeavesThenCountLeavesEqualsForestLength(f: Forest): Unit = {
+    require(f.forall(isLeaf))
+    f match {
+      case Nil() => ()
+      case hd :: tl => {
+        assert(isLeaf(hd))
+        assert(f.length == tl.length + 1)
+        lemmaIsAllLeavesThenCountLeavesEqualsForestLength(tl)
+        assert(countLeaves(tl) == tl.length)
+      } 
+    }
+
+  }.ensuring(_ => f.length == countLeaves(f))
+
   // return the Huffman code tree for a given list of characters that contains--
   // at least two different characters otherwise there is no meaningful---------
   // encoding for this----------------------------------------------------------
   def generateHuffmanCodeTree(s: List[Char]): Tree = {
     require(removeDuplicates(s).length > 1)
     val forest = generateSortedForest(s)
+    lemmaIsAllLeavesThenCountLeavesEqualsForestLength(forest)
+    assert(countLeaves(forest) == removeDuplicates(s).length)
     val huffman = huffmansAlgorithm(forest)(s)
     assert(s.forall(c => canEncodeCharUniquely(huffman, c)))
 
