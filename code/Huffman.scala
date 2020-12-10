@@ -221,10 +221,42 @@ object HuffmanCode {
 
   }.ensuring(r => ListSpecs.noDuplicate(r.map(_._1)) && r.length == removeDuplicates(s).length && r.map(_._1) == removeDuplicates(s))
   
+  def lemmaForallCanEncodeUniquelyWithOneMoreLeafInTheForestNotAlreadyContained(f: Forest, l: Leaf, s: List[Char]): Unit = {
+    require(s.forall(canEncodeCharUniquely(f, _)) && f.forall(isLeaf) && f.filter(cachedChars(_).contains(l.c)).isEmpty)
+
+  }.ensuring(_ => s.forall(canEncodeCharUniquely(l :: f, _)))
+
+  def lemmaForallCanEncodeUniquelyImpliesForallWithNewHeadAndCorrespondingLeaf(f: Forest, s: List[Char], l: Leaf, hd: Char): Unit = {
+    require(f.forall(isLeaf) && s.forall(canEncodeCharUniquely(f, _)) && l.c == hd && !s.contains(hd) && f.filter(cachedChars(_).contains(hd)).isEmpty)
+
+  }.ensuring(_ => (hd :: s).forall(canEncodeCharUniquely(l :: f, _)))
+
   def leavesGen(occ: List[(Char, BigInt)]): Forest = {
     require(ListSpecs.noDuplicate(occ.map(_._1)))
     occ match {
-      case hd :: tl => Leaf(hd._2, hd._1) :: leavesGen(tl)
+      case hd :: tl => {
+        val newLeaf = Leaf(hd._2, hd._1) 
+        val tailLeaves = leavesGen(tl)
+        assert(canEncodeCharUniquely(newLeaf, hd._1))
+        lemmaForallCanEncodeUniquelyWithOneMoreLeafInTheForestNotAlreadyContained(tailLeaves, newLeaf, tl.map(_._1))
+        assert(tl.map(_._1).forall(canEncodeCharUniquely(tailLeaves, _)))
+        assert(tl.map(_._1).forall(canEncodeCharUniquely(newLeaf :: tailLeaves, _)))
+        assert(hd._1 :: tl.map(_._1) == (hd :: tl).map(_._1))
+        assert((hd :: tl).map(_._1) == occ.map(_._1))
+
+        assert(tl.map(_._1).length == tailLeaves.length)
+        assert(tailLeaves.forall(isLeaf))
+        assert(tl.map(_._1).forall(canEncodeCharUniquely(tailLeaves, _)))
+        assert(newLeaf.c == hd._1)
+        assert(!tailLeaves.contains(newLeaf))
+        lemmaForallCanEncodeUniquelyImpliesForallWithNewHeadAndCorrespondingLeaf(tailLeaves, tl.map(_._1), newLeaf, hd._1)
+        assert((hd._1 :: tl.map(_._1)).forall(canEncodeCharUniquely(newLeaf :: tailLeaves, _)))
+
+        val res = newLeaf :: tailLeaves
+        assert(occ.map(_._1).forall(canEncodeCharUniquely(res, _)))
+        assert(res.forall(isLeaf))
+        res
+      }
       case Nil() => Nil[Tree]()
     }
   }.ensuring((r: Forest) => r.forall(isLeaf) && r.length == occ.length && occ.map(_._1).forall(canEncodeCharUniquely(r, _)))
