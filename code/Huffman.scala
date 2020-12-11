@@ -167,6 +167,11 @@ object HuffmanCode {
     case Leaf(_, c) => List(c)
   } 
 
+  def cachedChars(f: Forest): List[Char] = f match {
+    case hd :: tl => cachedChars(hd) ++ cachedChars(tl)
+    case Nil() => Nil()
+  }
+
   // merge two Tree in one by adding an InnerNode-------------------------------
   def uniteTrees(t1: Tree, t2: Tree): Tree = {
     require(ListSpecs.noDuplicate(cachedChars(t1) ++ cachedChars(t2)))
@@ -322,7 +327,13 @@ object HuffmanCode {
   def lemmaSameContentImpliesSameForallCanEncodeCharUniquely(f1: Forest, f2: Forest, s: List[Char]): Unit = {
     require( s.forall(canEncodeCharUniquely(f1, _)) && f1.content == f2.content && f1.length == f2.length && f1.forall(isLeaf) && f2.forall(isLeaf) && f1.length == removeDuplicates(s).length)
 
-    // TODO
+    s match {
+      case Nil() => ()
+      case hd :: tl => {
+        assert(canEncodeCharUniquely(f1, hd))
+        assert(canEncodeCharUniquely(f2, hd))
+      }
+    }
 
   } .ensuring(_ => s.forall(canEncodeCharUniquely(f2, _)))
 
