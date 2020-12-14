@@ -267,9 +267,9 @@ object HuffmanCode {
         val newLeaf = Leaf(hd._2, hd._1) 
         val tailLeaves = leavesGen(tl)
 
-        assert(tailLeaves.filter(cachedChars(_).contains(newLeaf.c)).isEmpty)
-        assert(!cachedChars(tailLeaves).contains(hd._1))
-        lemmaForallCanEncodeUniquelyWithOneMoreLeafInTheForestNotAlreadyContained(tailLeaves, newLeaf, tl.map(_._1))
+        // assert(tailLeaves.filter(cachedChars(_).contains(newLeaf.c)).isEmpty)
+        // assert(!cachedChars(tailLeaves).contains(hd._1))
+        // lemmaForallCanEncodeUniquelyWithOneMoreLeafInTheForestNotAlreadyContained(tailLeaves, newLeaf, tl.map(_._1))
 
         assert(!cachedChars(tailLeaves).contains(hd._1))
         val res = newLeaf :: tailLeaves
@@ -278,13 +278,7 @@ object HuffmanCode {
         assert(occ.map(_._1).forall(canEncodeCharUniquely(res, _)))
         res
       }
-      case Nil() => {
-        val res = Nil[Tree]()
-        assert(res.forall(isLeaf))
-        assert(res.length == occ.length)
-        assert(occ.map(_._1).forall(canEncodeCharUniquely(res, _)))
-        res
-        }
+      case Nil() => Nil[Tree]()
     }
   }.ensuring((r: Forest) => r.forall(isLeaf) && r.length == occ.length && occ.map(_._1).forall(canEncodeCharUniquely(r, _)))
 
@@ -345,7 +339,7 @@ object HuffmanCode {
   }.ensuring(l2.forall(isLeaf))
 
   def lemmaSameContentImpliesSameForallCanEncodeCharUniquely(f1: Forest, f2: Forest, s: List[Char]): Unit = {
-    require( s.forall(canEncodeCharUniquely(f1, _)) && f1.content == f2.content && f1.length == f2.length && f1.forall(isLeaf) && f2.forall(isLeaf) && f1.length == removeDuplicates(s).length)
+    require(s.forall(canEncodeCharUniquely(f1, _)) && f1.content == f2.content && f1.length == f2.length && f1.forall(isLeaf) && f2.forall(isLeaf) && f1.length == removeDuplicates(s).length)
 
     s match {
       case Nil() => ()
