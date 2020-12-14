@@ -263,7 +263,7 @@ object HuffmanCode {
         val hdBs = encodeChar(t, hd)
         val tlBs = encode(t, tl)
 
-        canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcatenation(t, hdBs, tlBs)(t)
+        canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcat(t, hdBs, tlBs)(t)
         canDecodeImpliesCanDecodeAtLeastOneChar(t, hdBs ++ tlBs)(t)
         canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t, hdBs ++ tlBs)(t)
         canDecodeExactlyImpliesCanDecodeOneCharPlusSomething(t, hd, hdBs, tlBs)
@@ -406,18 +406,18 @@ object HuffmanCode {
 
   // prove that if we can decode exactly one char and can decode an other-------
   // string then we can decode their concatenation------------------------------
-  def canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcatenation(s: Tree, bs1: List[Boolean], bs2: List[Boolean])(implicit t: Tree): Unit = {
+  def canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcat(s: Tree, bs1: List[Boolean], bs2: List[Boolean])(implicit t: Tree): Unit = {
     require(isInnerNode(s) && isInnerNode(t) && (bs1.isEmpty && t == s || canDecodeAtLeastOneChar(s, bs1) && decodeChar(s, bs1)._2 == Nil[Boolean]()) && canDecode(t, bs2)(t))
     decreases(bs1.length)
 
     s match { case InnerNode(_, t1, t2) => bs1 match {
       case hd :: tl => {
         if (!hd) t1 match {
-          case Leaf(_, c) => canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcatenation(t, Nil(), bs2)
-          case t1@InnerNode(_, _, _) => canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcatenation(t1, tl, bs2)
+          case Leaf(_, c) => canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcat(t, Nil(), bs2)
+          case t1@InnerNode(_, _, _) => canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcat(t1, tl, bs2)
         } else t2 match {
-          case Leaf(_, c) => canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcatenation(t, Nil(), bs2)
-          case t2@InnerNode(_, _, _) => canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcatenation(t2, tl, bs2)
+          case Leaf(_, c) => canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcat(t, Nil(), bs2)
+          case t2@InnerNode(_, _, _) => canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcat(t2, tl, bs2)
         }
       }
       case Nil() => ()
