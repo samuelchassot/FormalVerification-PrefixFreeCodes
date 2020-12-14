@@ -186,7 +186,7 @@ object HuffmanCode {
       case Nil() => List(t)
       case hd :: tl => if (cachedWeight(t) <= cachedWeight(hd)) t :: f else hd :: insortTree(t, tl)
     }
-  }.ensuring(r => r.length == f.length+1 && (t::f).content == r.content && countLeaves(t) + countLeaves(f) == countLeaves(r))
+  }.ensuring(r => r.length == f.length+1 && (t::f).content == r.content && countLeaves(t) + countLeaves(f) == countLeaves(r) && cachedChars(r).content == cachedChars(t :: f).content)
 
   def removeDuplicates(s: List[Char]): List[Char] = {
     s match {
@@ -398,6 +398,20 @@ object HuffmanCode {
     case t :: tl => ListSpecs.noDuplicate(cachedChars(t))
     case Nil() => ListSpecs.noDuplicate(cachedChars(f))
     })
+
+
+  def lemmaCanEncodeUniquelyForestOneTreeImpliesCanEncodeUniquelyTree(f: Forest, s: List[Char]): Unit = {
+    require(f.length == 1 && s.forall(canEncodeCharUniquely(f, _)) && isInnerNode(f(0)))
+
+  }.ensuring(_ => f match {
+    case t :: Nil() => s.forall(canEncodeCharUniquely(t, _))
+  })
+
+  def lemmaSameCachedCharsAndNumLeavesImpliesCanEncodeUniquely(f1: Forest, f2: Forest, s: List[Char]): Unit = {
+    require(s.forall(canEncodeCharUniquely(f1, _)) && cachedChars(f1).content == cachedChars(f2).content && countLeaves(f1) == countLeaves(f2))
+
+  }.ensuring(_ => s.forall(canEncodeCharUniquely(f2, _)))
+
   // generate Huffman code's Tree recursively given a Forest--------------------
   def huffmansAlgorithmHelper(f: Forest)(implicit s: List[Char]): Tree = {
     require((f.length == 1 && isInnerNode(f(0)) || f.length > 1 ) && s.forall(canEncodeCharUniquely(f, _)) && countLeaves(f) == removeDuplicates(s).length)
@@ -410,12 +424,19 @@ object HuffmanCode {
         assert(ListSpecs.noDuplicate(cachedChars(t1) ++ cachedChars(t2)))
         val newTree = uniteTrees(t1, t2)
         val newForest = insortTree(newTree, tl)
+        assert(cachedChars(newForest).content == cachedChars(newTree :: tl).content)
+        assert(cachedChars(newForest).content == cachedChars(f).content)
         assert(countLeaves(newForest) == removeDuplicates(s).length)
+        lemmaSameCachedCharsAndNumLeavesImpliesCanEncodeUniquely(f, newForest, s)
         assert(s.forall(canEncodeCharUniquely(newForest, _)))
         huffmansAlgorithmHelper(newForest)
-      }
-      case t :: _ => {
+        }
+      case t :: Nil() => {
+        lemmaCanEncodeUniquelyForestOneTreeImpliesCanEncodeUniquelyTree(f, s)
+        assert(f(0) == t) //WHY?
         assert(s.forall(canEncodeCharUniquely(t, _)))
+        assert(isInnerNode(t))
+        assert(countLeaves(t) == removeDuplicates(s).length)
         t
       }
     }
