@@ -11,10 +11,14 @@ import stainless.annotation._
 import stainless.equations._
 import stainless.proof.check
 import scala.collection.immutable.ListSet
-import HuffmanCode.InnerNode
-import HuffmanCode.Leaf
 
 object HuffmanCode {
+
+   @extern // WARNING: @extern is unsound, only use for debugging
+   def assume(b: Boolean): Unit = {
+     (??? : Unit)
+   }.ensuring(_ => b)
+
   // functional implemention of Huffman's Algorithm-----------------------------
   
   // datatypes------------------------------------------------------------------
@@ -771,14 +775,11 @@ object HuffmanCode {
   // encoding for this----------------------------------------------------------
   def generateHuffmanCodeTree(s: List[Char]): Tree = {
     require(removeDuplicates(s).length > 1)
-    val forest = generateSortedForest(s)
-    lemmaIsAllLeavesThenCountLeavesEqualsForestLength(forest)
-    assert(countLeaves(forest) == removeDuplicates(s).length)
-    val huffman = huffmansAlgorithm(forest)(s)
-    assert(s.forall(c => canEncodeCharUniquely(huffman, c)))
 
-    huffman
-    //TODO
+    val f = generateSortedForest(s)
+    lemmaIsAllLeavesThenCountLeavesEqualsForestLength(f)
+    huffmansAlgorithm(f)(s)
+
   }.ensuring(t => isInnerNode(t) && s.forall(c => canEncodeCharUniquely(t, c)))
 
   // prove that decode(encode(x)) is equal to x using Huffman's algorithm-------
