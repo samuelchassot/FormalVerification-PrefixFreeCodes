@@ -317,32 +317,31 @@ object HuffmanCode {
     // TODO last condition in the ensuring 
   }.ensuring(r => r.forall(isLeaf) && r.length == generateOccurencesTuples(s).length && s.forall(canEncodeCharUniquely(r, _)))
 
-  // sort a Forest--------------------------------------------------------------
-  def sortForest(f: Forest): Forest = {
+  // reorder a forest of leaves according to their weights in ascending order---
+  def sortLeaves(f: Forest): Forest = {
     require(f.forall(isLeaf))
-    f match {
-          case Nil() => Nil[Tree]()
-          case hd :: tl => {
-            val res = insortTree(hd, sortForest(tl))
-            assert(res.length == f.length)
-            lemmaSameContentImpliesSameForallIsLeaf(f, res)
-            res
-            }
 
+    f match {
+      case Nil() => Nil[Tree]()
+      case hd :: tl => {
+        val r = insortTree(hd, sortLeaves(tl))
+        subsetOfLeavesIsStillLeaves(f, r)
+        r
       }
+    }
   }.ensuring(r => r.length == f.length && r.content == f.content && r.forall(isLeaf))
 
-  def lemmaSameContentImpliesSameForallIsLeaf(l1: Forest, l2: Forest): Unit = { 
+  // prove that if we take a subset of leaves then------------------------------
+  // the former still only contains leaves--------------------------------------
+  def subsetOfLeavesIsStillLeaves(l1: Forest, l2: Forest): Unit = {
     require(l1.forall(isLeaf) && l2.content.subsetOf(l1.content))
     decreases(l2.length)
 
     l2 match {
       case Nil() => () 
       case hd :: tl => {
-        assert(l1.contains(hd))
         ListSpecs.forallContained(l1, isLeaf, hd)
-        assert(isLeaf(hd))
-        lemmaSameContentImpliesSameForallIsLeaf(l1, tl)
+        subsetOfLeavesIsStillLeaves(l1, tl)
       } 
     }
   }.ensuring(l2.forall(isLeaf))
@@ -367,11 +366,13 @@ object HuffmanCode {
   // generate and sort a Forest given a list of characters----------------------
   def generateSortedForest(s: List[Char]): Forest = {
     require(removeDuplicates(s).length > 1)
+
     val unsortedForest = generateUnsortedForest(s)
-    assert(s.forall(canEncodeCharUniquely(unsortedForest, _)))
-    val res = sortForest(unsortedForest)
-    lemmaSameContentImpliesSameForallIsLeaf(unsortedForest, res)
+    val res = sortLeaves(unsortedForest)
+
+    subsetOfLeavesIsStillLeaves(unsortedForest, res)
     lemmaSameContentImpliesSameForallCanEncodeCharUniquely(unsortedForest, res, s)
+
     res
   }.ensuring(r => r.forall(isLeaf) && s.forall(canEncodeCharUniquely(r, _)) && r.length > 1 && r.length == removeDuplicates(s).length)
   
@@ -766,8 +767,8 @@ object HuffmanCode {
     require(f.forall(isLeaf))
 
     f match {
-      case hd :: tl => allLeavesImpliesForestSameLength(tl)
       case Nil() => ()
+      case hd :: tl => allLeavesImpliesForestSameLength(tl)
     }
   }.ensuring(_ => f.length == countLeaves(f))
 
