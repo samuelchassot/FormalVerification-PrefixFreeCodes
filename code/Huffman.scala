@@ -303,33 +303,6 @@ object HuffmanCode {
 
   }.ensuring( _ => s.forall(canEncodeCharUniquely(f, _)))
 
-  // generate the Forest of Leaf for a given list of characters-----------------
-  def generateUnsortedForest(s: List[Char]): Forest = {
-    val occurences = generateOccurencesTuples(s)
-    val leaves = leavesGen(occurences)
-
-    allLeavesImpliesForestSameLength(leaves)
-    assert(occurences.map(_._1) == removeDuplicates(s))
-    assert(removeDuplicates(s).forall(canEncodeCharUniquely(leaves, _)))
-    lemmaForallCanEncodeUniquelyWithoutDuplicatesImpliesForallCanEncodeUniquelyOnCompleteList(leaves, s)
-    leaves
-
-    // TODO last condition in the ensuring 
-  }.ensuring(r => r.forall(isLeaf) && r.length == generateOccurencesTuples(s).length && s.forall(canEncodeCharUniquely(r, _)))
-
-  // reorder a forest of leaves according to their weights in ascending order---
-  def sortLeaves(f: Forest): Forest = {
-    require(f.forall(isLeaf))
-
-    f match {
-      case Nil() => Nil[Tree]()
-      case hd :: tl => {
-        val r = insortTree(hd, sortLeaves(tl))
-        subsetOfLeavesIsStillLeaves(f, r)
-        r
-      }
-    }
-  }.ensuring(r => r.length == f.length && r.content == f.content && r.forall(isLeaf))
 
   // prove that if we take a subset of leaves then------------------------------
   // the former still only contains leaves--------------------------------------
@@ -363,19 +336,6 @@ object HuffmanCode {
 
   } .ensuring(_ => s.forall(canEncodeCharUniquely(f2, _)))
 
-  // generate and sort a Forest given a list of characters----------------------
-  def generateSortedForest(s: List[Char]): Forest = {
-    require(removeDuplicates(s).length > 1)
-
-    val unsortedForest = generateUnsortedForest(s)
-    val res = sortLeaves(unsortedForest)
-
-    subsetOfLeavesIsStillLeaves(unsortedForest, res)
-    lemmaSameContentImpliesSameForallCanEncodeCharUniquely(unsortedForest, res, s)
-
-    res
-  }.ensuring(r => r.forall(isLeaf) && s.forall(canEncodeCharUniquely(r, _)) && r.length > 1 && r.length == removeDuplicates(s).length)
-  
 
   def lemmaCanEncodeUniquelyAndSameNLeavesThanCharsImpliesNoDuplicateInChars(f: Forest, s: List[Char]): Unit = {
     require(s.forall(canEncodeCharUniquely(f, _)) && countLeaves(f) == removeDuplicates(s).length)
@@ -460,12 +420,6 @@ object HuffmanCode {
       }
     }
   }.ensuring(t => isInnerNode(t) && s.forall(canEncodeCharUniquely(t, _)) && countLeaves(t) == removeDuplicates(s).length)
-
-  // generate Huffman code's Tree given a Forest--------------------------------
-  def huffmansAlgorithm(f: Forest)(implicit s: List[Char]): Tree = {
-    require(f.length > 1 && f.forall(isLeaf) && s.forall(canEncodeCharUniquely(f, _)) && f.length == removeDuplicates(s).length && f.length == countLeaves(f))
-    huffmansAlgorithmHelper(f)(s)
-  }.ensuring(t => isInnerNode(t) && s.forall(canEncodeCharUniquely(t, _)))
 
   // encode/decode--------------------------------------------------------------
 
@@ -765,6 +719,53 @@ object HuffmanCode {
     allLeavesImpliesForestSameLength(f)
     huffmansAlgorithm(f)(s)
   }.ensuring(t => isInnerNode(t) && s.forall(c => canEncodeCharUniquely(t, c)))
+
+  // generate and sort a Forest given a list of characters----------------------
+  def generateSortedForest(s: List[Char]): Forest = {
+    require(removeDuplicates(s).length > 1)
+
+    val unsortedForest = generateUnsortedForest(s)
+    val res = sortLeaves(unsortedForest)
+
+    subsetOfLeavesIsStillLeaves(unsortedForest, res)
+    lemmaSameContentImpliesSameForallCanEncodeCharUniquely(unsortedForest, res, s)
+
+    res
+  }.ensuring(r => r.forall(isLeaf) && s.forall(canEncodeCharUniquely(r, _)) && r.length > 1 && r.length == removeDuplicates(s).length)
+
+  // generate Huffman code's Tree given a Forest--------------------------------
+  def huffmansAlgorithm(f: Forest)(implicit s: List[Char]): Tree = {
+    require(f.length > 1 && f.forall(isLeaf) && s.forall(canEncodeCharUniquely(f, _)) && f.length == removeDuplicates(s).length && f.length == countLeaves(f))
+    huffmansAlgorithmHelper(f)(s)
+  }.ensuring(t => isInnerNode(t) && s.forall(canEncodeCharUniquely(t, _)))
+
+  // generate the Forest of Leaf for a given list of characters-----------------
+  def generateUnsortedForest(s: List[Char]): Forest = {
+    val occurences = generateOccurencesTuples(s)
+    val leaves = leavesGen(occurences)
+
+    allLeavesImpliesForestSameLength(leaves)
+    assert(occurences.map(_._1) == removeDuplicates(s))
+    assert(removeDuplicates(s).forall(canEncodeCharUniquely(leaves, _)))
+    lemmaForallCanEncodeUniquelyWithoutDuplicatesImpliesForallCanEncodeUniquelyOnCompleteList(leaves, s)
+    leaves
+
+    // TODO last condition in the ensuring
+  }.ensuring(r => r.forall(isLeaf) && r.length == generateOccurencesTuples(s).length && s.forall(canEncodeCharUniquely(r, _)))
+
+  // reorder a forest of leaves according to their weights in ascending order---
+  def sortLeaves(f: Forest): Forest = {
+    require(f.forall(isLeaf))
+
+    f match {
+      case Nil() => Nil[Tree]()
+      case hd :: tl => {
+        val r = insortTree(hd, sortLeaves(tl))
+        subsetOfLeavesIsStillLeaves(f, r)
+        r
+      }
+    }
+  }.ensuring(r => r.length == f.length && r.content == f.content && r.forall(isLeaf))
 
   // generateHuffmanCodeTree lemmas---------------------------------------------
 
