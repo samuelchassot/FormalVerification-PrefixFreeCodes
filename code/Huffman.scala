@@ -308,7 +308,7 @@ object HuffmanCode {
     val occurences = generateOccurencesTuples(s)
     val leaves = leavesGen(occurences)
 
-    lemmaIsAllLeavesThenCountLeavesEqualsForestLength(leaves)
+    allLeavesImpliesForestSameLength(leaves)
     assert(occurences.map(_._1) == removeDuplicates(s))
     assert(removeDuplicates(s).forall(canEncodeCharUniquely(leaves, _)))
     lemmaForallCanEncodeUniquelyWithoutDuplicatesImpliesForallCanEncodeUniquelyOnCompleteList(leaves, s)
@@ -760,14 +760,15 @@ object HuffmanCode {
     s.foldLeft[List[Char]](Nil())((l, c) => if (l.contains(c)) l else (c :: l)).length >= 2
   }
 
-
-  def lemmaIsAllLeavesThenCountLeavesEqualsForestLength(f: Forest): Unit = {
+  // prove that if we have only leaves in a forest then its size is-------------
+  // the same as the number of leaves-------------------------------------------
+  def allLeavesImpliesForestSameLength(f: Forest): Unit = {
     require(f.forall(isLeaf))
-    f match {
-      case Nil() => ()
-      case hd :: tl => lemmaIsAllLeavesThenCountLeavesEqualsForestLength(tl)
-    }
 
+    f match {
+      case hd :: tl => allLeavesImpliesForestSameLength(tl)
+      case Nil() => ()
+    }
   }.ensuring(_ => f.length == countLeaves(f))
 
   // return the Huffman code tree for a given list of characters that contains--
@@ -777,9 +778,8 @@ object HuffmanCode {
     require(removeDuplicates(s).length > 1)
 
     val f = generateSortedForest(s)
-    lemmaIsAllLeavesThenCountLeavesEqualsForestLength(f)
+    allLeavesImpliesForestSameLength(f)
     huffmansAlgorithm(f)(s)
-
   }.ensuring(t => isInnerNode(t) && s.forall(c => canEncodeCharUniquely(t, c)))
 
   // prove that decode(encode(x)) is equal to x using Huffman's algorithm-------
