@@ -232,17 +232,17 @@ object HuffmanCode {
   // anything and decoding the first char will remain the given one and the-----
   // remaining bits to decode will be the ones that we added to-----------------
   // the initial string---------------------------------------------------------
-  def canDecodeExactlyImpliesCanDecodeOneCharPlusSomething(t: Tree, c: Char, bs: List[Boolean], tlBs: List[Boolean]): Unit = {
+  def canStillDecodeOneCharAndSomething(t: Tree, c: Char, bs: List[Boolean], tlBs: List[Boolean]): Unit = {
     require(isInnerNode(t) && canDecodeAtLeastOneChar(t, bs) && decodeChar(t, bs) == (List(c), Nil[Boolean]()) && canDecodeAtLeastOneChar(t, bs ++ tlBs))
 
     t match { case t@InnerNode(_, _, t1, t2) => bs match {
       case hd :: tl => {
         if (!hd) t1 match {
           case Leaf(_, _) => ()
-          case InnerNode(_, _, _, _) => canDecodeExactlyImpliesCanDecodeOneCharPlusSomething(t1, c, tl, tlBs)
+          case InnerNode(_, _, _, _) => canStillDecodeOneCharAndSomething(t1, c, tl, tlBs)
         } else t2 match {
           case Leaf(_, _) => ()
-          case InnerNode(_, _, _, _) => canDecodeExactlyImpliesCanDecodeOneCharPlusSomething(t2, c, tl, tlBs)
+          case InnerNode(_, _, _, _) => canStillDecodeOneCharAndSomething(t2, c, tl, tlBs)
         }
       }
       case Nil() => ()
@@ -262,11 +262,11 @@ object HuffmanCode {
         val hdBs = encodeChar(t, hd)
         val tlBs = encode(t, tl)
 
-        canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcatenation(t, hdBs, tlBs)(t)
+        canStillDecodeConcatenation(t, hdBs, tlBs)(t)
         canDecodeImpliesCanDecodeAtLeastOneChar(t, hdBs ++ tlBs)(t)
         canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t, hdBs ++ tlBs)(t)
-        canDecodeExactlyImpliesCanDecodeOneCharPlusSomething(t, hd, hdBs, tlBs)
-        decodableConcatenationIsDecodableAndCorect(t, hdBs, tlBs, List(hd), tl)
+        canStillDecodeOneCharAndSomething(t, hd, hdBs, tlBs)
+        concatenationIsStillDecodableAndCorrect(t, hdBs, tlBs, List(hd), tl)
 
         hdBs ++ tlBs
       }
@@ -405,18 +405,18 @@ object HuffmanCode {
 
   // prove that if we can decode exactly one char and can decode an other-------
   // string then we can decode their concatenation------------------------------
-  def canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcatenation(s: Tree, bs1: List[Boolean], bs2: List[Boolean])(implicit t: Tree): Unit = {
+  def canStillDecodeConcatenation(s: Tree, bs1: List[Boolean], bs2: List[Boolean])(implicit t: Tree): Unit = {
     require(isInnerNode(s) && isInnerNode(t) && (bs1.isEmpty && t == s || canDecodeAtLeastOneChar(s, bs1) && decodeChar(s, bs1)._2 == Nil[Boolean]()) && canDecode(t, bs2)(t))
     decreases(bs1.length)
 
     s match { case InnerNode(_, _, t1, t2) => bs1 match {
       case hd :: tl => {
         if (!hd) t1 match {
-          case Leaf(_, c) => canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcatenation(t, Nil(), bs2)
-          case t1@InnerNode(_, _, _, _) => canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcatenation(t1, tl, bs2)
+          case Leaf(_, c) => canStillDecodeConcatenation(t, Nil(), bs2)
+          case t1@InnerNode(_, _, _, _) => canStillDecodeConcatenation(t1, tl, bs2)
         } else t2 match {
-          case Leaf(_, c) => canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcatenation(t, Nil(), bs2)
-          case t2@InnerNode(_, _, _, _) => canDecodeExactlyOneCharAndCanDecodeImpliesCanDecodeConcatenation(t2, tl, bs2)
+          case Leaf(_, c) => canStillDecodeConcatenation(t, Nil(), bs2)
+          case t2@InnerNode(_, _, _, _) => canStillDecodeConcatenation(t2, tl, bs2)
         }
       }
       case Nil() => ()
@@ -425,7 +425,7 @@ object HuffmanCode {
 
   // prove that we can stil decode the concatenation of two binary strings------
   // and the result is correct--------------------------------------------------
-  def decodableConcatenationIsDecodableAndCorect(t: Tree, bs1: List[Boolean], bs2: List[Boolean], s1: List[Char], s2: List[Char]): Unit = {
+  def concatenationIsStillDecodableAndCorrect(t: Tree, bs1: List[Boolean], bs2: List[Boolean], s1: List[Char], s2: List[Char]): Unit = {
     require(isInnerNode(t) && canDecodeAtLeastOneChar(t, bs1 ++ bs2) && decodeChar(t, bs1 ++ bs2) == (s1, bs2) && canDecode(t, bs2)(t) && decode(t, bs2) == s2)
     // this is strange as it is automatically proven but removing this lemma----
     // prevents the proof from being validated----------------------------------
