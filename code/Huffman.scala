@@ -480,6 +480,12 @@ object HuffmanCode {
     }
   }.ensuring(r => ListSpecs.noDuplicate(r))
 
+  // return true iff the two forests of leaves contain the same leaves----------
+  def equivalentLeaves(f1: Forest, f2: Forest): Boolean = {
+    require(f1.forall(isLeaf) && f2.forall(isLeaf))
+    f1.length == f2.length && f1.content == f2.content
+  }
+
   // return the Huffman code tree for a given list of characters that contains--
   // at least two different characters otherwise there is no meaningful---------
   // encoding for this----------------------------------------------------------
@@ -517,12 +523,6 @@ object HuffmanCode {
       }
     }
   }.ensuring(sortedF => sortedF.forall(isLeaf) && equivalentLeaves(f, sortedF))
-
-  // return true iff the two forests of leaves contain the same leaves----------
-  def equivalentLeaves(f1: Forest, f2: Forest): Boolean = {
-    require(f1.forall(isLeaf) && f2.forall(isLeaf))
-    f1.length == f2.length && f1.content == f2.content
-  }
 
   // generate the Forest of Leaf for a given list of characters-----------------
   def generateUnsortedForest(s: List[Char]): Forest = {
@@ -580,6 +580,7 @@ object HuffmanCode {
 
     f match {
       case t1 :: t2 :: tl => {
+        //TODO clean all assets once completely proven
         lemmaCanEncodeUniquelyAndSameNLeavesThanCharsImpliesNoDuplicateInChars(f, s)
         lemmaNoDuplicateInForestCharsImpliesNoDuplicateInTwoFirstTreesChars(f)
         assert(ListSpecs.noDuplicate(containedChars(t1) ++ containedChars(t2)))
@@ -591,7 +592,7 @@ object HuffmanCode {
         lemmaSameCachedCharsAndNumLeavesImpliesCanEncodeUniquely(f, newForest, s)
         assert(s.forall(canEncodeCharUniquely(newForest, _)))
         huffmansAlgorithmHelper(newForest)
-        }
+      }
       case t :: Nil() => {
         canStillEncodeUniquelyWithSingleTree(f, s)
         t
@@ -655,9 +656,7 @@ object HuffmanCode {
 
     s match {
       case hd :: tl => {
-        assert(removeDuplicates(s).contains(hd))
-        ListSpecs.forallContained(removeDuplicates(s), (c:Char) => canEncodeCharUniquely(f, c), hd)
-        assert(canEncodeCharUniquely(f, hd))
+        ListSpecs.forallContained(removeDuplicates(s), (c: Char) => canEncodeCharUniquely(f, c), hd)
         canStillEncodeSameCharsUniquely(f, tl)
       }
       case Nil() => () 
