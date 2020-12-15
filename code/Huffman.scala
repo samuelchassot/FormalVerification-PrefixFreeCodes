@@ -753,24 +753,7 @@ object HuffmanCode {
     }
   }
 
-  // final theorem--------------------------------------------------------------
-
-  // return true if the given list of characters contains-----------------------
-  // more than two different ones-----------------------------------------------
-  def containsAtLeastTwoDifferentCharacters(s: List[Char]): Boolean = {
-    s.foldLeft[List[Char]](Nil())((l, c) => if (l.contains(c)) l else (c :: l)).length >= 2
-  }
-
-  // prove that if we have only leaves in a forest then its size is-------------
-  // the same as the number of leaves-------------------------------------------
-  def allLeavesImpliesForestSameLength(f: Forest): Unit = {
-    require(f.forall(isLeaf))
-
-    f match {
-      case Nil() => ()
-      case hd :: tl => allLeavesImpliesForestSameLength(tl)
-    }
-  }.ensuring(_ => f.length == countLeaves(f))
+  // generateHuffmanCodeTree functions------------------------------------------
 
   // return the Huffman code tree for a given list of characters that contains--
   // at least two different characters otherwise there is no meaningful---------
@@ -783,6 +766,21 @@ object HuffmanCode {
     huffmansAlgorithm(f)(s)
   }.ensuring(t => isInnerNode(t) && s.forall(c => canEncodeCharUniquely(t, c)))
 
+  // generateHuffmanCodeTree lemmas---------------------------------------------
+
+  // prove that if we have only leaves in a forest then its size is-------------
+  // the same as the number of leaves-------------------------------------------
+  def allLeavesImpliesForestSameLength(f: Forest): Unit = {
+    require(f.forall(isLeaf))
+
+    f match {
+      case Nil() => ()
+      case hd :: tl => allLeavesImpliesForestSameLength(tl)
+    }
+  }.ensuring(_ => f.length == countLeaves(f))
+
+  // final theorem--------------------------------------------------------------
+
   // prove that decode(encode(x)) is equal to x using Huffman's algorithm-------
   def decodeEncodedString(s: List[Char]): Unit = {
     require(removeDuplicates(s).length > 1)
@@ -792,17 +790,4 @@ object HuffmanCode {
     val d = decode(t, e)
     s == d
   })
-
-  @extern
-  def main(args: Array[String]) = {
-    val s = List('a', 'a', 'b', 'c')
-
-    val t = generateHuffmanCodeTree(s)
-    val e = encode(t, s)
-    val d = decode(t, e)
-
-    println(t)
-    println(e)
-    println(d)
-  }
 }
