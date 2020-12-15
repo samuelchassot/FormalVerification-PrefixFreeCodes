@@ -304,38 +304,6 @@ object HuffmanCode {
   }.ensuring( _ => s.forall(canEncodeCharUniquely(f, _)))
 
 
-  // prove that if we take a subset of leaves then------------------------------
-  // the former still only contains leaves--------------------------------------
-  def subsetOfLeavesIsStillLeaves(l1: Forest, l2: Forest): Unit = {
-    require(l1.forall(isLeaf) && l2.content.subsetOf(l1.content))
-    decreases(l2.length)
-
-    l2 match {
-      case Nil() => () 
-      case hd :: tl => {
-        ListSpecs.forallContained(l1, isLeaf, hd)
-        subsetOfLeavesIsStillLeaves(l1, tl)
-      } 
-    }
-  }.ensuring(l2.forall(isLeaf))
-
-  def lemmaSameContentImpliesSameForallCanEncodeCharUniquely(f1: Forest, f2: Forest, s: List[Char]): Unit = {
-    require(s.forall(canEncodeCharUniquely(f1, _)) && f1.content == f2.content && f1.length == f2.length && f1.forall(isLeaf) && f2.forall(isLeaf) && f1.length == removeDuplicates(s).length)
-
-    //TODO
-    
-    s match {
-      case Nil() => ()
-      case hd :: tl => {
-        assert(canEncodeCharUniquely(f1, hd))
-        assert(canEncodeCharUniquely(f2, hd))
-        assert(tl.forall(canEncodeCharUniquely(f1, _)))
-        assert(tl.forall(canEncodeCharUniquely(f2, _)))
-      }
-    }
-
-  } .ensuring(_ => s.forall(canEncodeCharUniquely(f2, _)))
-
 
   def lemmaCanEncodeUniquelyAndSameNLeavesThanCharsImpliesNoDuplicateInChars(f: Forest, s: List[Char]): Unit = {
     require(s.forall(canEncodeCharUniquely(f, _)) && countLeaves(f) == removeDuplicates(s).length)
@@ -779,6 +747,38 @@ object HuffmanCode {
       case hd :: tl => allLeavesImpliesForestSameLength(tl)
     }
   }.ensuring(_ => f.length == countLeaves(f))
+
+  // prove that if we take a subset of leaves then------------------------------
+  // the former still only contains leaves--------------------------------------
+  def subsetOfLeavesIsStillLeaves(l1: Forest, l2: Forest): Unit = {
+    require(l1.forall(isLeaf) && l2.content.subsetOf(l1.content))
+    decreases(l2.length)
+
+    l2 match {
+      case Nil() => ()
+      case hd :: tl => {
+        ListSpecs.forallContained(l1, isLeaf, hd)
+        subsetOfLeavesIsStillLeaves(l1, tl)
+      }
+    }
+  }.ensuring(l2.forall(isLeaf))
+
+  def lemmaSameContentImpliesSameForallCanEncodeCharUniquely(f1: Forest, f2: Forest, s: List[Char]): Unit = {
+    require(s.forall(canEncodeCharUniquely(f1, _)) && f1.content == f2.content && f1.length == f2.length && f1.forall(isLeaf) && f2.forall(isLeaf) && f1.length == removeDuplicates(s).length)
+
+    //TODO
+
+    s match {
+      case Nil() => ()
+      case hd :: tl => {
+        assert(canEncodeCharUniquely(f1, hd))
+        assert(canEncodeCharUniquely(f2, hd))
+        assert(tl.forall(canEncodeCharUniquely(f1, _)))
+        assert(tl.forall(canEncodeCharUniquely(f2, _)))
+      }
+    }
+
+  } .ensuring(_ => s.forall(canEncodeCharUniquely(f2, _)))
 
   // final theorem--------------------------------------------------------------
 
