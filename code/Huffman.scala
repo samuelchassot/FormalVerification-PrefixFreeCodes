@@ -21,7 +21,7 @@ object HuffmanCode {
   // datatypes------------------------------------------------------------------
 
   sealed abstract class Tree
-  case class InnerNode(w: BigInt, chars: List[Char], t1: Tree, t2: Tree) extends Tree
+  case class InnerNode(t1: Tree, t2: Tree) extends Tree
   case class Leaf(w: BigInt, c: Char) extends Tree
 
   type Forest = List[Tree]
@@ -30,25 +30,25 @@ object HuffmanCode {
 
   // return true if tree is an InnerNode----------------------------------------
   def isInnerNode(t: Tree): Boolean = t match {
-    case InnerNode(_, _, _, _) => true
+    case InnerNode(_, _) => true
     case Leaf(_, _) => false
   }
 
   // return true if tree is a Leaf----------------------------------------------
   def isLeaf(t: Tree): Boolean = t match {
-    case InnerNode(_, _, _, _) => false
+    case InnerNode(_, _) => false
     case Leaf(_, _) => true
   }
 
   // return the weight of a Tree------------------------------------------------
-  def cachedWeight(t: Tree): BigInt = t match {
-    case InnerNode(w, _, _, _) => w
+  def containedWeights(t: Tree): BigInt = t match {
+    case InnerNode(t1, t2) => containedWeights(t1) + containedWeights(t2)
     case Leaf(w, _) => w
   }
 
   // return the list of chars contained in the tree-----------------------------
   def containedChars(t: Tree): List[Char] = t match {
-    case InnerNode(_, chars, t1, t2) => containedChars(t1) ++ containedChars(t2)
+    case InnerNode(t1, t2) => containedChars(t1) ++ containedChars(t2)
     case Leaf(_, c) => List(c)
   }
 
@@ -62,7 +62,7 @@ object HuffmanCode {
   def countChar(t: Tree, c: Char): BigInt = {
     t match {
       case Leaf(_, lC) => if (lC == c) BigInt(1) else BigInt(0)
-      case InnerNode(_, _, t1, t2) => countChar(t1, c) + countChar(t2, c)
+      case InnerNode(t1, t2) => countChar(t1, c) + countChar(t2, c)
     }
   }.ensuring(r => r >= 0)
 
@@ -78,7 +78,7 @@ object HuffmanCode {
   def countLeaves(t: Tree): BigInt = {
     t match {
       case Leaf(_, _) => BigInt(1)
-      case InnerNode(_, _, t1, t2) => countLeaves(t1) + countLeaves(t2)
+      case InnerNode(t1, t2) => countLeaves(t1) + countLeaves(t2)
     }
   }.ensuring(r => r >= 0)
 
@@ -96,8 +96,8 @@ object HuffmanCode {
       case Leaf(w2, c2) if (w1 == w2 && c1 == c2) => true
       case _ => false 
     }
-    case InnerNode(w1, _, t11, t12) => t2 match {
-      case InnerNode(w2, _, t21, t22) => w1 == w2 && isSameTree(t11, t21) && isSameTree(t12, t22)
+    case InnerNode(t11, t12) => t2 match {
+      case InnerNode(t21, t22) => isSameTree(t11, t21) && isSameTree(t12, t22)
       case _ => false
     }
   }
@@ -107,7 +107,7 @@ object HuffmanCode {
     if (isSameTree(t, st)) true
     else t match {
       case Leaf(_, _) => false
-      case InnerNode(_, _, t1, t2) => st match { case _ => isSubTree(t1, st) || isSubTree(t2, st) }
+      case InnerNode(t1, t2) => st match { case _ => isSubTree(t1, st) || isSubTree(t2, st) }
     }
   }
 
@@ -117,7 +117,7 @@ object HuffmanCode {
   def isSameTreeReflexivity(t: Tree): Unit = {
     t match {
       case Leaf(w, c) => ()
-      case InnerNode(w, _, t1, t2) => {
+      case InnerNode(t1, t2) => {
         isSameTreeReflexivity(t1)
         isSameTreeReflexivity(t2)
       }
@@ -129,7 +129,7 @@ object HuffmanCode {
     require(isSameTree(t1, t2) && isSameTree(t2, t3))
 
     (t1, t2, t3) match {
-      case (InnerNode(_, _, t11, t12), InnerNode(_, _, t21, t22), InnerNode(_, _, t31, t32)) => {
+      case (InnerNode(t11, t12), InnerNode(t21, t22), InnerNode(t31, t32)) => {
         isSameTreeTransitivity(t11, t21, t31)
         isSameTreeTransitivity(t12, t22, t32)
       }
@@ -148,9 +148,9 @@ object HuffmanCode {
 
     t match {
       case Leaf(_, _) => ()
-      case t@InnerNode(_, _, t1, t2) => st match {
+      case t@InnerNode(t1, t2) => st match {
         case Leaf(_, _) => ()
-        case InnerNode(stw, _, st1, st2) => {
+        case InnerNode(st1, st2) => {
           if (isSameTree(t, st)) isSameSubTree(t, st, sst)
           else if (isSubTree(t1, st)) isSubTreeTransitivity(t1, st, sst)
           else if (isSubTree(t2, st)) isSubTreeTransitivity(t2, st, sst)
@@ -168,7 +168,7 @@ object HuffmanCode {
       isSameTreeTransitivity(t1, t2, st)
     } else t2 match {
       case Leaf(_, _) => ()
-      case InnerNode(_, _, t21, t22) => t1 match { case InnerNode(_, _, t11, t12) => {
+      case InnerNode(t21, t22) => t1 match { case InnerNode(t11, t12) => {
         if (isSubTree(t21, st)) isSameSubTree(t11, t21, st)
         else if (isSubTree(t22, st)) isSameSubTree(t12, t22, st)
       }}
@@ -179,7 +179,7 @@ object HuffmanCode {
   def childrenAreSubTrees(t: Tree): Unit = {
     require(isInnerNode(t))
     isSubTreeReflexivity(t)
-  }.ensuring(_ => t match { case InnerNode(_, _, t1, t2) => isSubTree(t, t1) && isSubTree(t, t2) })
+  }.ensuring(_ => t match { case InnerNode(t1, t2) => isSubTree(t, t1) && isSubTree(t, t2) })
   
   // encode/decode--------------------------------------------------------------
 
@@ -198,11 +198,11 @@ object HuffmanCode {
 
     canDecodeExactlyOneCharImpliesCanDecode(t, encodeChar(t, c))(t)
     
-    t match { case InnerNode(_, _, t1, t2) => {
+    t match { case InnerNode(t1, t2) => {
         (t1, t2) match {
-          case (Leaf(_, c1), t2@InnerNode(_, _, _, _)) if (c1 != c) => encodeCharIsDecodableAndCorrect(t2, c)
-          case (t1@InnerNode(_, _, _, _), Leaf(_, c2)) if (c2 != c) => encodeCharIsDecodableAndCorrect(t1, c)
-          case (t1@InnerNode(_, _, t11, t12), t2@InnerNode(_, _, t21, t22)) => if (canEncodeCharUniquely(t1, c)) encodeCharIsDecodableAndCorrect(t1, c) else encodeCharIsDecodableAndCorrect(t2, c)
+          case (Leaf(_, c1), t2@InnerNode(_, _)) if (c1 != c) => encodeCharIsDecodableAndCorrect(t2, c)
+          case (t1@InnerNode(_, _), Leaf(_, c2)) if (c2 != c) => encodeCharIsDecodableAndCorrect(t1, c)
+          case (t1@InnerNode(t11, t12), t2@InnerNode(t21, t22)) => if (canEncodeCharUniquely(t1, c)) encodeCharIsDecodableAndCorrect(t1, c) else encodeCharIsDecodableAndCorrect(t2, c)
           case (Leaf(_, c1), _) if (c1 == c) => ()
           case (_, Leaf(_, c2)) if (c2 == c) => ()
         }
@@ -216,13 +216,13 @@ object HuffmanCode {
   def encodeChar(t: Tree, c: Char): List[Boolean] = {
     require(isInnerNode(t) && canEncodeCharUniquely(t, c))
 
-    t match { case InnerNode(_, _, t1, t2) => {
+    t match { case InnerNode(t1, t2) => {
       if (canEncodeCharUniquely(t1, c)) t1 match {
         case Leaf(_, _) => List(false)
-        case t1@InnerNode(_, _, _, _) => List(false) ++ encodeChar(t1, c)
+        case t1@InnerNode(_, _) => List(false) ++ encodeChar(t1, c)
       } else t2 match {
         case Leaf(_, _) => List(true)
-        case t2@InnerNode(_, _, _, _) => List(true) ++ encodeChar(t2, c)
+        case t2@InnerNode(_, _) => List(true) ++ encodeChar(t2, c)
       }
     }}
   }.ensuring(bs => canDecodeAtLeastOneChar(t, bs) && decodeChar(t, bs) == (List(c), Nil[Boolean]()))
@@ -235,14 +235,14 @@ object HuffmanCode {
   def canStillDecodeOneCharAndSomething(t: Tree, c: Char, bs: List[Boolean], tlBs: List[Boolean]): Unit = {
     require(isInnerNode(t) && canDecodeAtLeastOneChar(t, bs) && decodeChar(t, bs) == (List(c), Nil[Boolean]()) && canDecodeAtLeastOneChar(t, bs ++ tlBs))
 
-    t match { case t@InnerNode(_, _, t1, t2) => bs match {
+    t match { case t@InnerNode(t1, t2) => bs match {
       case hd :: tl => {
         if (!hd) t1 match {
           case Leaf(_, _) => ()
-          case InnerNode(_, _, _, _) => canStillDecodeOneCharAndSomething(t1, c, tl, tlBs)
+          case InnerNode(_, _) => canStillDecodeOneCharAndSomething(t1, c, tl, tlBs)
         } else t2 match {
           case Leaf(_, _) => ()
-          case InnerNode(_, _, _, _) => canStillDecodeOneCharAndSomething(t2, c, tl, tlBs)
+          case InnerNode(_, _) => canStillDecodeOneCharAndSomething(t2, c, tl, tlBs)
         }
       }
       case Nil() => ()
@@ -281,16 +281,16 @@ object HuffmanCode {
     require(isInnerNode(t) && canDecodeAtLeastOneChar(t, bs))
     decreases(bs.length)
     
-    t match { case InnerNode(_, _, t1, t2) => { bs match {
+    t match { case InnerNode(t1, t2) => { bs match {
         case hd :: tl => {
           if (!hd) {
             t1 match {
-              case t1@InnerNode(_, _, t11, t12) => decodeCharLength(t1, tl)
+              case t1@InnerNode(t11, t12) => decodeCharLength(t1, tl)
               case Leaf(_, _) => ()
             }
           } else {
             t2 match {
-              case t2@InnerNode(_, _, t11, t12) => decodeCharLength(t2, tl)
+              case t2@InnerNode(t11, t12) => decodeCharLength(t2, tl)
               case Leaf(_, _) => ()
             }
           }
@@ -304,14 +304,14 @@ object HuffmanCode {
     require(isInnerNode(t))
     decreases(bs.length)
 
-    t match { case InnerNode(_, _, t1, t2) => { bs match {
+    t match { case InnerNode(t1, t2) => { bs match {
       case hd :: tl => {
         if (!hd) t1 match {
           case Leaf(_, _) => true
-          case t1@InnerNode(_, _, _, _) => canDecodeAtLeastOneChar(t1, tl)
+          case t1@InnerNode(_, _) => canDecodeAtLeastOneChar(t1, tl)
         } else t2 match {
           case Leaf(_, _) => true
-          case t2@InnerNode(_, _, _, _) => canDecodeAtLeastOneChar(t2, tl)
+          case t2@InnerNode(_, _) => canDecodeAtLeastOneChar(t2, tl)
         }
       }
       case Nil() => false
@@ -335,18 +335,18 @@ object HuffmanCode {
     require(isInnerNode(s) && isInnerNode(t) && canDecode(s, bs)(t) && isSubTree(t, s))
     decreases(bs.length)
 
-    s match { case InnerNode(_, _, t1, t2) => { bs match {
+    s match { case InnerNode(t1, t2) => { bs match {
       case hd :: tl => {
         if (!hd) t1 match {
           case Leaf(_, c) => ()
-          case t1@InnerNode(_, _, _, _) => {
+          case t1@InnerNode(_, _) => {
             childrenAreSubTrees(s)
             isSubTreeTransitivity(t, s, t1)
             canDecodeImpliesCanDecodeAtLeastOneChar(t1, tl)
           }
         } else t2 match {
           case Leaf(_, c) => ()
-          case t2@InnerNode(_, _, _, _) => {
+          case t2@InnerNode(_, _) => {
             childrenAreSubTrees(s)
             isSubTreeTransitivity(t, s, t2)
             canDecodeImpliesCanDecodeAtLeastOneChar(t2, tl)
@@ -368,15 +368,15 @@ object HuffmanCode {
 
     bs match {
       case Nil() => ()
-      case hd :: tl => { s match { case InnerNode(_, _, s1, s2) => {
+      case hd :: tl => { s match { case InnerNode(s1, s2) => {
         if (!hd) {
           s1 match {
-            case s1@InnerNode(_, _, _, _) => canDecodeImpliesCanDecodeTailAfterOneCharDecoded(s1, tl)(t)
+            case s1@InnerNode(_, _) => canDecodeImpliesCanDecodeTailAfterOneCharDecoded(s1, tl)(t)
             case Leaf(_, c) => ()
           }
         } else {
           s2 match {
-            case s2@InnerNode(_, _, _, _) => canDecodeImpliesCanDecodeTailAfterOneCharDecoded(s2, tl)(t)
+            case s2@InnerNode(_, _) => canDecodeImpliesCanDecodeTailAfterOneCharDecoded(s2, tl)(t)
             case Leaf(_, c) => ()
           }
         }
@@ -389,14 +389,14 @@ object HuffmanCode {
     require(isInnerNode(s) && isInnerNode(t) && canDecodeAtLeastOneChar(s, bs) && decodeChar(s, bs)._2 ==  Nil())
     decreases(bs.length)
 
-    s match { case InnerNode(_, _, t1, t2) => { bs match {
+    s match { case InnerNode(t1, t2) => { bs match {
       case hd :: tl => {
         if (!hd) t1 match {
           case Leaf(_, _) => ()
-          case t1@InnerNode(_, _, _, _) => canDecodeExactlyOneCharImpliesCanDecode(t1, tl)
+          case t1@InnerNode(_, _) => canDecodeExactlyOneCharImpliesCanDecode(t1, tl)
         } else t2 match {
           case Leaf(_, _) => ()
-          case t2@InnerNode(_, _, _, _) => canDecodeExactlyOneCharImpliesCanDecode(t2, tl)
+          case t2@InnerNode(_, _) => canDecodeExactlyOneCharImpliesCanDecode(t2, tl)
         }
       }
       case Nil() => ()
@@ -409,14 +409,14 @@ object HuffmanCode {
     require(isInnerNode(s) && isInnerNode(t) && (bs1.isEmpty && t == s || canDecodeAtLeastOneChar(s, bs1) && decodeChar(s, bs1)._2 == Nil[Boolean]()) && canDecode(t, bs2)(t))
     decreases(bs1.length)
 
-    s match { case InnerNode(_, _, t1, t2) => bs1 match {
+    s match { case InnerNode(t1, t2) => bs1 match {
       case hd :: tl => {
         if (!hd) t1 match {
           case Leaf(_, c) => canStillDecodeConcatenation(t, Nil(), bs2)
-          case t1@InnerNode(_, _, _, _) => canStillDecodeConcatenation(t1, tl, bs2)
+          case t1@InnerNode(_, _) => canStillDecodeConcatenation(t1, tl, bs2)
         } else t2 match {
           case Leaf(_, c) => canStillDecodeConcatenation(t, Nil(), bs2)
-          case t2@InnerNode(_, _, _, _) => canStillDecodeConcatenation(t2, tl, bs2)
+          case t2@InnerNode(_, _) => canStillDecodeConcatenation(t2, tl, bs2)
         }
       }
       case Nil() => ()
@@ -438,13 +438,13 @@ object HuffmanCode {
     require(isInnerNode(t) && canDecodeAtLeastOneChar(t, bs))
     decreases(bs.length)
 
-    (t, bs) match { case (InnerNode(_, _, t1, t2), hd :: tl) => {
+    (t, bs) match { case (InnerNode(t1, t2), hd :: tl) => {
       if (!hd) t1 match {
         case Leaf(_, c) => (List(c), tl)
-        case t1@InnerNode(_, _, _, _) => decodeChar(t1, tl)
+        case t1@InnerNode(_, _) => decodeChar(t1, tl)
       } else t2 match {
         case Leaf(_, c) => (List(c), tl)
-        case t2@InnerNode(_, _, _, _) => decodeChar(t2, tl)
+        case t2@InnerNode(_, _) => decodeChar(t2, tl)
       }
     }}
   }.ensuring(r => r._1.length == 1)
@@ -611,7 +611,7 @@ object HuffmanCode {
   // merge two Tree in one by adding an InnerNode-------------------------------
   def uniteTrees(t1: Tree, t2: Tree): Tree = {
     require(ListSpecs.noDuplicate(containedChars(t1) ++ containedChars(t2)))
-    InnerNode(cachedWeight(t1) + cachedWeight(t2), containedChars(t1) ++ containedChars(t2), t1, t2)
+    InnerNode(t1, t2)
   }.ensuring(t => ListSpecs.noDuplicate(containedChars(t)))
 
   // insert a Tree in a Forest and sort the latter------------------------------
@@ -620,7 +620,7 @@ object HuffmanCode {
 
     f match {
       case Nil() => List(t)
-      case hd :: tl => if (cachedWeight(t) <= cachedWeight(hd)) t :: f else hd :: insortTree(t, tl)
+      case hd :: tl => if (containedWeights(t) <= containedWeights(hd)) t :: f else hd :: insortTree(t, tl)
     }
   }.ensuring(r => r.length == f.length+1 && (t::f).content == r.content && countLeaves(t) + countLeaves(f) == countLeaves(r) && containedChars(r).content == containedChars(t :: f).content)
 
