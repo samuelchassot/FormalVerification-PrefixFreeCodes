@@ -764,6 +764,7 @@ object HuffmanCode {
   def similarLeavesCanEncodeSameChars(f1: Forest, f2: Forest, s: List[Char]): Unit = {
     require(s.forall(canEncodeCharUniquely(f1, _)) && f1.content == f2.content && f1.length == f2.length && f1.forall(isLeaf) && f2.forall(isLeaf) && f1.length == removeDuplicates(s).length)
 
+    equivalentForestImpliesSameChars(f1, f2)
     s match {
       case Nil() => ()
       case hd :: tl => {
@@ -774,6 +775,28 @@ object HuffmanCode {
       }
     }
   } .ensuring(_ => s.forall(canEncodeCharUniquely(f2, _)))
+
+  //TODO
+  def equivalentForestImpliesSameChars(f1: Forest, f2: Forest) : Unit = {
+    require(f1.content == f2.content && f1.length == f2.length && ListSpecs.noDuplicate(f1) && ListSpecs.noDuplicate(f2))
+    decreases(f1.length)
+
+    (f1, f2) match {
+      case (hd1 :: tl1, hd2 :: tl2) => {
+        if(hd1 == hd2) {
+          equivalentForestImpliesSameChars(tl1, tl2)
+          assert(containedChars(f1).content == containedChars(f2).content)
+        } else {
+          assert(tl2.contains(hd1))
+          equivalentForestImpliesSameChars(tl1, f2.filter(_ != hd1))
+          assert(containedChars(tl1).content == containedChars(f2.filter(_ != hd1)).content)
+          assert(containedChars(hd1 :: tl1).content == (containedChars(hd1) ++ containedChars(tl1)).content)
+          assert(containedChars(hd1 :: f2.filter(_ != hd1)).content == containedChars(f2).content)
+        }
+      }
+      case (Nil(), Nil()) => ()
+    }
+  }.ensuring(_ => containedChars(f1).content == containedChars(f2).content)
 
   // You're leaving dangerous land----------------------------------------------
 
