@@ -536,16 +536,18 @@ object HuffmanCode {
 
   def occurrencesToLeaves(occ: List[(Char, BigInt)]): Forest = {
     require(ListSpecs.noDuplicate(occ.map(_._1)))
+
     occ match {
       case hd :: tl => {
         val newLeaf = Leaf(hd._2, hd._1)
-        val tailLeaves = occurrencesToLeaves(tl)
+        val newLeaves = occurrencesToLeaves(tl)
 
-        val res = newLeaf :: tailLeaves
-        val sTail = tl.map(_._1)
-        lemmaForallCanEncodeUniquelyImpliesForallWithNewHeadAndCorrespondingLeaf(tailLeaves, tl.map(_._1), newLeaf, hd._1)
-        lemmaForallCanEncodeUniquelyWithOneMoreLeafInTheForestNotAlreadyContained(tailLeaves, newLeaf, sTail)
-        res
+        val leaves = newLeaf :: newLeaves
+
+        canStillEncodeUniquelyConcat(newLeaves, tl.map(_._1), newLeaf, hd._1)
+        canStilEncodeUniquelyWithMoreUniqueLeaves(newLeaves, newLeaf, tl.map(_._1))
+
+        leaves
       }
       case Nil() => Nil[Tree]()
     }
@@ -581,16 +583,22 @@ object HuffmanCode {
     f match {
       case t1 :: t2 :: tl => {
         //TODO clean all assets once completely proven
-        lemmaCanEncodeUniquelyAndSameNLeavesThanCharsImpliesNoDuplicateInChars(f, s)
-        lemmaNoDuplicateInForestCharsImpliesNoDuplicateInTwoFirstTreesChars(f)
+        noDuplicatesInForest(f, s)
+        noDuplicatesInSubForest(f)
+
         assert(ListSpecs.noDuplicate(containedChars(t1) ++ containedChars(t2)))
+
         val newTree = uniteTrees(t1, t2)
         val newForest = insortTree(newTree, tl)
+
         assert(containedChars(newForest).content == containedChars(newTree :: tl).content)
         assert(containedChars(newForest).content == containedChars(f).content)
         assert(countLeaves(newForest) == removeDuplicates(s).length)
-        lemmaSameCachedCharsAndNumLeavesImpliesCanEncodeUniquely(f, newForest, s)
+
+        canEncodeUniquelyWithSimilarForest(f, newForest, s)
+
         assert(s.forall(canEncodeCharUniquely(newForest, _)))
+
         huffmansAlgorithmHelper(newForest)
       }
       case t :: Nil() => {
@@ -677,12 +685,12 @@ object HuffmanCode {
   // You're entering dangerous land---------------------------------------------
 
   //TODO
-  def lemmaCanEncodeUniquelyAndSameNLeavesThanCharsImpliesNoDuplicateInChars(f: Forest, s: List[Char]): Unit = {
+  def noDuplicatesInForest(f: Forest, s: List[Char]): Unit = {
     require(s.forall(canEncodeCharUniquely(f, _)) && countLeaves(f) == removeDuplicates(s).length)
   }.ensuring(_ => ListSpecs.noDuplicate(containedChars(f)))
 
   //TODO
-  def lemmaForallCanEncodeUniquelyImpliesForallWithNewHeadAndCorrespondingLeaf(f: Forest, s: List[Char], l: Leaf, hd: Char): Unit = {
+  def canStillEncodeUniquelyConcat(f: Forest, s: List[Char], l: Leaf, hd: Char): Unit = {
     require(f.forall(isLeaf) && s.forall(canEncodeCharUniquely(f, _)) && l.c == hd && !s.contains(hd) && !containedChars(f).contains(hd))
 
     assert(canEncodeCharUniquely(l, hd))
@@ -694,7 +702,7 @@ object HuffmanCode {
   }.ensuring(_ => (hd :: s).forall(canEncodeCharUniquely(l :: f, _)))
 
   //TODO
-  def lemmaForallCanEncodeUniquelyWithOneMoreLeafInTheForestNotAlreadyContained(f: Forest, l: Leaf, s: List[Char]): Unit = {
+  def canStilEncodeUniquelyWithMoreUniqueLeaves(f: Forest, l: Leaf, s: List[Char]): Unit = {
     require(s.forall(canEncodeCharUniquely(f, _)) && f.forall(isLeaf) && !containedChars(f).contains(l.c))
     decreases(s.length)
 
@@ -706,7 +714,7 @@ object HuffmanCode {
     //     assert(containedChars(f).contains(hd))
     //     assert(hd != l.c)
     //     assert( s == hd :: tl)
-    //     lemmaForallCanEncodeUniquelyWithOneMoreLeafInTheForestNotAlreadyContained(f, l, tl)
+    //     canStilEncodeUniquelyWithMoreUniqueLeaves(f, l, tl)
     //     assert(tl.forall(canEncodeCharUniquely(l :: f, _)))
     //     assert((hd :: tl).forall(canEncodeCharUniquely(l :: f, _)))
     //     assert(s.forall(canEncodeCharUniquely(l :: f, _)))
@@ -717,7 +725,7 @@ object HuffmanCode {
   }.ensuring(_ => s.forall(canEncodeCharUniquely(l :: f, _)))
 
   //TODO
-  def lemmaNoDuplicateInForestCharsImpliesNoDuplicateInTwoFirstTreesChars(f: Forest): Unit = {
+  def noDuplicatesInSubForest(f: Forest): Unit = {
     require(ListSpecs.noDuplicate(containedChars(f)))
     
     f match {
@@ -748,7 +756,7 @@ object HuffmanCode {
     })
 
   //TODO
-  def lemmaSameCachedCharsAndNumLeavesImpliesCanEncodeUniquely(f1: Forest, f2: Forest, s: List[Char]): Unit = {
+  def canEncodeUniquelyWithSimilarForest(f1: Forest, f2: Forest, s: List[Char]): Unit = {
     require(s.forall(canEncodeCharUniquely(f1, _)) && containedChars(f1).content == containedChars(f2).content && countLeaves(f1) == countLeaves(f2))
   }.ensuring(_ => s.forall(canEncodeCharUniquely(f2, _)))
 
