@@ -502,13 +502,13 @@ object HuffmanCode {
     require(removeDuplicates(s).length > 1)
 
     val unsortedForest = generateUnsortedForest(s)
+    assert(s.forall(canEncodeCharUniquely(unsortedForest, _)))
     val sortedForest = sortLeaves(unsortedForest)
 
-    subsetOfLeavesIsStillLeaves(unsortedForest, sortedForest)
-    similarLeavesCanEncodeSameChars(unsortedForest, sortedForest, s)
+    assert(s.forall(canEncodeCharUniquely(sortedForest, _)))
 
     sortedForest
-  }.ensuring(r => r.length > 1 && r.forall(isLeaf) && s.forall(canEncodeCharUniquely(r, _)) && r.length == removeDuplicates(s).length)
+  }.ensuring(r => r.length > 1 && r.forall(isLeaf) && s.forall(canEncodeCharUniquely(r, _)) && r.length == removeDuplicates(s).length && containedChars(r).content == removeDuplicates(s).content)
 
   // reorder a forest of leaves according to their weights in ascending order---
   def sortLeaves(f: Forest): Forest = {
@@ -522,7 +522,7 @@ object HuffmanCode {
         sortedF
       }
     }
-  }.ensuring(sortedF => sortedF.forall(isLeaf) && equivalentLeaves(f, sortedF))
+  }.ensuring(sortedF => equivalentLeaves(f, sortedF) && containedChars(f).content == containedChars(sortedF).content)
 
   // generate the Forest of Leaf for a given list of characters-----------------
   def generateUnsortedForest(s: List[Char]): Forest = {
@@ -532,7 +532,7 @@ object HuffmanCode {
     canStillEncodeSameCharsUniquely(f, s)
 
     f
-  }.ensuring(r => r.forall(isLeaf) && r.length == generateOccurrences(s).length && s.forall(canEncodeCharUniquely(r, _)))
+  }.ensuring(r => r.forall(isLeaf) && s.forall(canEncodeCharUniquely(r, _)) && r.length == removeDuplicates(s).length && containedChars(r).content == removeDuplicates(s).content)
 
   def occurrencesToLeaves(occ: List[(Char, BigInt)]): Forest = {
     require(ListSpecs.noDuplicate(occ.map(_._1)))
@@ -551,7 +551,7 @@ object HuffmanCode {
       }
       case Nil() => Nil[Tree]()
     }
-  }.ensuring(r => r.forall(isLeaf) && r.length == occ.length && occ.map(_._1).forall(canEncodeCharUniquely(r, _)) && containedChars(r).content == occ.map(_._1).content)
+  }.ensuring(r => r.forall(isLeaf) && occ.map(_._1).forall(canEncodeCharUniquely(r, _)) && r.length == occ.length && containedChars(r).content == occ.map(_._1).content)
 
   // return the list of occurences tuples of the given chars the given string---
   def generateOccurrencesHelper(chars: List[Char])(implicit s: List[Char]): List[(Char, BigInt)] = {
@@ -573,7 +573,7 @@ object HuffmanCode {
   // return the list of occurrences tuples in the given string------------------
   def generateOccurrences(s: List[Char]): List[(Char, BigInt)] = {
     generateOccurrencesHelper(removeDuplicates(s))(s)
-  }.ensuring(r => ListSpecs.noDuplicate(r.map(_._1)) && r.length == removeDuplicates(s).length && r.map(_._1) == removeDuplicates(s))
+  }.ensuring(r => ListSpecs.noDuplicate(r.map(_._1)) && r.map(_._1) == removeDuplicates(s))
 
   // generate Huffman code's Tree recursively given a Forest--------------------
   def huffmansAlgorithmHelper(f: Forest)(implicit s: List[Char]): Tree = {
@@ -759,44 +759,6 @@ object HuffmanCode {
   def canEncodeUniquelyWithSimilarForest(f1: Forest, f2: Forest, s: List[Char]): Unit = {
     require(s.forall(canEncodeCharUniquely(f1, _)) && containedChars(f1).content == containedChars(f2).content && countLeaves(f1) == countLeaves(f2))
   }.ensuring(_ => s.forall(canEncodeCharUniquely(f2, _)))
-
-  //TODO
-  def similarLeavesCanEncodeSameChars(f1: Forest, f2: Forest, s: List[Char]): Unit = {
-    require(s.forall(canEncodeCharUniquely(f1, _)) && f1.content == f2.content && f1.length == f2.length && f1.forall(isLeaf) && f2.forall(isLeaf) && f1.length == removeDuplicates(s).length)
-
-    equivalentForestImpliesSameChars(f1, f2)
-    s match {
-      case Nil() => ()
-      case hd :: tl => {
-        assert(canEncodeCharUniquely(f1, hd))
-        assert(canEncodeCharUniquely(f2, hd))
-        assert(tl.forall(canEncodeCharUniquely(f1, _)))
-        assert(tl.forall(canEncodeCharUniquely(f2, _)))
-      }
-    }
-  } .ensuring(_ => s.forall(canEncodeCharUniquely(f2, _)))
-
-  //TODO
-  def equivalentForestImpliesSameChars(f1: Forest, f2: Forest) : Unit = {
-    require(f1.content == f2.content && f1.length == f2.length && ListSpecs.noDuplicate(f1) && ListSpecs.noDuplicate(f2))
-    decreases(f1.length)
-
-    (f1, f2) match {
-      case (hd1 :: tl1, hd2 :: tl2) => {
-        if(hd1 == hd2) {
-          equivalentForestImpliesSameChars(tl1, tl2)
-          assert(containedChars(f1).content == containedChars(f2).content)
-        } else {
-          assert(tl2.contains(hd1))
-          equivalentForestImpliesSameChars(tl1, f2.filter(_ != hd1))
-          assert(containedChars(tl1).content == containedChars(f2.filter(_ != hd1)).content)
-          assert(containedChars(hd1 :: tl1).content == (containedChars(hd1) ++ containedChars(tl1)).content)
-          assert(containedChars(hd1 :: f2.filter(_ != hd1)).content == containedChars(f2).content)
-        }
-      }
-      case (Nil(), Nil()) => ()
-    }
-  }.ensuring(_ => containedChars(f1).content == containedChars(f2).content)
 
   // You're leaving dangerous land----------------------------------------------
 
