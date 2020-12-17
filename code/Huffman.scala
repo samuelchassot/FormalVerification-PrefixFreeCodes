@@ -1,5 +1,5 @@
 // Personal final Project
-// Verification of encode/decode with Huffman codes
+// Verification of encode/decode with binary tree codes
 // Formal verification (CS-550, EPFL)
 //
 // Samuel Chassot 270955
@@ -11,7 +11,7 @@ import stainless.equations._
 import stainless.lang._
 import stainless.proof.check
 
-object HuffmanCode {
+object BinaryTreeCodes {
 
    @extern // WARNING: @extern is unsound, only use for debugging
    def assume(b: Boolean): Unit = {
@@ -467,7 +467,7 @@ object HuffmanCode {
     }
   }
 
-  // generateHuffmanCodeTree functions------------------------------------------
+  // generateBinaryTreeCode functions-------------------------------------------
 
   // return a copy of the string without duplicates-----------------------------
   def removeDuplicates(s: List[Char]): List[Char] = {
@@ -480,88 +480,36 @@ object HuffmanCode {
     }
   }.ensuring(r => ListSpecs.noDuplicate(r))
 
-  // return true iff the two forests of leaves contain the same leaves----------
-  def equivalentLeaves(f1: Forest, f2: Forest): Boolean = {
-    require(f1.forall(isLeaf) && f2.forall(isLeaf))
-    f1.length == f2.length && f1.content == f2.content
-  }
-
-  // return the Huffman code tree for a given list of characters that contains--
+  // return a binary tree code for the given list of characters that contains---
   // at least two different characters otherwise there is no meaningful---------
   // encoding for this----------------------------------------------------------
-  def generateHuffmanCodeTree(s: List[Char]): Tree = {
+  def generateBinaryTreeCode(s: List[Char]): Tree = {
     require(removeDuplicates(s).length > 1)
 
-    val f = generateSortedForest(s)
-    allLeavesImpliesForestSameLength(f)
-    huffmansAlgorithm(f)(s)
+    forestToBinaryTreeCode(generateForest(s))(s)
   }.ensuring(t => isInnerNode(t) && s.forall(c => canEncodeCharUniquely(t, c)))
 
-  // generate and sort a Forest given a list of characters----------------------
-  def generateSortedForest(s: List[Char]): Forest = {
+  // generate a forest of leaves for a given list of characters-----------------
+  def generateForest(s: List[Char]): Forest = {
     require(removeDuplicates(s).length > 1)
 
-    val unsortedForest = generateUnsortedForest(s)
-    assert(s.forall(canEncodeCharUniquely(unsortedForest, _)))
-    val sortedForest = sortLeaves(unsortedForest)
-
-    assert(s.forall(canEncodeCharUniquely(sortedForest, _)))
-
-    sortedForest
-  }.ensuring(r => r.length > 1 && r.forall(isLeaf) && s.forall(canEncodeCharUniquely(r, _)) && r.length == removeDuplicates(s).length && containedChars(r).content == removeDuplicates(s).content)
-
-  // reorder a forest of leaves according to their weights in ascending order---
-  def sortLeaves(f: Forest): Forest = {
-    require(f.forall(isLeaf))
-
-    f match {
-      case Nil() => Nil[Tree]()
-      case hd :: tl => {
-        val sortedF = insortTree(hd, sortLeaves(tl))
-        subsetOfLeavesIsStillLeaves(f, sortedF)
-        sortedF
-      }
-    }
-  }.ensuring(sortedF => equivalentLeaves(f, sortedF) && containedChars(f).content == containedChars(sortedF).content)
-
-  // generate the Forest of Leaf for a given list of characters-----------------
-  def generateUnsortedForest(s: List[Char]): Forest = {
-    val occ = generateOccurrences(s)
-    val f = occurrencesToLeaves(occ)
+    val occ = generateOccurrences(removeDuplicates(s))(s)
+    val f = occurrencesToLeaves(occ, removeDuplicates(s))
 
     canStillEncodeSameCharsUniquely(f, s)
 
     f
-  }.ensuring(r => r.forall(isLeaf) && s.forall(canEncodeCharUniquely(r, _)) && r.length == removeDuplicates(s).length && containedChars(r).content == removeDuplicates(s).content)
-
-  def occurrencesToLeaves(occ: List[(Char, BigInt)]): Forest = {
-    require(ListSpecs.noDuplicate(occ.map(_._1)))
-
-    occ match {
-      case hd :: tl => {
-        val newLeaf = Leaf(hd._2, hd._1)
-        val newLeaves = occurrencesToLeaves(tl)
-
-        val leaves = newLeaf :: newLeaves
-
-        canStillEncodeUniquelyConcat(newLeaves, tl.map(_._1), newLeaf, hd._1)
-        canStilEncodeUniquelyWithMoreUniqueLeaves(newLeaves, newLeaf, tl.map(_._1))
-
-        leaves
-      }
-      case Nil() => Nil[Tree]()
-    }
-  }.ensuring(r => r.forall(isLeaf) && occ.map(_._1).forall(canEncodeCharUniquely(r, _)) && r.length == occ.length && containedChars(r).content == occ.map(_._1).content)
+  }.ensuring(f => s.forall(canEncodeCharUniquely(f, _)))
 
   // return the list of occurences tuples of the given chars the given string---
-  def generateOccurrencesHelper(chars: List[Char])(implicit s: List[Char]): List[(Char, BigInt)] = {
+  def generateOccurrences(chars: List[Char])(implicit s: List[Char]): List[(Char, BigInt)] = {
     require(ListSpecs.noDuplicate(chars))
 
     chars match {
       case Nil() => Nil[(Char, BigInt)]()
       case hd :: tl => {
         val tuple =  (hd, s.count(_ == hd))
-        val tuples = generateOccurrencesHelper(tl)
+        val tuples = generateOccurrences(tl)
 
         assert(ListSpecs.noDuplicate((tuple::tuples).map(_._1)))
 
@@ -570,94 +518,39 @@ object HuffmanCode {
     }
   }.ensuring(r => ListSpecs.noDuplicate(r.map(_._1)) && r.map(_._1) == chars)
 
-  // return the list of occurrences tuples in the given string------------------
-  def generateOccurrences(s: List[Char]): List[(Char, BigInt)] = {
-    generateOccurrencesHelper(removeDuplicates(s))(s)
-  }.ensuring(r => ListSpecs.noDuplicate(r.map(_._1)) && r.map(_._1) == removeDuplicates(s))
+  //TODO prove postcondition and document
+  def occurrencesToLeaves(occ: List[(Char, BigInt)], chars: List[Char]): Forest = {
+    require(ListSpecs.noDuplicate(occ.map(_._1)) && occ.map(_._1) == chars)
 
-  // generate Huffman code's Tree recursively given a Forest--------------------
-  def huffmansAlgorithmHelper(f: Forest)(implicit s: List[Char]): Tree = {
-    require((f.length == 1 && isInnerNode(f.head) || f.length > 1 ) && s.forall(canEncodeCharUniquely(f, _)) && countLeaves(f) == removeDuplicates(s).length)
-    decreases(f.length)
+    (occ, chars) match {
+      case (occHd :: occTl, chardHd :: charsTl) => {
+        val newLeaf = Leaf(occHd._2, occHd._1)
+        val newLeaves = occurrencesToLeaves(occTl, charsTl)
+
+        newLeaf :: newLeaves
+      }
+      case _ => Nil[Tree]()
+    }
+  }.ensuring(r => r.forall(isLeaf) && chars.forall(canEncodeCharUniquely(r, _)))
+
+  // generate the corresponding binary tree code given a Forest-----------------
+  def forestToBinaryTreeCode(f: Forest)(implicit s: List[Char]): Tree = {
+    require((f.length == 1 && isInnerNode(f.head) || f.length > 1) && s.forall(canEncodeCharUniquely(f, _)))
 
     f match {
-      case t1 :: t2 :: tl => {
-        //TODO clean all assets once completely proven
-        noDuplicatesInForest(f, s)
-        noDuplicatesInSubForest(f)
-
-        assert(ListSpecs.noDuplicate(containedChars(t1) ++ containedChars(t2)))
-
-        val newTree = uniteTrees(t1, t2)
-        val newForest = insortTree(newTree, tl)
-
-        assert(containedChars(newForest).content == containedChars(newTree :: tl).content)
-        assert(containedChars(newForest).content == containedChars(f).content)
-        assert(countLeaves(newForest) == removeDuplicates(s).length)
-
-        canEncodeUniquelyWithSimilarForest(f, newForest, s)
-
-        assert(s.forall(canEncodeCharUniquely(newForest, _)))
-
-        huffmansAlgorithmHelper(newForest)
-      }
-      case t :: Nil() => {
+      //TODO prove the precondition for the recursive call
+      case t1 :: t2 :: tl => forestToBinaryTreeCode(InnerNode(t1, t2) :: tl)
+      case t :: _ => {
         canStillEncodeUniquelyWithSingleTree(f, s)
         t
       }
     }
-  }.ensuring(t => isInnerNode(t) && s.forall(canEncodeCharUniquely(t, _)) && countLeaves(t) == removeDuplicates(s).length)
+  }.ensuring(btc => isInnerNode(btc) && s.forall(canEncodeCharUniquely(btc, _)))
 
-  // merge two Tree in one by adding an InnerNode-------------------------------
-  def uniteTrees(t1: Tree, t2: Tree): Tree = {
-    require(ListSpecs.noDuplicate(containedChars(t1) ++ containedChars(t2)))
-    InnerNode(t1, t2)
-  }.ensuring(t => ListSpecs.noDuplicate(containedChars(t)))
+  // generateBinaryTreeCode lemmas---------------------------------------------
 
-  // insert a Tree in a Forest and sort the latter------------------------------
-  def insortTree(t: Tree, f: Forest): Forest = {
-    decreases(f.length)
-
-    f match {
-      case Nil() => List(t)
-      case hd :: tl => if (containedWeights(t) <= containedWeights(hd)) t :: f else hd :: insortTree(t, tl)
-    }
-  }.ensuring(r => r.length == f.length+1 && (t::f).content == r.content && countLeaves(t) + countLeaves(f) == countLeaves(r) && containedChars(r).content == containedChars(t :: f).content)
-
-  // generate Huffman code's Tree given a Forest--------------------------------
-  def huffmansAlgorithm(f: Forest)(implicit s: List[Char]): Tree = {
-    require(f.length > 1 && f.forall(isLeaf) && s.forall(canEncodeCharUniquely(f, _)) && f.length == removeDuplicates(s).length && f.length == countLeaves(f))
-    huffmansAlgorithmHelper(f)(s)
-  }.ensuring(t => isInnerNode(t) && s.forall(canEncodeCharUniquely(t, _)))
-
-  // generateHuffmanCodeTree lemmas---------------------------------------------
-
-  // prove that if we have only leaves in a forest then its size is-------------
-  // the same as the number of leaves-------------------------------------------
-  def allLeavesImpliesForestSameLength(f: Forest): Unit = {
-    require(f.forall(isLeaf))
-
-    f match {
-      case Nil() => ()
-      case hd :: tl => allLeavesImpliesForestSameLength(tl)
-    }
-  }.ensuring(_ => f.length == countLeaves(f))
-
-  // prove that if we take a subset of leaves then------------------------------
-  // the former still only contains leaves--------------------------------------
-  def subsetOfLeavesIsStillLeaves(l1: Forest, l2: Forest): Unit = {
-    require(l1.forall(isLeaf) && l2.content.subsetOf(l1.content))
-    decreases(l2.length)
-
-    l2 match {
-      case Nil() => ()
-      case hd :: tl => {
-        ListSpecs.forallContained(l1, isLeaf, hd)
-        subsetOfLeavesIsStillLeaves(l1, tl)
-      }
-    }
-  }.ensuring(l2.forall(isLeaf))
-
+  // prove that if we can encode uniquely a string removing all the duplicates--
+  // then we can decode its initial form----------------------------------------
   def canStillEncodeSameCharsUniquely(f: Forest, s: List[Char]): Unit = {
     require(removeDuplicates(s).forall(canEncodeCharUniquely(f, _)))
     decreases(s.length)
@@ -671,7 +564,8 @@ object HuffmanCode {
     }
   }.ensuring( _ => s.forall(canEncodeCharUniquely(f, _)))
 
-
+  // prove that if we can encode uniquely with a forest of one tree then--------
+  // we can encode uniquely with the single tree of it--------------------------
   def canStillEncodeUniquelyWithSingleTree(f: Forest, s: List[Char]): Unit = {
     require(f.length == 1 && s.forall(canEncodeCharUniquely(f, _)))
 
@@ -681,94 +575,19 @@ object HuffmanCode {
     }
   }.ensuring(_ => s.forall(canEncodeCharUniquely(f.head, _)))
 
-
   // You're entering dangerous land---------------------------------------------
 
-  //TODO
-  def noDuplicatesInForest(f: Forest, s: List[Char]): Unit = {
-    require(s.forall(canEncodeCharUniquely(f, _)) && countLeaves(f) == removeDuplicates(s).length)
-  }.ensuring(_ => ListSpecs.noDuplicate(containedChars(f)))
-
-  //TODO
-  def canStillEncodeUniquelyConcat(f: Forest, s: List[Char], l: Leaf, hd: Char): Unit = {
-    require(f.forall(isLeaf) && s.forall(canEncodeCharUniquely(f, _)) && l.c == hd && !s.contains(hd) && !containedChars(f).contains(hd))
-
-    assert(canEncodeCharUniquely(l, hd))
-    assert(s.forall(canEncodeCharUniquely(f, _)))
-    assert(s.forall(canEncodeCharUniquely(l :: f, _)))
-    assert(canEncodeCharUniquely(l :: f, hd))
-    assert(s.forall(canEncodeCharUniquely(l :: f, _)))
-    assert((hd :: s).forall(canEncodeCharUniquely(l :: f, _)))
-  }.ensuring(_ => (hd :: s).forall(canEncodeCharUniquely(l :: f, _)))
-
-  //TODO
-  def canStilEncodeUniquelyWithMoreUniqueLeaves(f: Forest, l: Leaf, s: List[Char]): Unit = {
-    require(s.forall(canEncodeCharUniquely(f, _)) && f.forall(isLeaf) && !containedChars(f).contains(l.c))
-    decreases(s.length)
-
-    // val newForest = l :: f
-    // s match {
-    //   case hd :: tl => {
-    //     assert(s.forall(canEncodeCharUniquely(f, _)))
-    //     assert(canEncodeCharUniquely(f, hd))
-    //     assert(containedChars(f).contains(hd))
-    //     assert(hd != l.c)
-    //     assert( s == hd :: tl)
-    //     canStilEncodeUniquelyWithMoreUniqueLeaves(f, l, tl)
-    //     assert(tl.forall(canEncodeCharUniquely(l :: f, _)))
-    //     assert((hd :: tl).forall(canEncodeCharUniquely(l :: f, _)))
-    //     assert(s.forall(canEncodeCharUniquely(l :: f, _)))
-    //   }
-    //   case Nil() => assert(s.forall(canEncodeCharUniquely(l :: f, _)))
-    // }
-    // assert(s.forall(canEncodeCharUniquely(l :: f, _)))
-  }.ensuring(_ => s.forall(canEncodeCharUniquely(l :: f, _)))
-
-  //TODO
-  def noDuplicatesInSubForest(f: Forest): Unit = {
-    require(ListSpecs.noDuplicate(containedChars(f)))
-    
-    f match {
-      case t1 :: t2 :: tl => {
-        (
-          ListSpecs.noDuplicate(containedChars(f))                                                ==:| trivial |:
-          ListSpecs.noDuplicate(containedChars(t1) ++ containedChars(t2::tl))                        ==:| trivial |:
-          ListSpecs.noDuplicate(containedChars(t1) ++ (containedChars(t2) ++ containedChars(tl)))       ==:| ListSpecs.appendAssoc(containedChars(t1), containedChars(t2), containedChars(tl)) |:
-          ListSpecs.noDuplicate((containedChars(t1) ++ containedChars(t2)) ++ containedChars(tl))       ==:| ListSpecs.noDuplicateSubseq(containedChars(t1) ++ containedChars(t2), containedChars(t1) ++ (containedChars(t2) ++ containedChars(tl))) |:
-          ListSpecs.noDuplicate(containedChars(t1) ++ containedChars(t2))
-        ).qed
-
-        assert(f match { 
-          case t1 :: t2 :: tl => ListSpecs.noDuplicate(containedChars(t1) ++ containedChars(t2))
-          case t :: tl => ListSpecs.noDuplicate(containedChars(t))
-          case Nil() => ListSpecs.noDuplicate(containedChars(f))
-        })
-        ()
-      }
-      case t :: tl => ()
-      case Nil() => ()
-        
-    }
-  }.ensuring(_ => f match { 
-    case t1 :: t2 :: tl => ListSpecs.noDuplicate(containedChars(t1) ++ containedChars(t2))
-    case t :: tl => ListSpecs.noDuplicate(containedChars(t))
-    case Nil() => ListSpecs.noDuplicate(containedChars(f))
-    })
-
-  //TODO
-  def canEncodeUniquelyWithSimilarForest(f1: Forest, f2: Forest, s: List[Char]): Unit = {
-    require(s.forall(canEncodeCharUniquely(f1, _)) && containedChars(f1).content == containedChars(f2).content && countLeaves(f1) == countLeaves(f2))
-  }.ensuring(_ => s.forall(canEncodeCharUniquely(f2, _)))
+  //TODO add lemmas to prove here
 
   // You're leaving dangerous land----------------------------------------------
 
   // final theorem--------------------------------------------------------------
 
-  // prove that decode(encode(x)) is equal to x using Huffman's algorithm-------
+  // prove that decode(encode(x)) is equal to x using a binary tree code--------
   def decodeEncodedString(s: List[Char]): Unit = {
     require(removeDuplicates(s).length > 1)
   }.ensuring(_ => {
-    val t = generateHuffmanCodeTree(s)
+    val t = generateBinaryTreeCode(s)
     val e = encode(t, s)
     val d = decode(t, e)
     s == d
