@@ -1,5 +1,5 @@
 // Personal final Project
-// Verification of encode/decode with binary tree codes
+// Verification of encode/decode with prefix-free codes
 // Formal verification (CS-550, EPFL)
 //
 // Samuel Chassot 270955
@@ -11,7 +11,7 @@ import stainless.equations._
 import stainless.lang._
 import stainless.proof.check
 
-object BinaryTreeCodes {
+object PrefixFreeCodes {
 
    @extern // WARNING: @extern is unsound, only use for debugging
    def assume(b: Boolean): Unit = {
@@ -467,7 +467,7 @@ object BinaryTreeCodes {
     }
   }
 
-  // generateBinaryTreeCode functions-------------------------------------------
+  // generatePrefixFreeCode functions-------------------------------------------
 
   // return a copy of the string without duplicates-----------------------------
   def removeDuplicates(s: List[Char]): List[Char] = {
@@ -480,13 +480,13 @@ object BinaryTreeCodes {
     }
   }.ensuring(r => ListSpecs.noDuplicate(r))
 
-  // return a binary tree code for the given list of characters that contains---
+  // return a prefix free code for the given list of characters that contains---
   // at least two different characters otherwise there is no meaningful---------
   // encoding for this----------------------------------------------------------
-  def generateBinaryTreeCode(s: List[Char]): Tree = {
+  def generatePrefixFreeCode(s: List[Char]): Tree = {
     require(removeDuplicates(s).length > 1)
 
-    forestToBinaryTreeCode(generateForest(s))(s)
+    naivePrefixFreeCode(generateForest(s))(s)
   }.ensuring(t => isInnerNode(t) && s.forall(c => canEncodeCharUniquely(t, c)))
 
   // generate a forest of leaves for a given list of characters-----------------
@@ -533,21 +533,27 @@ object BinaryTreeCodes {
     }
   }.ensuring(r => r.forall(isLeaf) && chars.forall(canEncodeCharUniquely(r, _)))
 
-  // generate the corresponding binary tree code given a Forest-----------------
-  def forestToBinaryTreeCode(f: Forest)(implicit s: List[Char]): Tree = {
+  // generate the corresponding prefix free code given a Forest-----------------
+  def naivePrefixFreeCode(f: Forest)(implicit s: List[Char]): Tree = {
     require((f.length == 1 && isInnerNode(f.head) || f.length > 1) && s.forall(canEncodeCharUniquely(f, _)))
 
     f match {
       //TODO prove the precondition for the recursive call
-      case t1 :: t2 :: tl => forestToBinaryTreeCode(InnerNode(t1, t2) :: tl)
+      case t1 :: t2 :: tl => naivePrefixFreeCode(InnerNode(t1, t2) :: tl)
       case t :: _ => {
         canStillEncodeUniquelyWithSingleTree(f, s)
         t
       }
     }
-  }.ensuring(btc => isInnerNode(btc) && s.forall(canEncodeCharUniquely(btc, _)))
+  }.ensuring(pfc => isInnerNode(pfc) && s.forall(canEncodeCharUniquely(pfc, _)))
 
-  // generateBinaryTreeCode lemmas---------------------------------------------
+  // instead of using a naive algorithm to generate a prefix-free code----------
+  // we may use Huffman's algorithm that generate the optimal code--------------
+  // for a given forest, we assume this for now since it is much more-----------
+  // challenging to prove as it should remain sorted at each iteration.---------
+  // This can be kept for further work------------------------------------------
+
+  // generatePrefixFreeCode lemmas---------------------------------------------
 
   // prove that if we can encode uniquely a string removing all the duplicates--
   // then we can decode its initial form----------------------------------------
@@ -583,11 +589,11 @@ object BinaryTreeCodes {
 
   // final theorem--------------------------------------------------------------
 
-  // prove that decode(encode(x)) is equal to x using a binary tree code--------
+  // prove that decode(encode(x)) is equal to x using a prefix-free code--------
   def decodeEncodedString(s: List[Char]): Unit = {
     require(removeDuplicates(s).length > 1)
   }.ensuring(_ => {
-    val t = generateBinaryTreeCode(s)
+    val t = generatePrefixFreeCode(s)
     val e = encode(t, s)
     val d = decode(t, e)
     s == d
