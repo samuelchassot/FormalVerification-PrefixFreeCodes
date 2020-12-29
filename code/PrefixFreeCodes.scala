@@ -536,10 +536,13 @@ object PrefixFreeCodes {
   // generate the corresponding prefix free code given a Forest-----------------
   def naivePrefixFreeCode(f: Forest)(implicit s: List[Char]): Tree = {
     require((f.length == 1 && isInnerNode(f.head) || f.length > 1) && s.forall(canEncodeCharUniquely(f, _)))
-
+    decreases(f.length)
     f match {
-      //TODO prove the precondition for the recursive call
-      case t1 :: t2 :: tl => naivePrefixFreeCode(InnerNode(t1, t2) :: tl)
+      case t1 :: t2 :: tl => {
+        lemmaMergingFirstTwoTreesOfAForestDoesNotChangeContainedChars(f)
+        tempLemma(f, InnerNode(t1, t2) :: tl, s)
+        naivePrefixFreeCode(InnerNode(t1, t2) :: tl)
+      }
       case t :: _ => {
         canStillEncodeUniquelyWithSingleTree(f, s)
         t
@@ -583,7 +586,25 @@ object PrefixFreeCodes {
 
   // You're entering dangerous land---------------------------------------------
 
-  //TODO add lemmas to prove here
+  def tempLemma(f1: Forest, f2: Forest, s: List[Char]) : Unit = {
+    require(containedChars(f1) == containedChars(f2) && s.forall(canEncodeCharUniquely(f1, _)))
+    //TODO
+
+  }.ensuring( _ => s.forall(canEncodeCharUniquely(f2, _)))
+
+  def lemmaMergingFirstTwoTreesOfAForestDoesNotChangeContainedChars(f: Forest): Unit = {
+    require(f.length >= 2)
+
+    f match {
+      case t1 :: t2 :: tl => {
+        assert(ListSpecs.appendAssoc(containedChars(t1), containedChars(t2), containedChars(tl)))
+      }
+      case _ => ()
+    }
+
+  }.ensuring(_ => f match {
+    case t1 :: t2 :: tl => containedChars(f) == containedChars(InnerNode(t1, t2) :: tl)
+  })
 
   // You're leaving dangerous land----------------------------------------------
 
