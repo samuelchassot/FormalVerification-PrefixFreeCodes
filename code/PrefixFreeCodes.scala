@@ -10,6 +10,8 @@ import stainless.collection._
 import stainless.equations._
 import stainless.lang._
 import stainless.proof.check
+import PrefixFreeCodes.InnerNode
+import PrefixFreeCodes.Leaf
 
 object PrefixFreeCodes {
 
@@ -586,9 +588,52 @@ object PrefixFreeCodes {
 
   // You're entering dangerous land---------------------------------------------
 
+  def tempLemma3Tree(t: Tree, c: Char): Unit = {
+    t match {
+      case tt@InnerNode(t1, t2) => {
+        tempLemma3Tree(t1, c)
+        assert(containedChars(t1).count(_ == c) == countChar(t1, c))
+        tempLemma3Tree(t2, c)
+        assert(containedChars(t2).count(_ == c) == countChar(t2, c))
+        assert(containedChars(tt).count(_ == c) == countChar(tt, c))
+        }
+      case tt@Leaf(w, c1) => {
+        assert(containedChars(tt).count(_ == c1) == countChar(tt, c1))
+      }
+    }
+
+  }.ensuring(_ => containedChars(t).count(_ == c) == countChar(t, c))
+
+  def tempLemma3(f: Forest, c: Char): Unit = {
+    f match {
+      case t :: tl => {
+        tempLemma3Tree(t, c)
+        assert(containedChars(t).count(_ == c) == countChar(t, c))
+        tempLemma3(tl, c)
+        assert(containedChars(tl).count(_ == c) == countChar(tl, c))
+      }
+      case Nil() => 
+    }
+  }.ensuring(_ => containedChars(f).count(_ == c) == countChar(f, c))
+
+  def tempLemma2(f1: Forest, f2: Forest, c: Char): Unit = {
+    require(containedChars(f1) == containedChars(f2))
+    tempLemma3(f1, c)
+    tempLemma3(f2, c)
+    assert(containedChars(f1).count(_ == c) == containedChars(f2).count(_ == c))
+  }.ensuring(_ => countChar(f1, c) == countChar(f2, c))
+
   def tempLemma(f1: Forest, f2: Forest, s: List[Char]) : Unit = {
     require(containedChars(f1) == containedChars(f2) && s.forall(canEncodeCharUniquely(f1, _)))
-    //TODO
+    s match {
+      case hd :: tl => {
+        assert(canEncodeCharUniquely(f1, hd))
+        tempLemma2(f1, f2, hd)
+        assert(canEncodeCharUniquely(f2, hd))
+        tempLemma(f1, f2, tl)
+      }
+      case Nil() => ()
+    }
 
   }.ensuring( _ => s.forall(canEncodeCharUniquely(f2, _)))
 
