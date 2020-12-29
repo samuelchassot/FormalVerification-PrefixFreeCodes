@@ -591,10 +591,15 @@ object PrefixFreeCodes {
   def tempLemma3Tree(t: Tree, c: Char): Unit = {
     t match {
       case tt@InnerNode(t1, t2) => {
+        // tempLemma3Tree(t1, c)
+        // assert(containedChars(t1).count(_ == c) == countChar(t1, c))
+        // // tempLemma3Tree(t2, c)
+        // assert(containedChars(t2).count(_ == c) == countChar(t2, c))
+        assert(containedChars(t).count(_ == c) == containedChars(t1).count(_ == c) + containedChars(t2).count(_ == c))
         tempLemma3Tree(t1, c)
-        assert(containedChars(t1).count(_ == c) == countChar(t1, c))
         tempLemma3Tree(t2, c)
-        assert(containedChars(t2).count(_ == c) == countChar(t2, c))
+        assert(containedChars(t).count(_ == c) == countChar(t1, c) + countChar(t2, c))
+        // assert(containedChars(tt).count(_ == c) == containedChars(t1).count(_ == c) + containedChars(t2).count(_ == c))
         assert(containedChars(tt).count(_ == c) == countChar(tt, c))
         }
       case tt@Leaf(w, c1) => {
