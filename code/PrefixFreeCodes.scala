@@ -62,18 +62,12 @@ object PrefixFreeCodes {
 
   // return the number of leaves with a given character in the given tree-------
   def countChar(t: Tree, c: Char): BigInt = {
-    t match {
-      case Leaf(_, lC) => if (lC == c) BigInt(1) else BigInt(0)
-      case InnerNode(t1, t2) => countChar(t1, c) + countChar(t2, c)
-    }
+    containedChars(t).count(_ == c)
   }.ensuring(r => r >= 0)
 
   // return the number of leaves with a given character in the given forest-----
   def countChar(f: Forest, c: Char): BigInt = {
-    f match {
-      case Nil() => BigInt(0)
-      case hd :: tl => countChar(hd, c) + countChar(tl, c)
-    }
+    containedChars(f).count(_ == c)
   }.ensuring(r => r >= 0)
 
   // return the number of leaves in the given tree------------------------------
@@ -222,9 +216,13 @@ object PrefixFreeCodes {
       if (canEncodeCharUniquely(t1, c)) t1 match {
         case Leaf(_, _) => List(false)
         case t1@InnerNode(_, _) => List(false) ++ encodeChar(t1, c)
-      } else t2 match {
-        case Leaf(_, _) => List(true)
-        case t2@InnerNode(_, _) => List(true) ++ encodeChar(t2, c)
+      } else {
+        //TODO prove the following body assertion, maybe update canEncodeCharUniquely, countChar or ? definitions
+        assert(canEncodeCharUniquely(t2, c))
+        t2 match {
+          case Leaf(_, _) => List(true)
+          case t2@InnerNode(_, _) => List(true) ++ encodeChar(t2, c)
+        }
       }
     }}
   }.ensuring(bs => canDecodeAtLeastOneChar(t, bs) && decodeChar(t, bs) == (List(c), Nil[Boolean]()))
@@ -541,7 +539,7 @@ object PrefixFreeCodes {
     decreases(f.length)
     f match {
       case t1 :: t2 :: tl => {
-        lemmaMergingFirstTwoTreesOfAForestDoesNotChangeContainedChars(f)
+        sameContainedCharsForMergedTreesInForest(f)
         tempLemma(f, InnerNode(t1, t2) :: tl, s)
         naivePrefixFreeCode(InnerNode(t1, t2) :: tl)
       }
@@ -588,39 +586,15 @@ object PrefixFreeCodes {
 
   // You're entering dangerous land---------------------------------------------
 
+  //TODO clean and document
   def tempLemma3Tree(t: Tree, c: Char): Unit = {
-    t match {
-      case tt@InnerNode(t1, t2) => {
-        // tempLemma3Tree(t1, c)
-        // assert(containedChars(t1).count(_ == c) == countChar(t1, c))
-        // // tempLemma3Tree(t2, c)
-        // assert(containedChars(t2).count(_ == c) == countChar(t2, c))
-        assert(containedChars(t).count(_ == c) == containedChars(t1).count(_ == c) + containedChars(t2).count(_ == c))
-        tempLemma3Tree(t1, c)
-        tempLemma3Tree(t2, c)
-        assert(containedChars(t).count(_ == c) == countChar(t1, c) + countChar(t2, c))
-        // assert(containedChars(tt).count(_ == c) == containedChars(t1).count(_ == c) + containedChars(t2).count(_ == c))
-        assert(containedChars(tt).count(_ == c) == countChar(tt, c))
-        }
-      case tt@Leaf(w, c1) => {
-        assert(containedChars(tt).count(_ == c1) == countChar(tt, c1))
-      }
-    }
-
   }.ensuring(_ => containedChars(t).count(_ == c) == countChar(t, c))
 
+  //TODO clean and document
   def tempLemma3(f: Forest, c: Char): Unit = {
-    f match {
-      case t :: tl => {
-        tempLemma3Tree(t, c)
-        assert(containedChars(t).count(_ == c) == countChar(t, c))
-        tempLemma3(tl, c)
-        assert(containedChars(tl).count(_ == c) == countChar(tl, c))
-      }
-      case Nil() => 
-    }
   }.ensuring(_ => containedChars(f).count(_ == c) == countChar(f, c))
 
+  //TODO clean and document
   def tempLemma2(f1: Forest, f2: Forest, c: Char): Unit = {
     require(containedChars(f1) == containedChars(f2))
     tempLemma3(f1, c)
@@ -628,6 +602,7 @@ object PrefixFreeCodes {
     assert(containedChars(f1).count(_ == c) == containedChars(f2).count(_ == c))
   }.ensuring(_ => countChar(f1, c) == countChar(f2, c))
 
+  //TODO clean and document
   def tempLemma(f1: Forest, f2: Forest, s: List[Char]) : Unit = {
     require(containedChars(f1) == containedChars(f2) && s.forall(canEncodeCharUniquely(f1, _)))
     s match {
@@ -642,7 +617,8 @@ object PrefixFreeCodes {
 
   }.ensuring( _ => s.forall(canEncodeCharUniquely(f2, _)))
 
-  def lemmaMergingFirstTwoTreesOfAForestDoesNotChangeContainedChars(f: Forest): Unit = {
+  //TODO clean and document
+  def sameContainedCharsForMergedTreesInForest(f: Forest): Unit = {
     require(f.length >= 2)
 
     f match {
