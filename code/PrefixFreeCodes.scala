@@ -521,6 +521,7 @@ object PrefixFreeCodes {
     val occ = generateOccurrences(removeDuplicates(s))(s)
     val f = occurrencesToLeaves(occ, removeDuplicates(s))
 
+    forallTrivial(f, removeDuplicates(s))
     canStillEncodeSameCharsUniquely(f, s)
 
     f
@@ -543,24 +544,7 @@ object PrefixFreeCodes {
     }
   }.ensuring(r => ListSpecs.noDuplicate(r.map(_._1)) && r.map(_._1) == chars)
 
-  def lemmaNotInContainedCharImpliesStillEncodeUniquely(f: Forest, l: Leaf, s: List[Char]): Unit = {
-    require(s.forall(canEncodeCharUniquely(f, _)) && !containedChars(f).contains(l.c))
-    // decreases(s.size)
-    // s match {
-    //   case hd :: tl => {
-    //     assert(countChar(f, hd) == 1)
-    //     assert(countChar(l, hd) == 0)
-    //     assert(countChar(l :: f, hd) == 1)
-    //     assert(canEncodeCharUniquely(l :: f, hd))
-    //     lemmaNotInContainedCharImpliesStillEncodeUniquely(f, l, tl)
-    //     assert(tl.forall(canEncodeCharUniquely(l :: f, _)))
-    //   }
-    //   case Nil() => ()
-    // }
-    assume(s.forall(canEncodeCharUniquely(l::f, _)))
-  }.ensuring(_ => s.forall(canEncodeCharUniquely(l::f, _)))
-
-  //TODO prove postcondition and document
+  //TODO document
   def occurrencesToLeaves(occ: List[(Char, BigInt)], chars: List[Char]): Forest = {
     require(ListSpecs.noDuplicate(occ.map(_._1)) && occ.map(_._1) == chars)
 
@@ -568,29 +552,35 @@ object PrefixFreeCodes {
       case (occHd :: occTl, chardHd :: charsTl) => {
         val newLeaf = Leaf(occHd._2, occHd._1)
         val newLeaves = occurrencesToLeaves(occTl, charsTl)
+        val r = newLeaf :: newLeaves
 
-        // assert(charsTl.forall(canEncodeCharUniquely(newLeaves, _)))
-        // assert(canEncodeCharUniquely(newLeaf, chardHd))
-        // assert(containedChars(newLeaf) == List(chardHd))
+        assert(r.forall(isLeaf))
 
-        // assert(charsTl == containedChars(newLeaves))
-        // assert(!charsTl.contains(chardHd))
-        // assert(newLeaf.c == chardHd)
-        // assert(!containedChars(newLeaves).contains(chardHd))
-
-        lemmaNotInContainedCharImpliesStillEncodeUniquely(newLeaves, newLeaf, charsTl)
+        assert(ListSpecs.noDuplicate(chars))
+        assert(ListSpecs.noDuplicate(containedChars(r)))
         
-        // assert(charsTl.forall(canEncodeCharUniquely(newLeaf :: newLeaves, _)))
+        assert(containedChars(newLeaf) == List(chardHd))
+        assert(containedChars(newLeaves) == charsTl)
+        assert(containedChars(newLeaf :: newLeaves) == List(chardHd) ++ charsTl)
+        assert(containedChars(r) == chars)
+        
+        assert(countChar(newLeaf, chardHd) == 1)
+        assert(countChar(r, chardHd) == 1)
 
-        // assert(countChar(newLeaf :: newLeaves, chardHd) == 1)
+        assert(List(chardHd).forall(countChar(newLeaf, _) == 1))
+        assert(List(chardHd).forall(countChar(newLeaf :: newLeaves, _) == 1))
+        assert(charsTl.forall(countChar(newLeaves, _) == 1))
 
-        // assert(chars.forall(canEncodeCharUniquely(newLeaf :: newLeaves, _)))
+        //TODO the next assertion is the only remaining one
+        assert(charsTl.forall(countChar(newLeaf :: newLeaves, _) == 1))
 
-        newLeaf :: newLeaves
+        assert((chardHd :: charsTl).forall(countChar(newLeaf :: newLeaves, _) == 1))
+
+        r
       }
       case _ => Nil[Tree]()
     }
-  }.ensuring(r => r.forall(isLeaf) && chars.forall(canEncodeCharUniquely(r, _)) && containedChars(r) == chars)
+  }.ensuring(r => r.forall(isLeaf) && containedChars(r) == chars && chars.forall(countChar(r, _) == 1))
 
   // generate the corresponding prefix free code given a Forest-----------------
   def naivePrefixFreeCode(f: Forest)(implicit s: List[Char]): Tree = {
@@ -644,6 +634,25 @@ object PrefixFreeCodes {
   }.ensuring(_ => s.forall(canEncodeCharUniquely(f.head, _)))
 
   // You're entering dangerous land---------------------------------------------
+
+  //TODO clean and document
+  def trivial(f: Forest, c: Char): Unit = {
+    require(countChar(f, c) == 1)
+  }.ensuring(_ => canEncodeCharUniquely(f, c))
+
+  //TODO clean and document
+  def forallTrivial(f: Forest, c: List[Char]): Unit = {
+    require(c.forall(countChar(f, _) == 1))
+
+    c match {
+      case hd :: tl => {
+        trivial(f, hd)
+        forallTrivial(f, tl)
+      }
+      case _ => ()
+    }
+  }.ensuring(_ => c.forall(canEncodeCharUniquely(f, _)))
+
 
   //TODO clean and document
   def tempLemma3Tree(t: Tree, c: Char): Unit = {
