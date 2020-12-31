@@ -543,6 +543,48 @@ object PrefixFreeCodes {
     }
   }.ensuring(r => ListSpecs.noDuplicate(r.map(_._1)) && r.map(_._1) == chars)
 
+  def z3(f: Forest, l: Leaf, c: Char) : Unit = {
+    require(countChar(f, c) == 1 && countChar(l, c) == 0)
+
+  }.ensuring(_ => countChar(l::f, c) == 1)
+
+  def zBeautifulLemma(f: Forest, l: Leaf, s: List[Char]): Unit = {
+    require(s.forall(countChar(f, _) == 1) && s.forall(countChar(l, _) == 0))
+    decreases(s.length)
+    
+    s match {
+      case hd :: tl => {
+        z3(f, l, hd)
+        zBeautifulLemma(f, l, tl)
+      }
+        // {
+        // // assert(s.forall(countChar(f, _) == 1))
+        // // assert(s.forall(countChar(l, _) == 0))
+        // assert(countChar(f, hd) == 1)
+        // assert(countChar(l, hd) == 0)
+        // assert(countChar(l :: f, hd) == 1)
+        // zBeautifulLemma(f, l, tl)
+        // assert(tl.forall(countChar(l :: f, _) == 1))
+        // assert(s.forall(countChar(l :: f, _) == 1))
+      // }
+      case Nil() => ()
+    }
+    // assume(s.forall(countChar(l :: f, _) == 1))
+  }.ensuring(_ => s.forall(countChar(l :: f, _) == 1))
+
+  def zBeautifulLemma2(l: Leaf, s: List[Char]): Unit = {
+    require(!s.contains(l.c))
+    s match {
+      case hd :: tl => {
+        assert(l.c != hd)
+        assert(countChar(l, hd) == 0)
+        zBeautifulLemma2(l, tl)
+      } 
+      case Nil() => ()
+    }
+
+  }.ensuring(_ => s.forall(countChar(l, _) == 0))
+
   //TODO document
   def occurrencesToLeaves(occ: List[(Char, BigInt)], chars: List[Char]): Forest = {
     require(ListSpecs.noDuplicate(occ.map(_._1)) && occ.map(_._1) == chars)
@@ -570,7 +612,12 @@ object PrefixFreeCodes {
         assert(List(chardHd).forall(countChar(newLeaf :: newLeaves, _) == 1))
         assert(charsTl.forall(countChar(newLeaves, _) == 1))
 
+        zBeautifulLemma2(newLeaf, charsTl)
+        assert(charsTl.forall(countChar(newLeaf, _) == 0))
+
         //TODO the next assertion is the only remaining one
+        zBeautifulLemma(newLeaves, newLeaf, charsTl)
+
         assert(charsTl.forall(countChar(newLeaf :: newLeaves, _) == 1))
 
         assert((chardHd :: charsTl).forall(countChar(newLeaf :: newLeaves, _) == 1))
