@@ -1,0 +1,109 @@
+% This file is called bibtex.
+% It is a reusable list of reference entries that look like textual database.
+% A program called bibtex processes this file and creates a file called main.bbl
+% based on which citations are actually used in the paper.
+
+% Citation command \cite emits information on which references are used and how
+% they are referred to, replacing user-given identifiers such as DBLP:books/daglib/0072139
+% with the inline citation according to a specified citation style (defined in variout .bst files).
+% The bibliography command then uses information on what was cited to typeset
+% a bibliography, again according to the .bst citation style.
+
+% The entry below is copied verbatim from the biburl link below.
+% Among simplest ways to create bibtex entries is to find it in dblp database.
+% One way is to type in your search engine: dblp "Paper title"
+@book{DBLP:books/daglib/0072139,
+  author    = {J. C. P. Woodcock and
+               Jim Davies},
+  title     = {Using {Z} - specification, refinement, and proof},
+  series    = {Prentice Hall international series in computer science},
+  publisher = {Prentice Hall},
+  year      = {1996},
+  isbn      = {978-0-13-948472-8},
+  timestamp = {Fri, 19 Jul 2019 16:04:28 +0200}, 
+  biburl    = {https://dblp.org/rec/books/daglib/0072139.bib},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+
+% This article was taken from the url and clicking on citation entry denoted by quotes ''
+% One can, of course, choose a more readable identifier instead of DOI
+@article{10.1145/321033.321034,
+author = {Davis, Martin and Putnam, Hilary},
+title = {A Computing Procedure for Quantification Theory},
+year = {1960},
+issue_date = {July 1960},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {7},
+number = {3},
+issn = {0004-5411},
+url = {https://doi.org/10.1145/321033.321034},
+doi = {10.1145/321033.321034},
+journal = {J. ACM},
+month = jul,
+pages = {201–215},
+numpages = {15}
+}
+
+@inproceedings{DBLP:conf/cade/BlanchetteFW16,
+  author    = {Jasmin Christian Blanchette and
+               Mathias Fleury and
+               Christoph Weidenbach},
+  editor    = {Nicola Olivetti and
+               Ashish Tiwari},
+  title     = {A Verified {SAT} Solver Framework with Learn, Forget, Restart, and
+               Incrementality},
+  booktitle = {Automated Reasoning - 8th International Joint Conference, {IJCAR}
+               2016, Coimbra, Portugal, June 27 - July 2, 2016, Proceedings},
+  series    = {Lecture Notes in Computer Science},
+  volume    = {9706},
+  pages     = {25--44},
+  publisher = {Springer},
+  year      = {2016},
+  url       = {https://doi.org/10.1007/978-3-319-40229-1\_4},
+  doi       = {10.1007/978-3-319-40229-1\_4},
+  biburl    = {https://dblp.org/rec/conf/cade/BlanchetteFW16.bib},
+}
+
+
+% note the extra braces in '{A} Primer' to keep A capital, since bibtex may downcase
+% annote is shown
+@Misc{latexTutorial,
+  key =       {latexTutorial},
+  author =    {Indian TEX Users Group},
+  title =     {{LaTeX} Tutorials: {A} Primer},
+  howpublished = {\url{http://www.tug.org/twg/mactex/tutorials/ltxprimer-1.0.pdf}},
+  month =     {September},
+  year =      2003,
+  note =    {Trivandrum, India}
+}
+
+
+@PhdThesis{Kuncak07DecisionProceduresModularDataStructureVerification,
+  author =       {Viktor Kuncak},
+  title =        {Modular Data Structure Verification},
+  school =       {EECS Department, Massachusetts Institute of Technology},
+  month = {February},
+  year =         {2007},
+}
+
+@article{fakingIt,
+  title={Faking it: Simulating dependent types in {H}askell},
+  author={McBride, Conor},
+  journal={Journal of functional programming},
+  volume={12},
+  number={4-5},
+  year={2002},
+  publisher={Cambridge University Press}
+}
+
+@article{HamzaETAL19SystemFR,
+  author = {Jad Hamza and Nicolas Voirol and Viktor Kun\v{c}ak},
+  title = {{System FR}: Formalized Foundations for the {Stainless} Verifier},
+  journal = {Proc. ACM Program. Lang},
+  number = {OOPSLA},
+  year = {2019},
+  month = {November},
+  doi = {https://doi.org/10.1145/3360592}
+}
