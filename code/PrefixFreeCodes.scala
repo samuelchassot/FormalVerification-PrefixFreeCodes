@@ -10,6 +10,8 @@ import stainless.collection._
 import stainless.equations._
 import stainless.lang._
 import stainless.proof.check
+import PrefixFreeCodes.InnerNode
+import PrefixFreeCodes.Leaf
 
 object PrefixFreeCodes {
 
@@ -60,18 +62,12 @@ object PrefixFreeCodes {
 
   // return the number of leaves with a given character in the given tree-------
   def countChar(t: Tree, c: Char): BigInt = {
-    t match {
-      case Leaf(_, lC) => if (lC == c) BigInt(1) else BigInt(0)
-      case InnerNode(t1, t2) => countChar(t1, c) + countChar(t2, c)
-    }
+    containedChars(t).count(_ == c)
   }.ensuring(r => r >= 0)
 
   // return the number of leaves with a given character in the given forest-----
   def countChar(f: Forest, c: Char): BigInt = {
-    f match {
-      case Nil() => BigInt(0)
-      case hd :: tl => countChar(hd, c) + countChar(tl, c)
-    }
+    containedChars(f).count(_ == c)
   }.ensuring(r => r >= 0)
 
   // return the number of leaves in the given tree------------------------------
@@ -210,19 +206,47 @@ object PrefixFreeCodes {
     }
   }.ensuring(_ => canDecode(t, encodeChar(t, c))(t) && decode(t, encodeChar(t, c)) == List(c))
 
+  def lemmaCountOnConcatIsEqualToSumCountOnSublist(l1: List[Char], l2: List[Char], p: Char => Boolean): Unit = {
+    l1 match {
+      case hd1 :: tl1 => {
+        lemmaCountOnConcatIsEqualToSumCountOnSublist(tl1, l2, p)
+      }
+      case Nil() => ()
+    }
+  }.ensuring(_ => (l1 ++ l2).count(p) == l1.count(p) + l2.count(p))
+
+  def lemmaSumOfPositiveNEquals1ImpliesXor(x1: BigInt, x2: BigInt): Unit = {
+    require(x1 >= 0 && x2 >= 0 && (x1 + x2 == 1))
+
+  }.ensuring(_ => x1 == 1 ^ x2 == 1)
+
+  def lemmaCanEncodeUniquelyInnerImpliesOneOfTheChildren(t: Tree, c: Char): Unit = {
+    require(isInnerNode(t) && canEncodeCharUniquely(t, c))
+    t match {
+      case InnerNode(t1, t2) => {
+        lemmaCountOnConcatIsEqualToSumCountOnSublist(containedChars(t1), containedChars(t2), c1 => c1 == c)
+
+      }
+    }
+  }.ensuring(_ => t match { case InnerNode(t1, t2) => canEncodeCharUniquely(t1, c) ^ canEncodeCharUniquely(t2, c) })
+
   // encode functions-----------------------------------------------------------
 
   // encode a character as a list of bits recursively with a given tree---------
   def encodeChar(t: Tree, c: Char): List[Boolean] = {
     require(isInnerNode(t) && canEncodeCharUniquely(t, c))
-
+    
     t match { case InnerNode(t1, t2) => {
       if (canEncodeCharUniquely(t1, c)) t1 match {
         case Leaf(_, _) => List(false)
         case t1@InnerNode(_, _) => List(false) ++ encodeChar(t1, c)
-      } else t2 match {
-        case Leaf(_, _) => List(true)
-        case t2@InnerNode(_, _) => List(true) ++ encodeChar(t2, c)
+      } else {
+        lemmaCanEncodeUniquelyInnerImpliesOneOfTheChildren(t, c)
+        assert(canEncodeCharUniquely(t2, c))
+        t2 match {
+          case Leaf(_, _) => List(true)
+          case t2@InnerNode(_, _) => List(true) ++ encodeChar(t2, c)
+        }
       }
     }}
   }.ensuring(bs => canDecodeAtLeastOneChar(t, bs) && decodeChar(t, bs) == (List(c), Nil[Boolean]()))
@@ -496,6 +520,7 @@ object PrefixFreeCodes {
     val occ = generateOccurrences(removeDuplicates(s))(s)
     val f = occurrencesToLeaves(occ, removeDuplicates(s))
 
+    forallTrivial(f, removeDuplicates(s))
     canStillEncodeSameCharsUniquely(f, s)
 
     f
@@ -518,28 +543,106 @@ object PrefixFreeCodes {
     }
   }.ensuring(r => ListSpecs.noDuplicate(r.map(_._1)) && r.map(_._1) == chars)
 
-  //TODO prove postcondition and document
+  def z3(f: Forest, l: Leaf, c: Char) : Unit = {
+    require(countChar(f, c) == 1 && countChar(l, c) == 0)
+
+  }.ensuring(_ => countChar(l::f, c) == 1)
+
+  def forallAltcountChar(s: List[Char], f: Forest) : Boolean = {
+    decreases(s.length)
+    s match {
+      case hd :: tl => (countChar(f, hd) == 1) && forallAltcountChar(tl, f)
+      case Nil() => true
+    }
+  }.ensuring(b => b == s.forall(countChar(f, _) == 1))
+
+  def zBeautifulLemma(f: Forest, l: Leaf, s: List[Char]): Unit = {
+    require(s.forall(countChar(f, _) == 1) && s.forall(countChar(l, _) == 0))
+    decreases(s.length)
+
+    s match {
+      case hd :: tl => {
+        assert(countChar(f, hd) == 1)
+        assert(countChar(l, hd) == 0)
+        assert(countChar(l::f, hd) == 1)
+        assert(forallAltcountChar(List(hd), l::f))
+        zBeautifulLemma(f, l, tl)
+        assert(forallAltcountChar(tl, l::f))
+      }
+      case Nil() => ()
+    }
+  }.ensuring(_ => forallAltcountChar(s, l :: f))
+
+  def zBeautifulLemma2(l: Leaf, s: List[Char]): Unit = {
+    require(!s.contains(l.c))
+    decreases(s.length)
+
+    s match {
+      case hd :: tl => {
+        assert(l.c != hd)
+        assert(countChar(l, hd) == 0)
+        zBeautifulLemma2(l, tl)
+      } 
+      case Nil() => ()
+    }
+
+  }.ensuring(_ => s.forall(countChar(l, _) == 0))
+
+  //TODO document
   def occurrencesToLeaves(occ: List[(Char, BigInt)], chars: List[Char]): Forest = {
     require(ListSpecs.noDuplicate(occ.map(_._1)) && occ.map(_._1) == chars)
+    decreases(occ.length)
 
     (occ, chars) match {
       case (occHd :: occTl, chardHd :: charsTl) => {
         val newLeaf = Leaf(occHd._2, occHd._1)
         val newLeaves = occurrencesToLeaves(occTl, charsTl)
+        val r = newLeaf :: newLeaves
 
-        newLeaf :: newLeaves
+        assert(r.forall(isLeaf))
+
+        assert(ListSpecs.noDuplicate(chars))
+        assert(ListSpecs.noDuplicate(containedChars(r)))
+        
+        assert(containedChars(newLeaf) == List(chardHd))
+        assert(containedChars(newLeaves) == charsTl)
+        assert(containedChars(newLeaf :: newLeaves) == List(chardHd) ++ charsTl)
+        assert(containedChars(r) == chars)
+        
+        assert(countChar(newLeaf, chardHd) == 1)
+        assert(countChar(r, chardHd) == 1)
+
+        assert(List(chardHd).forall(countChar(newLeaf, _) == 1))
+        assert(List(chardHd).forall(countChar(newLeaf :: newLeaves, _) == 1))
+        assert(charsTl.forall(countChar(newLeaves, _) == 1))
+
+        zBeautifulLemma2(newLeaf, charsTl)
+        assert(charsTl.forall(countChar(newLeaf, _) == 0))
+
+        //TODO the next assertion is the only remaining one
+        zBeautifulLemma(newLeaves, newLeaf, charsTl)
+        assert(forallAltcountChar(charsTl, newLeaf::newLeaves))
+
+        assert(charsTl.forall(countChar(newLeaf :: newLeaves, _) == 1))
+
+        assert((chardHd :: charsTl).forall(countChar(newLeaf :: newLeaves, _) == 1))
+        assert(chars.forall(countChar(r, _) == 1))
+        r
       }
       case _ => Nil[Tree]()
     }
-  }.ensuring(r => r.forall(isLeaf) && chars.forall(canEncodeCharUniquely(r, _)))
+  }.ensuring(r => r.forall(isLeaf) && containedChars(r) == chars && chars.forall(countChar(r, _) == 1))
 
   // generate the corresponding prefix free code given a Forest-----------------
   def naivePrefixFreeCode(f: Forest)(implicit s: List[Char]): Tree = {
     require((f.length == 1 && isInnerNode(f.head) || f.length > 1) && s.forall(canEncodeCharUniquely(f, _)))
-
+    decreases(f.length)
     f match {
-      //TODO prove the precondition for the recursive call
-      case t1 :: t2 :: tl => naivePrefixFreeCode(InnerNode(t1, t2) :: tl)
+      case t1 :: t2 :: tl => {
+        sameContainedCharsForMergedTreesInForest(f)
+        tempLemma(f, InnerNode(t1, t2) :: tl, s)
+        naivePrefixFreeCode(InnerNode(t1, t2) :: tl)
+      }
       case t :: _ => {
         canStillEncodeUniquelyWithSingleTree(f, s)
         t
@@ -583,7 +686,70 @@ object PrefixFreeCodes {
 
   // You're entering dangerous land---------------------------------------------
 
-  //TODO add lemmas to prove here
+  //TODO clean and document
+  def trivial(f: Forest, c: Char): Unit = {
+    require(countChar(f, c) == 1)
+  }.ensuring(_ => canEncodeCharUniquely(f, c))
+
+  //TODO clean and document
+  def forallTrivial(f: Forest, c: List[Char]): Unit = {
+    require(c.forall(countChar(f, _) == 1))
+
+    c match {
+      case hd :: tl => {
+        trivial(f, hd)
+        forallTrivial(f, tl)
+      }
+      case _ => ()
+    }
+  }.ensuring(_ => c.forall(canEncodeCharUniquely(f, _)))
+
+
+  //TODO clean and document
+  def tempLemma3Tree(t: Tree, c: Char): Unit = {
+  }.ensuring(_ => containedChars(t).count(_ == c) == countChar(t, c))
+
+  //TODO clean and document
+  def tempLemma3(f: Forest, c: Char): Unit = {
+  }.ensuring(_ => containedChars(f).count(_ == c) == countChar(f, c))
+
+  //TODO clean and document
+  def tempLemma2(f1: Forest, f2: Forest, c: Char): Unit = {
+    require(containedChars(f1) == containedChars(f2))
+    tempLemma3(f1, c)
+    tempLemma3(f2, c)
+    assert(containedChars(f1).count(_ == c) == containedChars(f2).count(_ == c))
+  }.ensuring(_ => countChar(f1, c) == countChar(f2, c))
+
+  //TODO clean and document
+  def tempLemma(f1: Forest, f2: Forest, s: List[Char]) : Unit = {
+    require(containedChars(f1) == containedChars(f2) && s.forall(canEncodeCharUniquely(f1, _)))
+    s match {
+      case hd :: tl => {
+        assert(canEncodeCharUniquely(f1, hd))
+        tempLemma2(f1, f2, hd)
+        assert(canEncodeCharUniquely(f2, hd))
+        tempLemma(f1, f2, tl)
+      }
+      case Nil() => ()
+    }
+
+  }.ensuring( _ => s.forall(canEncodeCharUniquely(f2, _)))
+
+  //TODO clean and document
+  def sameContainedCharsForMergedTreesInForest(f: Forest): Unit = {
+    require(f.length >= 2)
+
+    f match {
+      case t1 :: t2 :: tl => {
+        assert(ListSpecs.appendAssoc(containedChars(t1), containedChars(t2), containedChars(tl)))
+      }
+      case _ => ()
+    }
+
+  }.ensuring(_ => f match {
+    case t1 :: t2 :: tl => containedChars(f) == containedChars(InnerNode(t1, t2) :: tl)
+  })
 
   // You're leaving dangerous land----------------------------------------------
 
