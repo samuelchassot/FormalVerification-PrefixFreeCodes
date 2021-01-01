@@ -548,32 +548,35 @@ object PrefixFreeCodes {
 
   }.ensuring(_ => countChar(l::f, c) == 1)
 
+  def forallAltcountChar(s: List[Char], f: Forest) : Boolean = {
+    decreases(s.length)
+    s match {
+      case hd :: tl => (countChar(f, hd) == 1) && forallAltcountChar(tl, f)
+      case Nil() => true
+    }
+  }.ensuring(b => b == s.forall(countChar(f, _) == 1))
+
   def zBeautifulLemma(f: Forest, l: Leaf, s: List[Char]): Unit = {
     require(s.forall(countChar(f, _) == 1) && s.forall(countChar(l, _) == 0))
     decreases(s.length)
-    
+
     s match {
       case hd :: tl => {
-        z3(f, l, hd)
+        assert(countChar(f, hd) == 1)
+        assert(countChar(l, hd) == 0)
+        assert(countChar(l::f, hd) == 1)
+        assert(forallAltcountChar(List(hd), l::f))
         zBeautifulLemma(f, l, tl)
+        assert(forallAltcountChar(tl, l::f))
       }
-        // {
-        // // assert(s.forall(countChar(f, _) == 1))
-        // // assert(s.forall(countChar(l, _) == 0))
-        // assert(countChar(f, hd) == 1)
-        // assert(countChar(l, hd) == 0)
-        // assert(countChar(l :: f, hd) == 1)
-        // zBeautifulLemma(f, l, tl)
-        // assert(tl.forall(countChar(l :: f, _) == 1))
-        // assert(s.forall(countChar(l :: f, _) == 1))
-      // }
       case Nil() => ()
     }
-    // assume(s.forall(countChar(l :: f, _) == 1))
-  }.ensuring(_ => s.forall(countChar(l :: f, _) == 1))
+  }.ensuring(_ => forallAltcountChar(s, l :: f))
 
   def zBeautifulLemma2(l: Leaf, s: List[Char]): Unit = {
     require(!s.contains(l.c))
+    decreases(s.length)
+
     s match {
       case hd :: tl => {
         assert(l.c != hd)
@@ -588,6 +591,7 @@ object PrefixFreeCodes {
   //TODO document
   def occurrencesToLeaves(occ: List[(Char, BigInt)], chars: List[Char]): Forest = {
     require(ListSpecs.noDuplicate(occ.map(_._1)) && occ.map(_._1) == chars)
+    decreases(occ.length)
 
     (occ, chars) match {
       case (occHd :: occTl, chardHd :: charsTl) => {
@@ -617,11 +621,12 @@ object PrefixFreeCodes {
 
         //TODO the next assertion is the only remaining one
         zBeautifulLemma(newLeaves, newLeaf, charsTl)
+        assert(forallAltcountChar(charsTl, newLeaf::newLeaves))
 
         assert(charsTl.forall(countChar(newLeaf :: newLeaves, _) == 1))
 
         assert((chardHd :: charsTl).forall(countChar(newLeaf :: newLeaves, _) == 1))
-
+        assert(chars.forall(countChar(r, _) == 1))
         r
       }
       case _ => Nil[Tree]()
