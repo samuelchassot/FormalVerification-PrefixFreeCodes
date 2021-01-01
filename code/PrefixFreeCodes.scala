@@ -5,6 +5,7 @@
 // Samuel Chassot 270955
 // Daniel Filipe Nunes Silva 275197
 
+
 import stainless.annotation._
 import stainless.collection._
 import stainless.equations._
