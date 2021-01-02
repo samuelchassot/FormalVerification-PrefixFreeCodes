@@ -238,6 +238,8 @@ object PrefixFreeCodes {
     require(isInnerNode(t) && canEncodeCharUniquely(t, c))
 
     t match { case InnerNode(t1, t2) => {
+      // using the left child is encoded as a false (0)-------------------------
+      // while using the right is encoded as a true (1)-------------------------
       if (canEncodeCharUniquely(t1, c)) t1 match {
         case Leaf(_, _) => List(false)
         case t1@InnerNode(_, _) => List(false) ++ encodeChar(t1, c)
@@ -284,29 +286,26 @@ object PrefixFreeCodes {
 
   // prove that the length of the remaining list of bits after decoding---------
   // the first decodable character is smaller than the original list of bits----
-  def decodeCharLength(t: Tree, bs: List[Boolean]): Unit = {
+  def toDecodeBinaryStringLengthDecreases(t: Tree, bs: List[Boolean]): Unit = {
     require(isInnerNode(t) && canDecodeAtLeastOneChar(t, bs))
     decreases(bs.length)
     
     t match { case InnerNode(t1, t2) => { bs match {
         case hd :: tl => {
-          if (!hd) {
-            t1 match {
-              case t1@InnerNode(t11, t12) => decodeCharLength(t1, tl)
-              case Leaf(_, _) => ()
-            }
-          } else {
-            t2 match {
-              case t2@InnerNode(t11, t12) => decodeCharLength(t2, tl)
-              case Leaf(_, _) => ()
-            }
-          }
+          if (!hd) { t1 match {
+            case t1@InnerNode(t11, t12) => toDecodeBinaryStringLengthDecreases(t1, tl)
+            case Leaf(_, _) => ()
+          }} else { t2 match {
+            case t2@InnerNode(t11, t12) => toDecodeBinaryStringLengthDecreases(t2, tl)
+            case Leaf(_, _) => ()
+          }}
         }
         case Nil() => ()
     }}}
   }.ensuring(_ => decodeChar(t, bs) match { case (_, nBs) => nBs.length < bs.length })
   
-  // check if at least one character can be decoded-----------------------------
+  // check if at least one character can be decoded, i.e. we can reach at least-
+  // one leaf of the tree with the given binary string--------------------------
   def canDecodeAtLeastOneChar(t: Tree, bs: List[Boolean]): Boolean = {
     require(isInnerNode(t))
     decreases(bs.length)
@@ -326,12 +325,16 @@ object PrefixFreeCodes {
   }
 
   // check if the whole list of bits can be correctly decoded-------------------
+  // the s and t give the  flexibility to check if we can finish to decode------
+  // a binary string with s that would be a subTree of t and complete-----------
+  // the decoding with recusive calls with t------------------------------------
   def canDecode(s: Tree, bs: List[Boolean])(implicit t: Tree): Boolean = {
     require(isInnerNode(s) && isInnerNode(t))
     decreases(bs.length)
 
     canDecodeAtLeastOneChar(s, bs) && {
-      decodeCharLength(s, bs)
+      // make sure we calling it recursively on shorter binary strings----------
+      toDecodeBinaryStringLengthDecreases(s, bs)
       val (_, nBs) = decodeChar(s, bs)
       nBs.isEmpty || canDecode(t, nBs)
     }
