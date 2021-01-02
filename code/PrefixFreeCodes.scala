@@ -82,6 +82,7 @@ object PrefixFreeCodes {
   // datatypes lemmas-----------------------------------------------------------
 
   // prove that isSameTree is a reflexive relation------------------------------
+  // usefull to show that isSubTree is also a reflexive relation----------------
   def isSameTreeReflexivity(t: Tree): Unit = {
     t match {
       case Leaf(w, c) => ()
@@ -93,6 +94,7 @@ object PrefixFreeCodes {
   }.ensuring(_ => isSameTree(t, t))
 
   // prove that isSameTree is a transitive relation-----------------------------
+  // usefull to prove isSameSubTree---------------------------------------------
   def isSameTreeTransitivity(t1: Tree, t2: Tree, t3: Tree): Unit = {
     require(isSameTree(t1, t2) && isSameTree(t2, t3))
 
@@ -106,11 +108,33 @@ object PrefixFreeCodes {
   }.ensuring(_ => isSameTree(t1, t3))
 
   // prove isSubTree is a reflexive relation------------------------------------
+  // usefull when we need to call functions where explicit and implicit---------
+  // tree parameters are actually the same but it is not trivial----------------
+  // it is a subTree of itself--------------------------------------------------
   def isSubTreeReflexivity(t: Tree): Unit = {
     isSameTreeReflexivity(t)
   }.ensuring(_ => isSubTree(t, t))
 
+  // if st is a subtree of t2 and t1 is the same as t2 then st is---------------
+  // a subtree of t1------------------------------------------------------------
+  // usefull to prove isSubTreeTransitivity-------------------------------------
+  def isSameSubTree(t1: Tree, t2: Tree, st: Tree): Unit = {
+    require(isSameTree(t1, t2) && isSubTree(t2, st))
+
+    if (isSameTree(t2, st)) {
+      isSameTreeTransitivity(t1, t2, st)
+    } else t2 match {
+      case Leaf(_, _) => ()
+      case InnerNode(t21, t22) => t1 match { case InnerNode(t11, t12) => {
+        if (isSubTree(t21, st)) isSameSubTree(t11, t21, st)
+        else if (isSubTree(t22, st)) isSameSubTree(t12, t22, st)
+      }}
+    }
+  }.ensuring(_ => isSubTree(t1, st))
+
   // prove isSubTree is a transitive relation-----------------------------------
+  // usefull in recursive calls to make sure children of a tree is actually-----
+  // a subTree------------------------------------------------------------------
   def isSubTreeTransitivity(t: Tree, st: Tree, sst: Tree): Unit = {
     require(isSubTree(t, st) && isSubTree(st, sst))
 
@@ -127,23 +151,9 @@ object PrefixFreeCodes {
     }
   }.ensuring(_ => isSubTree(t, sst))
 
-  // if st is a subtree of t2 and t1 is the same as t2 then st is---------------
-  // a subtree of t1------------------------------------------------------------
-  def isSameSubTree(t1: Tree, t2: Tree, st: Tree): Unit = {
-    require(isSameTree(t1, t2) && isSubTree(t2, st))
-
-    if (isSameTree(t2, st)) {
-      isSameTreeTransitivity(t1, t2, st)
-    } else t2 match {
-      case Leaf(_, _) => ()
-      case InnerNode(t21, t22) => t1 match { case InnerNode(t11, t12) => {
-        if (isSubTree(t21, st)) isSameSubTree(t11, t21, st)
-        else if (isSubTree(t22, st)) isSameSubTree(t12, t22, st)
-      }}
-    }
-  }.ensuring(_ => isSubTree(t1, st))
-
   // prove children of a node are subtrees or the node itself-------------------
+  // usefull in recursive calls to make sure children of a tree is actually-----
+  // a subTree------------------------------------------------------------------
   def childrenAreSubTrees(t: Tree): Unit = {
     require(isInnerNode(t))
     isSubTreeReflexivity(t)
