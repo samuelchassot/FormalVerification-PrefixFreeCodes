@@ -544,11 +544,10 @@ object PrefixFreeCodes {
     }
   }.ensuring(r => ListSpecs.noDuplicate(r.map(_._1)) && r.map(_._1) == chars)
 
-  def z3(f: Forest, l: Leaf, c: Char) : Unit = {
-    require(countChar(f, c) == 1 && countChar(l, c) == 0)
-
-  }.ensuring(_ => countChar(l::f, c) == 1)
-
+  // alternative definition of a forall function that checks if all chars
+  // of the given list yields to a countChar value of 1 when called on the 
+  // given forest
+  // ensuring that it is equivalent to the forall of the library
   def forallAltcountChar(s: List[Char], f: Forest) : Boolean = {
     decreases(s.length)
     s match {
@@ -557,39 +556,41 @@ object PrefixFreeCodes {
     }
   }.ensuring(b => b == s.forall(countChar(f, _) == 1))
 
-  def zBeautifulLemma(f: Forest, l: Leaf, s: List[Char]): Unit = {
+  // prove that if we can encode uniquely with a forest, adding a leaf with a char that is not
+  // in the list does not change anything
+  def addingNewLeafToForestPreservesForallCountChar(f: Forest, l: Leaf, s: List[Char]): Unit = {
     require(s.forall(countChar(f, _) == 1) && s.forall(countChar(l, _) == 0))
     decreases(s.length)
 
     s match {
       case hd :: tl => {
-        assert(countChar(f, hd) == 1)
-        assert(countChar(l, hd) == 0)
-        assert(countChar(l::f, hd) == 1)
-        assert(forallAltcountChar(List(hd), l::f))
-        zBeautifulLemma(f, l, tl)
-        assert(forallAltcountChar(tl, l::f))
+        addingNewLeafToForestPreservesForallCountChar(f, l, tl)
       }
       case Nil() => ()
     }
   }.ensuring(_ => forallAltcountChar(s, l :: f))
 
-  def zBeautifulLemma2(l: Leaf, s: List[Char]): Unit = {
+  // prove that countChar called on a leaf forall char of a list gives 0 if the character of the
+  // leaf is not in the list
+  def countCharOnALeafWithDifferentCharacterAlwaysGivesZero(l: Leaf, s: List[Char]): Unit = {
     require(!s.contains(l.c))
     decreases(s.length)
 
     s match {
       case hd :: tl => {
-        assert(l.c != hd)
-        assert(countChar(l, hd) == 0)
-        zBeautifulLemma2(l, tl)
+        countCharOnALeafWithDifferentCharacterAlwaysGivesZero(l, tl)
       } 
       case Nil() => ()
     }
 
   }.ensuring(_ => s.forall(countChar(l, _) == 0))
 
-  //TODO document
+  // generate a forest of leaves given the occurences and the list of chars.
+  // the occurences is a list of tuples containing the char with the number of times
+  // it appears in the original list.
+  // each char must appear only once in the occurences as well as in chars.
+  // it ensures that the produced forest only contains leaves and that it contains
+  // all the chars of the list once and only once.
   def occurrencesToLeaves(occ: List[(Char, BigInt)], chars: List[Char]): Forest = {
     require(ListSpecs.noDuplicate(occ.map(_._1)) && occ.map(_._1) == chars)
     decreases(occ.length)
@@ -600,34 +601,9 @@ object PrefixFreeCodes {
         val newLeaves = occurrencesToLeaves(occTl, charsTl)
         val r = newLeaf :: newLeaves
 
-        assert(r.forall(isLeaf))
+        countCharOnALeafWithDifferentCharacterAlwaysGivesZero(newLeaf, charsTl)
+        addingNewLeafToForestPreservesForallCountChar(newLeaves, newLeaf, charsTl)
 
-        assert(ListSpecs.noDuplicate(chars))
-        assert(ListSpecs.noDuplicate(containedChars(r)))
-        
-        assert(containedChars(newLeaf) == List(chardHd))
-        assert(containedChars(newLeaves) == charsTl)
-        assert(containedChars(newLeaf :: newLeaves) == List(chardHd) ++ charsTl)
-        assert(containedChars(r) == chars)
-        
-        assert(countChar(newLeaf, chardHd) == 1)
-        assert(countChar(r, chardHd) == 1)
-
-        assert(List(chardHd).forall(countChar(newLeaf, _) == 1))
-        assert(List(chardHd).forall(countChar(newLeaf :: newLeaves, _) == 1))
-        assert(charsTl.forall(countChar(newLeaves, _) == 1))
-
-        zBeautifulLemma2(newLeaf, charsTl)
-        assert(charsTl.forall(countChar(newLeaf, _) == 0))
-
-        //TODO the next assertion is the only remaining one
-        zBeautifulLemma(newLeaves, newLeaf, charsTl)
-        assert(forallAltcountChar(charsTl, newLeaf::newLeaves))
-
-        assert(charsTl.forall(countChar(newLeaf :: newLeaves, _) == 1))
-
-        assert((chardHd :: charsTl).forall(countChar(newLeaf :: newLeaves, _) == 1))
-        assert(chars.forall(countChar(r, _) == 1))
         r
       }
       case _ => Nil[Tree]()
@@ -641,7 +617,7 @@ object PrefixFreeCodes {
     f match {
       case t1 :: t2 :: tl => {
         sameContainedCharsForMergedTreesInForest(f)
-        tempLemma(f, InnerNode(t1, t2) :: tl, s)
+        sameContainedCharsImpliesSameCanEncodeUniquely(f, InnerNode(t1, t2) :: tl, s)
         naivePrefixFreeCode(InnerNode(t1, t2) :: tl)
       }
       case t :: _ => {
@@ -710,34 +686,35 @@ object PrefixFreeCodes {
   def tempLemma3Tree(t: Tree, c: Char): Unit = {
   }.ensuring(_ => containedChars(t).count(_ == c) == countChar(t, c))
 
-  //TODO clean and document
-  def tempLemma3(f: Forest, c: Char): Unit = {
+  // prove that counting how many times a char appears in the contained chars of a forest
+  // gives the same result as calling the countChar function on that forest
+  def countCharIsSameAsCountingInContainedChars(f: Forest, c: Char): Unit = {
   }.ensuring(_ => containedChars(f).count(_ == c) == countChar(f, c))
 
-  //TODO clean and document
-  def tempLemma2(f1: Forest, f2: Forest, c: Char): Unit = {
+  // prove that counting how many times a given char appears in two forests with the same containedChars
+  // gives the same result
+  def sameContainedCharsImpliesSameCountChar(f1: Forest, f2: Forest, c: Char): Unit = {
     require(containedChars(f1) == containedChars(f2))
-    tempLemma3(f1, c)
-    tempLemma3(f2, c)
-    assert(containedChars(f1).count(_ == c) == containedChars(f2).count(_ == c))
+
+    countCharIsSameAsCountingInContainedChars(f1, c)
+    countCharIsSameAsCountingInContainedChars(f2, c)
   }.ensuring(_ => countChar(f1, c) == countChar(f2, c))
 
-  //TODO clean and document
-  def tempLemma(f1: Forest, f2: Forest, s: List[Char]) : Unit = {
+  // prove that if we can encode uniquely with a forest then we can with a forest with the same contained chars
+  // as well
+  def sameContainedCharsImpliesSameCanEncodeUniquely(f1: Forest, f2: Forest, s: List[Char]) : Unit = {
     require(containedChars(f1) == containedChars(f2) && s.forall(canEncodeCharUniquely(f1, _)))
     s match {
       case hd :: tl => {
-        assert(canEncodeCharUniquely(f1, hd))
-        tempLemma2(f1, f2, hd)
-        assert(canEncodeCharUniquely(f2, hd))
-        tempLemma(f1, f2, tl)
+        sameContainedCharsImpliesSameCountChar(f1, f2, hd)
+        sameContainedCharsImpliesSameCanEncodeUniquely(f1, f2, tl)
       }
       case Nil() => ()
     }
 
   }.ensuring( _ => s.forall(canEncodeCharUniquely(f2, _)))
 
-  //TODO clean and document
+  // prove that the contained chars of a forest are preserved when merging the two first trees in a new InnerNode
   def sameContainedCharsForMergedTreesInForest(f: Forest): Unit = {
     require(f.length >= 2)
 
