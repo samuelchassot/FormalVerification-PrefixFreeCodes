@@ -11,16 +11,9 @@ import stainless.collection._
 import stainless.equations._
 import stainless.lang._
 import stainless.proof.check
-import PrefixFreeCodes.InnerNode
-import PrefixFreeCodes.Leaf
 
 object PrefixFreeCodes {
 
-   @extern // WARNING: @extern is unsound, only use for debugging
-   def assume(b: Boolean): Unit = {
-     (??? : Unit)
-   }.ensuring(_ => b)
-  
   // datatypes------------------------------------------------------------------
 
   sealed abstract class Tree
