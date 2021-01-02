@@ -342,7 +342,7 @@ object PrefixFreeCodes {
 
   // prove that canDecode implies canDecodeAtLeastOneChar-----------------------
   def canDecodeImpliesCanDecodeAtLeastOneChar(s: Tree, bs: List[Boolean])(implicit t: Tree): Unit = {
-    require(isInnerNode(s) && isInnerNode(t) && canDecode(s, bs)(t) && isSubTree(t, s))
+    require(isInnerNode(s) && isInnerNode(t) && isSubTree(t, s) &&  canDecode(s, bs)(t))
     decreases(bs.length)
 
     s match { case InnerNode(t1, t2) => { bs match {
@@ -370,7 +370,7 @@ object PrefixFreeCodes {
   // prove that can decode implies that we can decode the remaining bits--------
   // after having decoded the first decodable character-------------------------
   def canDecodeImpliesCanDecodeTailAfterOneCharDecoded(s: Tree, bs: List[Boolean])(implicit t: Tree): Unit = {
-    require(isInnerNode(s) && isInnerNode(t) && canDecode(s, bs)(t) && isSubTree(t, s))
+    require(isInnerNode(s) && isInnerNode(t) && isSubTree(t, s) && canDecode(s, bs)(t))
     decreases(bs.length)
 
     isSubTreeReflexivity(t)
@@ -378,17 +378,13 @@ object PrefixFreeCodes {
 
     bs match {
       case Nil() => ()
-      case hd :: tl => { s match { case InnerNode(s1, s2) => {
-        if (!hd) {
-          s1 match {
-            case s1@InnerNode(_, _) => canDecodeImpliesCanDecodeTailAfterOneCharDecoded(s1, tl)(t)
-            case Leaf(_, c) => ()
-          }
-        } else {
-          s2 match {
-            case s2@InnerNode(_, _) => canDecodeImpliesCanDecodeTailAfterOneCharDecoded(s2, tl)(t)
-            case Leaf(_, c) => ()
-          }
+      case hd :: tl => { s match { case InnerNode(t1, t2) => {
+        if (!hd) t1 match {
+          case t1@InnerNode(_, _) => canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t1, tl)(t)
+          case Leaf(_, c) => ()
+        } else t2 match {
+          case t2@InnerNode(_, _) => canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t2, tl)(t)
+          case Leaf(_, c) => ()
         }
     }}}}
   }.ensuring(_ => decodeChar(s, bs) match { case(_, nBs) => nBs.isEmpty || canDecode(t, nBs)(t) })
@@ -506,7 +502,7 @@ object PrefixFreeCodes {
     val occ = generateOccurrences(removeDuplicates(s))(s)
     val f = occurrencesToLeaves(occ, removeDuplicates(s))
 
-    forallTrivial(f, removeDuplicates(s))
+    forallCountCharOneImpliesCanEncodeCharUniquely(f, removeDuplicates(s))
     canStillEncodeSameCharsUniquely(f, s)
 
     f
@@ -518,64 +514,52 @@ object PrefixFreeCodes {
 
     chars match {
       case Nil() => Nil[(Char, BigInt)]()
-      case hd :: tl => {
-        val tuple =  (hd, s.count(_ == hd))
-        val tuples = generateOccurrences(tl)
-
-        assert(ListSpecs.noDuplicate((tuple::tuples).map(_._1)))
-
-        tuple :: tuples
-      }
+      case hd :: tl => (hd, s.count(_ == hd)) :: generateOccurrences(tl)
     }
   }.ensuring(r => ListSpecs.noDuplicate(r.map(_._1)) && r.map(_._1) == chars)
 
-  // alternative definition of a forall function that checks if all chars
-  // of the given list yields to a countChar value of 1 when called on the 
-  // given forest
-  // ensuring that it is equivalent to the forall of the library
+  // alternative definition of a forall function that checks if all chars-------
+  // of the given list yields to a countChar value of 1 when called on the------
+  // given forest---------------------------------------------------------------
+  // ensuring that it is equivalent to the forall of the library----------------
   def forallAltcountChar(s: List[Char], f: Forest) : Boolean = {
     decreases(s.length)
     s match {
       case hd :: tl => (countChar(f, hd) == 1) && forallAltcountChar(tl, f)
       case Nil() => true
     }
-  }.ensuring(b => b == s.forall(countChar(f, _) == 1))
+  }.ensuring(r => r == s.forall(countChar(f, _) == 1))
 
-  // prove that if we can encode uniquely with a forest, adding a leaf with a char that is not
-  // in the list does not change anything
+  // prove that if we can encode uniquely with a forest-------------------------
+  // then adding a leaf with a char that is not in the list is okay-------------
   def addingNewLeafToForestPreservesForallCountChar(f: Forest, l: Leaf, s: List[Char]): Unit = {
     require(s.forall(countChar(f, _) == 1) && s.forall(countChar(l, _) == 0))
     decreases(s.length)
 
     s match {
-      case hd :: tl => {
-        addingNewLeafToForestPreservesForallCountChar(f, l, tl)
-      }
+      case hd :: tl => addingNewLeafToForestPreservesForallCountChar(f, l, tl)
       case Nil() => ()
     }
   }.ensuring(_ => forallAltcountChar(s, l :: f))
 
-  // prove that countChar called on a leaf forall char of a list gives 0 if the character of the
-  // leaf is not in the list
+  // prove that countChar called on a leaf forall char of a list gives 0--------
+  // if the character of the leaf is not in the list----------------------------
   def countCharOnALeafWithDifferentCharacterAlwaysGivesZero(l: Leaf, s: List[Char]): Unit = {
     require(!s.contains(l.c))
     decreases(s.length)
 
     s match {
-      case hd :: tl => {
-        countCharOnALeafWithDifferentCharacterAlwaysGivesZero(l, tl)
-      } 
+      case hd :: tl => countCharOnALeafWithDifferentCharacterAlwaysGivesZero(l, tl)
       case Nil() => ()
     }
-
   }.ensuring(_ => s.forall(countChar(l, _) == 0))
 
-  // generate a forest of leaves given the occurences and the list of chars.
-  // the occurences is a list of tuples containing the char with the number of times
-  // it appears in the original list.
-  // each char must appear only once in the occurences as well as in chars.
-  // it ensures that the produced forest only contains leaves and that it contains
-  // all the chars of the list once and only once.
+  // generate a forest of leaves given the occurences and the list of chars-----
+  // the occurences is a list of tuples containing the char with----------------
+  // the number of times it appears in the original list------------------------
+  // each char must appear only once in the occurences as well as in chars------
+  // it ensures that the produced forest only contains leaves and that----------
+  // it contains all the chars of the list once and only once-------------------
   def occurrencesToLeaves(occ: List[(Char, BigInt)], chars: List[Char]): Forest = {
     require(ListSpecs.noDuplicate(occ.map(_._1)) && occ.map(_._1) == chars)
     decreases(occ.length)
@@ -595,7 +579,8 @@ object PrefixFreeCodes {
     }
   }.ensuring(r => r.forall(isLeaf) && containedChars(r) == chars && chars.forall(countChar(r, _) == 1))
 
-  // generate the corresponding prefix free code given a Forest-----------------
+  // generate the corresponding prefix free code given a forest-----------------
+  // by merging recursively the two first trees of a forest---------------------
   def naivePrefixFreeCode(f: Forest)(implicit s: List[Char]): Tree = {
     require((f.length == 1 && isInnerNode(f.head) || f.length > 1) && s.forall(canEncodeCharUniquely(f, _)))
     decreases(f.length)
@@ -646,49 +631,45 @@ object PrefixFreeCodes {
     }
   }.ensuring(_ => s.forall(canEncodeCharUniquely(f.head, _)))
 
-  // You're entering dangerous land---------------------------------------------
-
-  //TODO clean and document
-  def trivial(f: Forest, c: Char): Unit = {
+  // define the equivalence between canEncodeCharUniquely and its definition----
+  def countCharOneImpliesCanEncodeCharUniquely(f: Forest, c: Char): Unit = {
     require(countChar(f, c) == 1)
   }.ensuring(_ => canEncodeCharUniquely(f, c))
 
-  //TODO clean and document
-  def forallTrivial(f: Forest, c: List[Char]): Unit = {
-    require(c.forall(countChar(f, _) == 1))
+  // define the equivalence between calling canEncodeCharUniquely---------------
+  // characters of a string and its definition----------------------------------
+  def forallCountCharOneImpliesCanEncodeCharUniquely(f: Forest, s: List[Char]): Unit = {
+    require(s.forall(countChar(f, _) == 1))
 
-    c match {
+    s match {
       case hd :: tl => {
-        trivial(f, hd)
-        forallTrivial(f, tl)
+        countCharOneImpliesCanEncodeCharUniquely(f, hd)
+        forallCountCharOneImpliesCanEncodeCharUniquely(f, tl)
       }
       case _ => ()
     }
-  }.ensuring(_ => c.forall(canEncodeCharUniquely(f, _)))
+  }.ensuring(_ => s.forall(canEncodeCharUniquely(f, _)))
 
-
-  //TODO clean and document
-  def tempLemma3Tree(t: Tree, c: Char): Unit = {
-  }.ensuring(_ => containedChars(t).count(_ == c) == countChar(t, c))
-
-  // prove that counting how many times a char appears in the contained chars of a forest
-  // gives the same result as calling the countChar function on that forest
-  def countCharIsSameAsCountingInContainedChars(f: Forest, c: Char): Unit = {
+  // prove that counting how many times a char appears in the contained chars---
+  // of a forest gives the same result as calling-------------------------------
+  // the countChar function on that forest--------------------------------------
+  def countCharEqualsCountingContainedChars(f: Forest, c: Char): Unit = {
   }.ensuring(_ => containedChars(f).count(_ == c) == countChar(f, c))
 
-  // prove that counting how many times a given char appears in two forests with the same containedChars
-  // gives the same result
+  // prove that counting how many times a given char appears in two forests-----
+  // with the same containedChars gives the same result-------------------------
   def sameContainedCharsImpliesSameCountChar(f1: Forest, f2: Forest, c: Char): Unit = {
     require(containedChars(f1) == containedChars(f2))
 
-    countCharIsSameAsCountingInContainedChars(f1, c)
-    countCharIsSameAsCountingInContainedChars(f2, c)
+    countCharEqualsCountingContainedChars(f1, c)
+    countCharEqualsCountingContainedChars(f2, c)
   }.ensuring(_ => countChar(f1, c) == countChar(f2, c))
 
-  // prove that if we can encode uniquely with a forest then we can with a forest with the same contained chars
-  // as well
+  // prove that if we can encode uniquely with a forest-------------------------
+  // then we can with a forest with the same contained chars as well------------
   def sameContainedCharsImpliesSameCanEncodeUniquely(f1: Forest, f2: Forest, s: List[Char]) : Unit = {
     require(containedChars(f1) == containedChars(f2) && s.forall(canEncodeCharUniquely(f1, _)))
+
     s match {
       case hd :: tl => {
         sameContainedCharsImpliesSameCountChar(f1, f2, hd)
@@ -696,25 +677,18 @@ object PrefixFreeCodes {
       }
       case Nil() => ()
     }
-
   }.ensuring( _ => s.forall(canEncodeCharUniquely(f2, _)))
 
-  // prove that the contained chars of a forest are preserved when merging the two first trees in a new InnerNode
+  // prove that the contained chars of a forest are preserved-------------------
+  // when merging the two first trees into a single InnerNode-------------------
   def sameContainedCharsForMergedTreesInForest(f: Forest): Unit = {
-    require(f.length >= 2)
+    require(f.length > 1)
 
     f match {
-      case t1 :: t2 :: tl => {
-        assert(ListSpecs.appendAssoc(containedChars(t1), containedChars(t2), containedChars(tl)))
-      }
+      case t1 :: t2 :: tl => assert(ListSpecs.appendAssoc(containedChars(t1), containedChars(t2), containedChars(tl)))
       case _ => ()
     }
-
-  }.ensuring(_ => f match {
-    case t1 :: t2 :: tl => containedChars(f) == containedChars(InnerNode(t1, t2) :: tl)
-  })
-
-  // You're leaving dangerous land----------------------------------------------
+  }.ensuring(_ => f match { case t1 :: t2 :: tl => containedChars(f) == containedChars(InnerNode(t1, t2) :: tl) })
 
   // final theorem--------------------------------------------------------------
 
