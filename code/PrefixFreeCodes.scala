@@ -243,7 +243,6 @@ object PrefixFreeCodes {
         case t1@InnerNode(_, _) => List(false) ++ encodeChar(t1, c)
       } else {
         lemmaCanEncodeUniquelyInnerImpliesOneOfTheChildren(t, c)
-        assert(canEncodeCharUniquely(t2, c))
         t2 match {
           case Leaf(_, _) => List(true)
           case t2@InnerNode(_, _) => List(true) ++ encodeChar(t2, c)
