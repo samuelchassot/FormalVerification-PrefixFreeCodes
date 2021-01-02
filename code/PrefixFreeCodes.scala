@@ -25,12 +25,16 @@ object PrefixFreeCodes {
   // datatypes helper functions-------------------------------------------------
 
   // return true if tree is an InnerNode----------------------------------------
+  // usefull to make sure encoding and decoding operations are performed--------
+  // with a node and not a leaf which would lead to a meaningless interpretaton-
   def isInnerNode(t: Tree): Boolean = t match {
     case InnerNode(_, _) => true
     case Leaf(_, _) => false
   }
 
   // return true if tree is a Leaf----------------------------------------------
+  // usefull to make sure when generating a forest from the input string--------
+  // that we have only leaves---------------------------------------------------
   def isLeaf(t: Tree): Boolean = t match {
     case InnerNode(_, _) => false
     case Leaf(_, _) => true
@@ -164,7 +168,7 @@ object PrefixFreeCodes {
   // encode lemmas--------------------------------------------------------------
 
   // define that a character is uniquely encodable iff it appears once----------
-  // in the tree----------------------------------------------------------------
+  // in a tree or a forest------------------------------------------------------
   def canEncodeCharUniquely(t: Tree, c: Char): Boolean = (countChar(t, c) == 1)
   def canEncodeCharUniquely(f: Forest, c: Char): Boolean = (countChar(f, c) == 1)
 
@@ -177,15 +181,14 @@ object PrefixFreeCodes {
     canDecodeExactlyOneCharImpliesCanDecode(t, encodeChar(t, c))(t)
     
     t match { case InnerNode(t1, t2) => {
-        (t1, t2) match {
-          case (Leaf(_, c1), t2@InnerNode(_, _)) if (c1 != c) => encodeCharIsDecodableAndCorrect(t2, c)
-          case (t1@InnerNode(_, _), Leaf(_, c2)) if (c2 != c) => encodeCharIsDecodableAndCorrect(t1, c)
-          case (t1@InnerNode(t11, t12), t2@InnerNode(t21, t22)) => if (canEncodeCharUniquely(t1, c)) encodeCharIsDecodableAndCorrect(t1, c) else encodeCharIsDecodableAndCorrect(t2, c)
-          case (Leaf(_, c1), _) if (c1 == c) => ()
-          case (_, Leaf(_, c2)) if (c2 == c) => ()
-        }
+      (t1, t2) match {
+        case (Leaf(_, c1), t2@InnerNode(_, _)) if (c1 != c) => encodeCharIsDecodableAndCorrect(t2, c)
+        case (t1@InnerNode(_, _), Leaf(_, c2)) if (c2 != c) => encodeCharIsDecodableAndCorrect(t1, c)
+        case (t1@InnerNode(t11, t12), t2@InnerNode(t21, t22)) => if (canEncodeCharUniquely(t1, c)) encodeCharIsDecodableAndCorrect(t1, c) else encodeCharIsDecodableAndCorrect(t2, c)
+        case (Leaf(_, c1), _) if (c1 == c) => ()
+        case (_, Leaf(_, c2)) if (c2 == c) => ()
       }
-    }
+    }}
   }.ensuring(_ => canDecode(t, encodeChar(t, c))(t) && decode(t, encodeChar(t, c)) == List(c))
 
   def lemmaCountOnConcatIsEqualToSumCountOnSublist(l1: List[Char], l2: List[Char], p: Char => Boolean): Unit = {
