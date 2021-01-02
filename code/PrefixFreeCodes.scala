@@ -36,49 +36,27 @@ object PrefixFreeCodes {
     case Leaf(_, _) => true
   }
 
-  // return the weight of a Tree------------------------------------------------
-  def containedWeights(t: Tree): BigInt = t match {
-    case InnerNode(t1, t2) => containedWeights(t1) + containedWeights(t2)
-    case Leaf(w, _) => w
-  }
-
-  // return the list of chars contained in the tree-----------------------------
+  // return the list of chars contained in a tree-------------------------------
   def containedChars(t: Tree): List[Char] = t match {
     case InnerNode(t1, t2) => containedChars(t1) ++ containedChars(t2)
     case Leaf(_, c) => List(c)
   }
 
-  // return the list of chars contained in the forest---------------------------
+  // return the list of chars contained in a forest-----------------------------
   def containedChars(f: Forest): List[Char] = f match {
     case hd :: tl => containedChars(hd) ++ containedChars(tl)
     case Nil() => Nil()
   }
 
-  // return the number of leaves with a given character in the given tree-------
+  // return the number of leaves with a given character in a tree---------------
   def countChar(t: Tree, c: Char): BigInt = {
     containedChars(t).count(_ == c)
-  }.ensuring(r => r >= 0)
+  }
 
-  // return the number of leaves with a given character in the given forest-----
+  // return the number of leaves with a given character in the a forest---------
   def countChar(f: Forest, c: Char): BigInt = {
     containedChars(f).count(_ == c)
-  }.ensuring(r => r >= 0)
-
-  // return the number of leaves in the given tree------------------------------
-  def countLeaves(t: Tree): BigInt = {
-    t match {
-      case Leaf(_, _) => BigInt(1)
-      case InnerNode(t1, t2) => countLeaves(t1) + countLeaves(t2)
-    }
-  }.ensuring(r => r >= 0)
-
-  // return the number of leaves in the given forest----------------------------
-  def countLeaves(f: Forest): BigInt = {
-    f match {
-      case Nil() => BigInt(0)
-      case hd :: tl => countLeaves(hd) + countLeaves(tl)
-    }
-  }.ensuring(r => r >= 0)
+  }
 
   // return true iff two trees are the same-------------------------------------
   def isSameTree(t1: Tree, t2: Tree): Boolean = t1 match {
