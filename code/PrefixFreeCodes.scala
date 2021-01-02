@@ -251,6 +251,8 @@ object PrefixFreeCodes {
         }
       }
     }}
+  // the result is decodable and decoding it returns the original character-----
+  // and nothing more to decode-------------------------------------------------
   }.ensuring(bs => canDecodeAtLeastOneChar(t, bs) && decodeChar(t, bs) == (List(c), Nil[Boolean]()))
 
   // encode a list of characters as list of bits with a given tree--------------
@@ -275,6 +277,7 @@ object PrefixFreeCodes {
         hdBs ++ tlBs
       }
     }}
+  // the result is decodable and decoding it returns exactly the original string
   }.ensuring(bs => canDecode(t, bs)(t) && decode(t, bs) == s)
 
   // decode lemmas--------------------------------------------------------------
