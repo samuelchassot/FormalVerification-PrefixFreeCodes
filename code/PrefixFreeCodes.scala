@@ -623,6 +623,7 @@ object PrefixFreeCodes {
   def naivePrefixFreeCode(f: Forest)(implicit s: List[Char]): Tree = {
     require((f.length == 1 && isInnerNode(f.head) || f.length > 1) && s.forall(canEncodeCharUniquely(f, _)))
     decreases(f.length)
+
     f match {
       case t1 :: t2 :: tl => {
         sameContainedCharsForMergedTreesInForest(f)
