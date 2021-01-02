@@ -191,28 +191,22 @@ object PrefixFreeCodes {
     }}
   }.ensuring(_ => canDecode(t, encodeChar(t, c))(t) && decode(t, encodeChar(t, c)) == List(c))
 
-  def lemmaCountOnConcatIsEqualToSumCountOnSublist(l1: List[Char], l2: List[Char], p: Char => Boolean): Unit = {
+  // prove that counting how many time a predicate is satisfied on two lists----
+  // is equivalent to counting it in the concatenation of the lists-------------
+  def countPreservedOnConcat(l1: List[Char], l2: List[Char], p: Char => Boolean): Unit = {
     l1 match {
-      case hd1 :: tl1 => {
-        lemmaCountOnConcatIsEqualToSumCountOnSublist(tl1, l2, p)
-      }
+      case hd1 :: tl1 => countPreservedOnConcat(tl1, l2, p)
       case Nil() => ()
     }
   }.ensuring(_ => (l1 ++ l2).count(p) == l1.count(p) + l2.count(p))
 
-  def lemmaSumOfPositiveNEquals1ImpliesXor(x1: BigInt, x2: BigInt): Unit = {
-    require(x1 >= 0 && x2 >= 0 && (x1 + x2 == 1))
-
-  }.ensuring(_ => x1 == 1 ^ x2 == 1)
-
-  def lemmaCanEncodeUniquelyInnerImpliesOneOfTheChildren(t: Tree, c: Char): Unit = {
+  // prove that if we can encode uniquely a character with a tree then it-------
+  // means we can encode it with one xor the other child of the tree------------
+  // usefull to show that while encoding you will chose exactly one of the------
+  // children
+  def canEncodeUniquelyImpliesWithExactlyOneChild(t: Tree, c: Char): Unit = {
     require(isInnerNode(t) && canEncodeCharUniquely(t, c))
-    t match {
-      case InnerNode(t1, t2) => {
-        lemmaCountOnConcatIsEqualToSumCountOnSublist(containedChars(t1), containedChars(t2), c1 => c1 == c)
-
-      }
-    }
+    t match { case InnerNode(t1, t2) => countPreservedOnConcat(containedChars(t1), containedChars(t2), c1 => c1 == c) }
   }.ensuring(_ => t match { case InnerNode(t1, t2) => canEncodeCharUniquely(t1, c) ^ canEncodeCharUniquely(t2, c) })
 
   // encode functions-----------------------------------------------------------
@@ -226,7 +220,7 @@ object PrefixFreeCodes {
         case Leaf(_, _) => List(false)
         case t1@InnerNode(_, _) => List(false) ++ encodeChar(t1, c)
       } else {
-        lemmaCanEncodeUniquelyInnerImpliesOneOfTheChildren(t, c)
+        canEncodeUniquelyImpliesWithExactlyOneChild(t, c)
         assert(canEncodeCharUniquely(t2, c))
         t2 match {
           case Leaf(_, _) => List(true)
