@@ -63,7 +63,7 @@
 
 The aim of this project is to come up with a verified implementation of an encoder decoder pair as well as a prefix-free code generator in the scope of a personal project for the Formal Verification course (CS-550) at EPFL.
 
-In \cite{blanchette}, J. C. Blanchette presents a formal proof of the optimality for the Huffman's algorithm. The latter generates a prefix-free code for a string such that the encoding of the encoded string has minimal length. As proposed in the conclusion of Blanchette's article, we explore the verification of encode/decode functions.
+In \cite{blanchette}, J. C. Blanchette presents a formal proof of the optimality of the Huffman's algorithm. The latter generates a prefix-free code for a string such that the encoding of the encoded string has minimal length. As proposed in the conclusion of Blanchette's article, we explore the verification of encode/decode functions.
 
 In this report, we start with some background knowledge related to prefix-free codes. Then, we go through the verified implementation of the pipeline we propose.
 
@@ -98,7 +98,7 @@ and build instructions are in file \verb|README.md| in the top-level directory.
 
 \section{Prefix-free codes}
 
-We define a code as a map from characters formed from a string, the symbols, to a list of bits, the code words. The fact that a code is prefix-free means that there is no full code word in this map that is a prefix of an other code word, i.e. $01$ is a prefix of the code word $0111$.
+We define a code as a map from characters formed from a string, the symbols, to a list of bits, the code words. The fact that a code is prefix-free means that there is no full code word in this map that is a prefix of an other code word, e.g. $01$ is a prefix of the code word $0111$.
 
 Those codes can be represented as full binary trees. To determine the code word of a symbols located in the leaves, it suffices to find the path from the root down to the corresponding leaf assuming that taking the left child represents the 0 bit and the right child represents the 1 bit.
 
@@ -133,16 +133,16 @@ Moreover, we define two functions on \lstinline{Tree}s that are proven to be ref
 \section{Encoder}
 
 \subsection{"Encodability"}
-Before implementing the \lstinline{encode} function, we need to define the notion of encodability. For a character to be encodable with a given tree, it must appear exactly once its leaves.
+Before implementing the \lstinline{encode} function, we need to define the notion of encodability. For a character to be encodable with a given tree, it must appear exactly once in its leaves.
 If the character does not appear in the tree, we simply cannot encode it and if it appears more than once, the behavior of the function is undefined.
 
-We so define the following function that returns true if and only if the given character appears exactly once in the tree's leaves:
+We therefore define the following function that returns true if and only if the given character appears exactly once in the tree's leaves:
 
 \begin{lstlisting}
     def canEncodeCharUniquely(t: Tree, c: Char): Boolean
 \end{lstlisting}
 
-When encoding, we also require that the tree must be an \lstinline{InnerNode} because encoding with a single \lstinline{Leaf} is not properly defined. In fact, there is no point in encoding a string that contains only one unique character.
+When encoding, we also require that the tree is an \lstinline{InnerNode} because encoding with a single \lstinline{Leaf} is not properly defined. In fact, there is no point in encoding a string that contains only one unique character.
 
 \subsection{Encode a character}
 We first define the following :
@@ -157,12 +157,12 @@ and the \lstinline{Char} to be uniquely encodable :
 \begin{enumerate}
     \item It first checks which of the left or right child of the tree contains the character to encode
     \item if the child is a \lstinline{Leaf}, it returns \lstinline{List(False)} if it is the left child or \lstinline{List(True)} if it is the right,
-    \item if the child is a \lstinline{InnerNode}, it performs a recursive call on this subtree and appends the result to either \lstinline{List(False)} or \lstinline{List(True)}.
+    \item if the child is a \lstinline{InnerNode}, it performs a recursive call on this subtree and appends the output to either \lstinline{List(False)} or \lstinline{List(True)}.
 \end{enumerate}
 
 For the first point to be valid, we define the following lemma: if a tree can encode uniquely a character, then exactly one of its children can. We then know that only one branch of the condition is valid at a time.
 
-The function has a post condition asserting that the produced list of bits is actually decodable and that, if it is decoded, it returns the exact same character that is to be encoded and all bits of its encoding are consumed.
+The function has a postcondition asserting that the produced list of bits is actually decodable and that, if it is decoded, it returns the exact same character that is to be encoded and all bits of its encoding are consumed.
 
 \subsection{Encode a string}
 We first define the following :
@@ -179,7 +179,7 @@ We now define the \lstinline{encode} function itself. It is defined recursively 
     \item Else, call \lstinline{encodeChar} on the head and concatenate the result with the result of a recursive call on the tail.
 \end{enumerate}
 
-The post condition asserts that the produced list of bits is decodable using the same tree and that, if decoded, gives back the same string as the one received as input.
+The postcondition asserts that the produced list of bits is decodable using the same tree and that, if decoded, gives back the same string as the one received as input.
 
 To prove this postcondition, we have to define the following lemmas:
 \begin{enumerate}
@@ -200,9 +200,9 @@ Similarily to the notion of encodability, we define the notion of decodability. 
 \end{lstlisting}
 
 The first one returns true if it is possible to decode at least one character from the given list of bits using the given tree. 
-It goes down the tree from the root and follow the proper edge recursively given the head bit of the list and consumes it. If it reaches a leaf, it returns true or false otherwise.
+It goes down the tree from the root and follow the proper edge recursively given the head bit of the list and consumes it. If it reaches a leaf, it returns true, false otherwise.
 
-The second one returns true only if we can decode the whole list of bits, i.e. we can decode one or more characters and when the list of bits is empty, we eventually reached a leaf. It is defined recursively and uses \lstinline{canDecodeAtLeastOneChar}.
+The second one returns true only if we can decode the whole list of bits, i.e. we can decode one or more characters and when the list of bits is empty, we effectively reached a leaf. It is defined recursively and uses \lstinline{canDecodeAtLeastOneChar}.
 
 Then, we prove a few lemmas related to those two functions, the most important ones being the following:
 \begin{itemize}
@@ -234,7 +234,7 @@ The output corresponds to the list of characters obtained by decoding the list o
 It has no postcondition but some preconditions. Like \lstinline{decodeChar}, it requires the given \lstinline{Tree} to be an \lstinline{InnerNode} but also that we can decode the entire given list of bits using the given tree.
 
 Concerning the implementation, it first calls \lstinline{decodeChar} and if the remaining list of bits in the resulting tuple is empty, it returns \lstinline{List(c)} where \lstinline{c} is the character in the tuple. If the remaining bits list is not empty,
-it calls itself recursively on this list and returns \lstinline{c :: res)} where res is the list produced by the recursive call.
+it calls itself recursively on this list and returns \lstinline{c :: res} where res is the list produced by the recursive call.
 
 The lemmas are called in the implementation to ensure that the preconditions of the calls to \lstinline{decodeChar} and to \lstinline{decode} are indeed valid.
 
@@ -283,7 +283,7 @@ Huffman's algorithm was the starting point of this project altough we did not cl
 As an improvement, we suggest to extend our current implementation of naive prefix-free code generator to an actual formally verified implementation of Huffman's algorithm. This is surely more challenging to prove since Huffman's algorithm requires sorting the forest of tree at each iteration. Ensuring the forest properties such as the characters that can be uniquely decoded with it, is not trivial.
 
 \section{Conclusion}
-We propose a formally verified implementation in Scala of an encode decode functions pair for prefix-free code. To complete the pipeline, we also propose a formally verified prefix-free code generator.
+We propose a formally verified implementation in Scala of an encode-decode functions pair for prefix-free code. To complete the pipeline, we also propose a formally verified prefix-free code generator.
 We verify the whole pipeline, that means that, given a string represented by a \lstinline{List[Char]}, it can generate the prefix-free code, encode the string and decode the encoded output correctly.
 
 The most difficult part of this project is to figure out how to break problems into pieces small enough so that Stainless can be used to prove them. 
