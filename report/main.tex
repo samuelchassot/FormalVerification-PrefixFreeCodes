@@ -95,7 +95,7 @@ Our code is available in the following repository:
 \end{center}
 and build instructions are in file \verb|README.md| in the top-level directory.
 
-\section{Prefix-free codes} %TODO
+\section{Prefix-free codes}
 
 We define a code as a map from a list of characters formed from a string, the symbols, to a list of bits, the code words. The fact that a code is prefix-free means that there is no full code word in this map that is a prefix of an other code word, i.e. $01$ is a prefix of the code word $0111$.
 
@@ -108,7 +108,7 @@ Those codes can be represented as full binary trees. To determine the code word 
     \caption{A full binary tree representing a prefix-free code.\label{fig:pfc}}
 \end{figure}
 
-\section{Datatypes} %TODO
+\section{Datatypes}
 
 We represent a string (the tyoe of an input of the pipeline) as \lstinline{List[Char]} as it is easier to define recursion using lists rather than the \lstinline{String} type directly. 
 Similarily we define an encoded binary string (the type of an output of the pipeline) as \lstinline{List[Boolean]}.
@@ -133,7 +133,7 @@ We define two functions on \lstinline{Tree}s:
 
 We then prove that these two relations are transitive and reflexive.
 
-\section{Encoder} %TODO
+\section{Encoder}
 
 \subsection{"Encodability"}
 Before implementing the \lstinline{encode} function, we need to define the notion of encodability. For a character to be encoable using a given tree, it must appear exactly once in the leaves of this tree. If the character does 
@@ -181,13 +181,43 @@ To prove this post condition, we have to define several lemmas:
 \end{itemize}
 
 
-\section{Decoder} %TODO
+\section{Decoder}
 
 \subsection{"Decodability"}
-%TODO present lemmas canDecode and candecodeatleastonechar, canDecodeImpliesCanDecodeAtLeastOneChar, canDecodeImpliesCanDecodeTailAfterOneCharDecoded
+Similarily to the notion of encodability, we define the notion of decodability. We define two functions:
+\begin{lstlisting}
+    def canDecodeAtLeastOneChar(t: Tree, bs: List[Boolean]): Boolean
+    def canDecode(s: Tree, bs: List[Boolean])(implicit t: Tree): Boolean
+\end{lstlisting}
+
+The first one returns true if it is possible to decode one char from the given list of bits using the given tree. 
+It goes down the tree from the root and follow the proper edge given the head bit of the list and consumes it. If it reaches a leaf, it returns true, false if not. It is defined recursively.
+
+The second one returns true only if we can decode the whole list of bits, aka we can decode n characters and when the list of bits is empty, we reached a leaf. It is defined recursively and uses \lstinline{canDecodeAtLeastOneChar}.
+
+We then define and prove some lemmas about these, the most important being these two:
+\begin{itemize}
+    \item \lstinline{canDecodeImpliesCanDecodeAtLeastOneChar}: proves that, if we can decode the whole list of bits, then we can decode at least one character from it.
+    \item \lstinline{canDecodeImpliesCanDecodeTailAfterOneCharDecoded}: proves that, if we can decode the whole list of bits, then if we decode the first character, we can still decode the tail that is left.
+\end{itemize}
+
+\subsection{Decode a character}
+Just as for the \lstinline{encode} function, we first define a function to decode on character. This \lstinline{decodeChar} function takes as parameters a \lstinline{List[Boolean]} and 
+a \lstinline{Tree} and produces a tuple containing the decoded \lstinline{Char} and the remaining \lstinline{List[Boolean]}.
+As preconditions, it requires that the given \lstinline{Tree} is in fact a \lstinline{InnerNode} (as \lstinline{encode} does and for the same reasons) and that we can decode at least one character from the given list of bits using the given tree.
+
+Concerning the implementation, it is define recursively: it goes down the tree consuming a bit from the list at each step (when \lstinline{False} it calls recursively on the left child, on the right when \lstinline{True}) until it reaches a leaf. At this point,
+it returns the character that is in the leaf and the remaining list of bits.
 
 \subsection{Decode a string}
-%TODO present implementation and how lemmas are used
+The \lstinline{decode} function takes as parameters a \lstinline{List[Boolean]} and a \lstinline{Tree} and produces a \lstinline{List[Char]}. The output corresponds to the list of characters obtained by decoding the list of bits using the given tree.
+It has no postcondition but some preconditions. As \lstinline{decodeChar}, it requires that the given \lstinline{Tree} is a \lstinline{InnerNode} but also that we can decode the entire given list of bits using the given tree.
+
+Concerning the implementation, it first calls \lstinline{decodeChar} and if the remaining list of bits in the resulting tuple is empty, it returns \lstinline{List(c)} where \lstinline{c} is the character in the tuple. If the remaining bits list is not empty,
+it calls itself recursively on this list and returns \lstinline{c :: res)} where res is the list produced by the recursive call.
+
+The lemmas are called in the implementation to ensure that the preconditions of the calls to \lstinline{decodeChar} and to \lstinline{decode} are indeed valid.
+
 
 \section{Prefix-free code generator} %TODO
 %TODO present how naive algo works and how we go from a string to a forest of leaves
