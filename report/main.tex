@@ -136,10 +136,32 @@ We then prove that these two relations are transitive and reflexive.
 \section{Encoder} %TODO
 
 \subsection{"Encodability"}
-%TODO how canEncode is defined, canEncodeCharUniquely and need a InnerNode
+To define the \lstinline{encode} function, we first need to define its parameters, output and preconditions. The \lstinline{encode} function takes as input a \lstinline{List[Char]} and a \lstinline{Tree} and produces a \lstinline{List[Boolean]}.
+It requires that the \lstinline{Tree} is in fact a \lstinline{InnerNode} instance. Willing to encode something with only a \lstinline{Leaf} would not make sense as the bits are added to the output binary string when an edge of the tree is followed.
+It also requires that the \lstinline{List[Char]} is non-empty and that each of its character is uniquely encodable by the tree. To be uniquely encodable means that the character appears exactly once in the leaves of the tree. If the character does 
+not appear in the tree, we simply cannot encode it and if it appears more than once, the behavior of the function is undefined.
+
+We so define the following function that return true if and only if the given character appears only once in the tree's leaves:
+
+\begin{lstlisting}
+    def canEncodeCharUniquely(t: Tree, c: Char): Boolean
+\end{lstlisting}
+
 
 \subsection{Encode a character}
-%TODO present postcondition, implementation and canEncodeUniquelyImpliesWithExactlyOneChild
+We first define a function \lstinline{encodeChar(t: Tree, c: Char): List[Boolean]} which encodes the given \lstinline{Char} using the given \lstinline{Tree}. This function also requires the \lstinline{Tree} to be an instance of \lstinline{InnerNode} 
+and the \lstinline{Char} to be uniquely encodable.
+
+This function is defined recursively:
+\begin{itemize}
+    \item it first checks which of the left or right child can encode the character (using the \lstinline{canEncodeCharUniquely} function),
+    \item if the subtree that can encode the character is a \lstinline{Leaf}, it returns \lstinline{List(False)} if it is the left child or \lstinline{List(True)} if it is the right,
+    \item if the subtree is a \lstinline{InnerNode}, it performs a recursive call on this subtree and appends the result to either \lstinline{List(False)} or \lstinline{List(True)} depending on the left or right again.
+\end{itemize}
+
+For the first point to be valid, we define a lemma proving the following: if a tree can encode uniquely a character, then exactly one child can. We then know that only one branch of the condition is valid at a time.
+
+The function has a post condition asserting that the produced list of bits is actually decodable (see later) and that, if it is decoded, it gives the same character back and all bits are consumed.
 
 \subsection{Encode a string}
 %TODO present postconditon, implementatio and give intuition of all lemmas called
