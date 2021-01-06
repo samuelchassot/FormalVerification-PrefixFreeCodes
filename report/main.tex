@@ -109,8 +109,6 @@ Those codes can be represented as full binary trees. To determine the code word 
     \caption{A full binary tree representing a prefix-free code.\label{fig:pfc}}
 \end{figure}
 
-\pagebreak
-
 \section{Datatypes}
 
 The inputs of our pipeline are string stored as \lstinline{List[Char]} since it is easier to define recursion on lists rather than on the \lstinline{String} type directly with Stainless. 
@@ -179,7 +177,7 @@ We now define the \lstinline{encode} function itself. It is defined recursively 
 \begin{enumerate}
     \item If there is only one char in the input list, call \lstinline{encodeChar} and returns the result.
     \item Else, call \lstinline{encodeChar} on the head and concatenate the result with the result of a recursive call on the tail.
-\end{itemize}
+\end{enumerate}
 
 The post condition asserts that the produced list of bits is decodable using the same tree and that, if decoded, gives back the same string as the one received as input.
 
@@ -213,55 +211,67 @@ Then, we prove a few lemmas related to those two functions, the most important o
 \end{itemize}
 
 \subsection{Decode a character}
-Just as for the \lstinline{encode} function, we first define a function to decode on character. This \lstinline{decodeChar} function takes as parameters a \lstinline{List[Boolean]} and 
-a \lstinline{Tree} and produces a tuple containing the decoded \lstinline{Char} and the remaining \lstinline{List[Boolean]}.
-As preconditions, it requires that the given \lstinline{Tree} is in fact a \lstinline{InnerNode} (as \lstinline{encode} does and for the same reasons) and that we can decode at least one character from the given list of bits using the given tree.
+We first define the following :
 
-Concerning the implementation, it is define recursively: it goes down the tree consuming a bit from the list at each step (when \lstinline{False} it calls recursively on the left child, on the right when \lstinline{True}) until it reaches a leaf. At this point,
+\begin{lstlisting}
+    def decodeChar(t: Tree, bs: List[Boolean]): (Char, List[Boolean])
+\end{lstlisting}
+
+It produces a tuple containing the decoded \lstinline{Char} and the remaining \lstinline{List[Boolean]} to be decoded.
+As preconditions, it requires that the given \lstinline{Tree} is in fact an \lstinline{InnerNode} and that we can decode at least one character from the given list of bits using the given tree.
+
+Concerning the implementation, it is defined recursively: going down the tree consuming a bit from the list at each step, when \lstinline{False} it calls recursively on the left child or on the right one when \lstinline{True} until it reaches a leaf. At this point,
 it returns the character that is in the leaf and the remaining list of bits.
 
 \subsection{Decode a string}
-The \lstinline{decode} function takes as parameters a \lstinline{List[Boolean]} and a \lstinline{Tree} and produces a \lstinline{List[Char]}. The output corresponds to the list of characters obtained by decoding the list of bits using the given tree.
-It has no postcondition but some preconditions. As \lstinline{decodeChar}, it requires that the given \lstinline{Tree} is a \lstinline{InnerNode} but also that we can decode the entire given list of bits using the given tree.
+We first define the following :
+
+\begin{lstlisting}
+    def decode(t: Tree, bs: List[Boolean]): List[Char]
+\end{lstlisting}
+
+The output corresponds to the list of characters obtained by decoding the list of bits using the given tree.
+It has no postcondition but some preconditions. Like \lstinline{decodeChar}, it requires the given \lstinline{Tree} to be an \lstinline{InnerNode} but also that we can decode the entire given list of bits using the given tree.
 
 Concerning the implementation, it first calls \lstinline{decodeChar} and if the remaining list of bits in the resulting tuple is empty, it returns \lstinline{List(c)} where \lstinline{c} is the character in the tuple. If the remaining bits list is not empty,
 it calls itself recursively on this list and returns \lstinline{c :: res)} where res is the list produced by the recursive call.
 
 The lemmas are called in the implementation to ensure that the preconditions of the calls to \lstinline{decodeChar} and to \lstinline{decode} are indeed valid.
 
-
-\section{Prefix-free code generator} %TODO
-To complete the pipeline, we implement a algorithm that produces a prefix-free code for a string. It is a naive algorithm in the sense that it does not produce an optimal tree 
-(optimal in the sense that the encoded string is the shortest possible given the input).
+\section{Prefix-free code generator} 
+To complete the pipeline, we implement an algorithm that produces a prefix-free code for a string. It is a naive algorithm in the sense that it does not produce an optimal such that the encoded string is the shortest possible given the input.
 
 It takes as parameters a \lstinline{List[Char]} and works as following:
-\begin{itemize}
-    \item a function produces a \lstinline{List[(Char, Int)]} where each character of the input list appears once and the integer in the tuple is the number of times this character occurs in the input list. We call this list the occurences.
-    \item a function takes the occurences and produces a \lstinline{Forest} of leaves where each character appears in one leaf with the number of occurences as weight.
-    \item the tree is then produced by recursively merging the two first trees of the forest into a new \lstinline{InnerNode} and calling the function recursively on the resulting \lstinline{Forest} until only one tree is left.
-\end{itemize}
+\begin{enumerate}
+    \item A function produces a \lstinline{List[(Char, Int)]} where each character of the input list appears once and the integer in the tuple is the number of times this character occurs in the input list. We call this list the occurences.
+    \item A function takes the occurences and produces a \lstinline{Forest} of leaves where each character appears in one leaf with the number of occurences as weight.
+    \item The tree is then produced by recursively merging the two first trees of the forest into a new \lstinline{InnerNode} and calling the function recursively on the resulting \lstinline{Forest} until only one tree is left.
+\end{enumerate}
 
 To implement this algorithm, we use three functions:
 \begin{lstlisting}
-    def generateOccurrences(chars: List[Char])(implicit s: List[Char]): List[(Char, BigInt)]
+    def generateOccurrences(chars: List[Char])
+                           (implicit s: List[Char]): List[(Char,
+                                                           BigInt)]
     def generateForest(s: List[Char]): Forest
     def naivePrefixFreeCode(f: Forest)(implicit s: List[Char]): Tree
 \end{lstlisting}
 
-These three functions have some pre- and postconditions ensuring during the whole process that, at the end, each character of the input list in uniquely encodable by the produced tree.
-This proof is quite tedious and requires to prove that the list of characters is indeed preserved during the whole process but without any duplicates.
+These three functions have sufficient pre- and postconditions ensuring during the whole process that,  each character of the input list in uniquely encodable by the produced tree.
+This proof is not trivial and requires to prove that the list of characters is indeed preserved during the whole process but without any duplicates.
 
 \section{Main theorem}
-The main theorem we prove is the following:
+The main theorem we prove in the end is the following:
 \begin{lstlisting}
     def decodeEncodedString(s: List[Char]): Unit = {
-    require(removeDuplicates(s).length > 1)
-  }.ensuring(_ => {
-    val t = generatePrefixFreeCode(s)
-    val e = encode(t, s)
-    val d = decode(t, e)
-    s == d
-  })
+        require(removeDuplicates(s).length > 1)
+    }.ensuring(_ => {
+        val t = generatePrefixFreeCode(s)
+        val e = encode(t, s)
+        val d = decode(t, e)
+
+        s == d
+    })
 \end{lstlisting}
 
 It states that, if we take the input string, generate a prefix-free code tree, use it to encode the list and decode the produced encoding, we indeed get back the original list.
@@ -273,12 +283,11 @@ Huffman's algorithm was the starting point of this project altough we did not cl
 As an improvement, we suggest to extend our current implementation of naive prefix-free code generator to an actual formally verified implementation of Huffman's algorithm. This is surely more challenging to prove since Huffman's algorithm requires sorting the forest of tree at each iteration. Ensuring the forest properties such as the characters that can be uniquely decoded with it, is not trivial.
 
 \section{Conclusion}
-We propose a formally verified implementation in Scala of a pair of encode/decode functions for prefix-free code. To complete the pipeline, we also propose a formally verified prefix-free code generator although not optimal.
+We propose a formally verified implementation in Scala of an encode decode functions pair for prefix-free code. To complete the pipeline, we also propose a formally verified prefix-free code generator.
 We verify the whole pipeline, that means that, given a string represented by a \lstinline{List[Char]}, it can generate the prefix-free code, encode the string and decode the encoded output correctly.
 
-The most difficult part of this project is to figure out how to break problems into pieces small enough so that Stainless can prove them. 
-It is quite frustrating to see how trivial the solution appears but how difficult it is to find it in the first place.
-
+The most difficult part of this project is to figure out how to break problems into pieces small enough so that Stainless can be used to prove them. 
+It is frustrating to see how trivial the solution appears but how difficult it is to find it in the first place.
 
 \vspace{0.5cm} % some vertical space since we are creating this paragraph manually
 \noindent % otherwise many styles like to indent the first word of a paragraph
