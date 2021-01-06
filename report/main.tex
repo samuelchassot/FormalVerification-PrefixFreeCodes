@@ -161,10 +161,24 @@ This function is defined recursively:
 
 For the first point to be valid, we define a lemma proving the following: if a tree can encode uniquely a character, then exactly one child can. We then know that only one branch of the condition is valid at a time.
 
-The function has a post condition asserting that the produced list of bits is actually decodable (see later) and that, if it is decoded, it gives the same character back and all bits are consumed.
+The function has a post condition asserting that the produced list of bits is actually decodable (see later) and that, if it is decoded (calling \lstinline{decodeChar}), it gives the same character back and all bits are consumed.
 
 \subsection{Encode a string}
-%TODO present postconditon, implementatio and give intuition of all lemmas called
+We now define the \lstinline{encode} function itself. It is defined recursively as followed:
+\begin{itemize}
+    \item if there is only one char in the input list, call \lstinline{encodeChar} and returns the result
+    \item else, call \lstinline{encodeChar} on the head and concatenate the result with the result of a recursive call on the tail.
+\end{itemize}
+
+The post condition asserts that, as stated earlier, that the produced list of bits is decodable using the same tree and that, if decoded, gives back the same string as the one received as input.
+
+To prove this post condition, we have to define several lemmas:
+\begin{itemize}
+    \item to assert that \lstinline(encodeChar) produces a list of bits that is decodable and gives the right result back.
+    \item to assert that if we can decode two lists of bits, we can still decode the concatenation of the two.
+    \item to assert that if we can decode a list of bits, then we can decode at least one character from it and that we can still decode what is left (the tail).
+\end{itemize}
+
 
 \section{Decoder} %TODO
 
