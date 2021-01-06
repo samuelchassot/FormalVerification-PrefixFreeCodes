@@ -136,9 +136,7 @@ We then prove that these two relations are transitive and reflexive.
 \section{Encoder} %TODO
 
 \subsection{"Encodability"}
-To define the \lstinline{encode} function, we first need to define its parameters, output and preconditions. The \lstinline{encode} function takes as input a \lstinline{List[Char]} and a \lstinline{Tree} and produces a \lstinline{List[Boolean]}.
-It requires that the \lstinline{Tree} is in fact a \lstinline{InnerNode} instance. Willing to encode something with only a \lstinline{Leaf} would not make sense as the bits are added to the output binary string when an edge of the tree is followed.
-It also requires that the \lstinline{List[Char]} is non-empty and that each of its character is uniquely encodable by the tree. To be uniquely encodable means that the character appears exactly once in the leaves of the tree. If the character does 
+Before implementing the \lstinline{encode} function, we need to define the notion of encodability. For a character to be encoable using a given tree, it must appear exactly once in the leaves of this tree. If the character does 
 not appear in the tree, we simply cannot encode it and if it appears more than once, the behavior of the function is undefined.
 
 We so define the following function that return true if and only if the given character appears only once in the tree's leaves:
@@ -164,6 +162,9 @@ For the first point to be valid, we define a lemma proving the following: if a t
 The function has a post condition asserting that the produced list of bits is actually decodable (see later) and that, if it is decoded (calling \lstinline{decodeChar}), it gives the same character back and all bits are consumed.
 
 \subsection{Encode a string}
+The \lstinline{encode} function takes as input a \lstinline{List[Char]} and a \lstinline{Tree} and produces a \lstinline{List[Boolean]}.
+It requires that the \lstinline{Tree} is in fact a \lstinline{InnerNode} instance. Willing to encode something with only a \lstinline{Leaf} would not make sense as the bits are added to the output binary string when an edge of the tree is followed.
+It also requires that the \lstinline{List[Char]} is non-empty and that each of its character is uniquely encodable by the tree.
 We now define the \lstinline{encode} function itself. It is defined recursively as followed:
 \begin{itemize}
     \item if there is only one char in the input list, call \lstinline{encodeChar} and returns the result
