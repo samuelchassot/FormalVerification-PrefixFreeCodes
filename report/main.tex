@@ -238,10 +238,22 @@ To implement this algorithm, we use three functions:
 \end{lstlisting}
 
 These three functions have some pre- and postconditions ensuring during the whole process that, at the end, each character of the input list in uniquely encodable by the produced tree.
-This proof is quite tedious and require to prove that the list of characters is indeed preserved during the whole process but without duplicates.
+This proof is quite tedious and requires to prove that the list of characters is indeed preserved during the whole process but without any duplicates.
 
 \section{Main theorem}
-%TODO résume sa mère et comment on met tout ensemble pour prouver tout quoi
+The main theorem we prove is the following:
+\begin{lstlisting}
+    def decodeEncodedString(s: List[Char]): Unit = {
+    require(removeDuplicates(s).length > 1)
+  }.ensuring(_ => {
+    val t = generatePrefixFreeCode(s)
+    val e = encode(t, s)
+    val d = decode(t, e)
+    s == d
+  })
+\end{lstlisting}
+
+It states that, if we take the input string, generate a prefix-free code tree, use it to encode the list and decode the produced encoding, we indeed get back the original list.
 
 \section{Future work}
 
