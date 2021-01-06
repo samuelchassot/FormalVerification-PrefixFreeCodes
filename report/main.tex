@@ -109,12 +109,14 @@ Those codes can be represented as full binary trees. To determine the code word 
     \caption{A full binary tree representing a prefix-free code.\label{fig:pfc}}
 \end{figure}
 
+\pagebreak
+
 \section{Datatypes}
 
-We represent a string (the tyoe of an input of the pipeline) as \lstinline{List[Char]} as it is easier to define recursion using lists rather than the \lstinline{String} type directly. 
-Similarily we define an encoded binary string (the type of an output of the pipeline) as \lstinline{List[Boolean]}.
+The inputs of our pipeline are string stored as \lstinline{List[Char]} since it is easier to define recursion on lists rather than on the \lstinline{String} type directly with Stainless. 
+Similarily, we define the outputs of our pipeline, an encoded binary string as \lstinline{List[Boolean]}.
 
-To represent the binary trees used to represent the prefix-free codes, we define the folowing case classes:
+We define the following case classes to describe the full binary tree used to represent prefix-free codes and \lstinline{Forest}, which is a list of trees used for the generation of the prefix-free codes:
 
 \begin{lstlisting}
     sealed abstract class Tree
@@ -124,15 +126,11 @@ To represent the binary trees used to represent the prefix-free codes, we define
     type Forest = List[Tree]
 \end{lstlisting}
 
-A \lstinline{Forest} is a list of trees that is used in the process of generation of the prefix-free code.
-
-We define two functions on \lstinline{Tree}s:
+Moreover, we define two functions on \lstinline{Tree}s that are proven to be reflexive and transitive:
 \begin{itemize}
     \item \lstinline{isSubTree(t: Tree, st: Tree)}: boolean value indicating if \lstinline{st} is a subtree of \lstinline{t}.
-    \item \lstinline{isSameTree(t1: Tree, t2: Tree)}: equality between trees) are reflexive and transitive.
+    \item \lstinline{isSameTree(t1: Tree, t2: Tree)}: boolean value indicating if two trees are the same, i.e. all the nodes are the same.
 \end{itemize}
-
-We then prove that these two relations are transitive and reflexive.
 
 \section{Encoder}
 
