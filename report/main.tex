@@ -125,27 +125,42 @@ To represent the binary trees used to represent the prefix-free codes, we define
 
 A \lstinline{Forest} is a list of trees that is used in the process of generation of the prefix-free code.
 
-\section{Encode} %TODO
+%TODO one sentence to say what kind of functions and properties we needed to ensure
 
-TODO
+\section{Encoder} %TODO
 
-\section{Decode} %TODO
+\subsection{"Encodability"}
+%TODO how canEncode is defined, canEncodeCharUniquely and need a InnerNode
 
-TODO
+\subsection{Encode a character}
+%TODO present postcondition, implementation and canEncodeUniquelyImpliesWithExactlyOneChild
+
+\subsection{Encode a string}
+%TODO present postconditon, implementatio and give intuition of all lemmas called
+
+\section{Decoder} %TODO
+
+\subsection{"Decodability"}
+%TODO present lemmas canDecode and candecodeatleastonechar, canDecodeImpliesCanDecodeAtLeastOneChar, canDecodeImpliesCanDecodeTailAfterOneCharDecoded
+
+\subsection{Decode a string}
+%TODO present implementation and how lemmas are used
 
 \section{Prefix-free code generator} %TODO
+%TODO present how naive algo works and how we go from a string to a forest of leaves
 
-TODO
+\section{Main theorem}
+%TODO résume sa mère et comment on met tout ensemble pour prouver tout quoi
 
-\section{Future work} %TODO
+\section{Future work}
 
 Huffman's algorithm was the starting point of this project altough we did not clearly exploit it. We restricted ourselves to the broader class of prefix-free codes and how to generate some without worrying about its optimality as in \cite{blanchette}. 
 
 As an improvement, we suggest to extend our current implementation of naive prefix-free code generator to an actual formally verified implementation of Huffman's algorithm. This is surely more challenging to prove since Huffman's algorithm requires sorting the forest of tree at each iteration. Ensuring the forest properties such as the characters that can be uniquely decoded with it, is not trivial.
 
-\section{Conclusions} %TODO
+\section{Conclusions}
 
-TODO
+%TODO challenging to find how to break problems in smaller pieces and how trivial it looks once proven
 
 \vspace{0.5cm} % somem vertical space since we are creating this paragraph manually
 \noindent % otherwise many styles like to indent the first word of a paragraph
