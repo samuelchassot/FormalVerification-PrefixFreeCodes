@@ -110,7 +110,8 @@ Those codes can be represented as full binary trees. To determine the code word 
 
 \section{Datatypes} %TODO
 
-We represent the strings (input of the pipeline) as \lstinline{List[Char]} as it is easier to define recursion using lists rather than  \lstinline{String} type directly. Similarily we define the encoded binary string as  \lstinline{List[Boolean]}.
+We represent a string (the tyoe of an input of the pipeline) as \lstinline{List[Char]} as it is easier to define recursion using lists rather than the \lstinline{String} type directly. 
+Similarily we define an encoded binary string (the type of an output of the pipeline) as \lstinline{List[Boolean]}.
 
 To represent the binary trees used to represent the prefix-free codes, we define the folowing case classes:
 
