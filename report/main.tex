@@ -5,6 +5,7 @@
 \usepackage{amsmath}
 \bibliographystyle{plainurl}% the bibstyle
 \usepackage{cleveref} % Provides \Cref
+\usepackage{listings} % For code snippets
 
 
 \title{Implementation and verification of encoder, decoder and generator for prefix-free codes}
@@ -62,28 +63,28 @@
 
 The aim of this project is to come up with a verified implementation of an encoder and decoder pair as well as a prefix-free code generator in the scope of a personal project for the Formal Verification course (CS-550) at EPFL.
 
-In \cite{blanchette}, J. C. Blanchette presents a formal proof of the optimality for the Huffman's algorithm. The latter generates a prefix-free code for a string such that the encoding of the encoded string has minimal length. As proposed in the conclusion of Blanchette's article, we explored the the verification on encode/decode functions.
+In \cite{blanchette}, J. C. Blanchette presents a formal proof of the optimality for the Huffman's algorithm. The latter generates a prefix-free code for a string such that the encoding of the encoded string has minimal length. As proposed in the conclusion of Blanchette's article, we explore the verification of encode/decode functions.
 
-In this report, we start with some background knowledge related to prefix-free codes. Then, we go through the verified implementation of the pipeline we came up with.
+In this report, we start with some background knowledge related to prefix-free codes. Then, we go through the verified implementation of the pipeline we propose.
 
 \subsection*{Prior work}
 
-To the best of our knowledge, this is the first time an encode decode function pair is formally verified.
-However we can find many examples of similar exercises in the litterature such as formally defining Huffman's algorithm in \cite{formal} or implementing formally verified compression decompression function pair for deflate in \cite{deflate}.
+To the best of our knowledge, this is the first time an encode/decode function pair is formally verified.
+However we can find many examples of similar exercises in the litterature such as a formal definition Huffman's algorithm in \cite{formal} or a formally verified implemention of compression/decompression function pair for deflate in \cite{deflate}.
 
 \subsection*{Our approach} % the star makes the section number disappear
 
-We first considered the whole class of prefix-free codes and not only the optimal ones generates by Huffman's algorithm.
-Then, we came up with basic datatypes and implementations plain Scala code before adding  \emph{require}s and \emph{ensuring}s from Stainless in order to validate the main correctness theorem
-Finally, we also implemented and verified an naive prefix-free code generator in order to complete the whole pipeline.
+We first consider the whole class of prefix-free codes and not only the optimal ones generates by Huffman's algorithm.
+Then, we come up with basic datatypes and implementations plain Scala code before adding  \emph{require}s and \emph{ensuring}s from Stainless in order to validate the main correctness theorem.
+Finally, we also implement and verify an naive prefix-free code generator in order to complete the whole pipeline.
 
 \subsection*{Contributions} % the star makes the section number disappear
 
 The main contributions of this report are the following:
 \begin{enumerate}
-    \item formally verified of an encode function for prefix-free codes
-    \item formally verified of an decode function for prefix-free codes
-    \item formally verified of a prefix-free code generator
+    \item a formally verified implementation of an encode function for prefix-free codes
+    \item a formally verified implementation of an decode function for prefix-free codes
+    \item a formally verified implementation of a prefix-free code generator
 \end{enumerate}
 
 \section{Implementation}
@@ -96,7 +97,7 @@ and build instructions are in file \verb|README.md| in the top-level directory.
 
 \section{Prefix-free codes} %TODO
 
-We define a code as map from a list of characters formed from a string, the symbols, to a list of bits, the code words. The fact that a code is prefix-free means that there is no full code word in this map that is a prefix of an other code word, i.e. $01$ is a prefix of the code word $0111$.
+We define a code as a map from a list of characters formed from a string, the symbols, to a list of bits, the code words. The fact that a code is prefix-free means that there is no full code word in this map that is a prefix of an other code word, i.e. $01$ is a prefix of the code word $0111$.
 
 Those codes can be represented as full binary trees. To determine the code word of a symbols located in the leaves, it suffices to find the path from the root down to the corresponding leaf assuming that taking the left child represents the 0 bit and the right child represents the 1 bit.
 
@@ -109,7 +110,19 @@ Those codes can be represented as full binary trees. To determine the code word 
 
 \section{Datatypes} %TODO
 
-TODO
+We represent the strings (input of the pipeline) as \lstinline{List[Char]} as it is easier to define recursion using lists rather than  \lstinline{String} type directly. Similarily we define the encoded binary string as  \lstinline{List[Boolean]}.
+
+To represent the binary trees used to represent the prefix-free codes, we define the folowing case classes:
+
+\begin{lstlisting}
+    sealed abstract class Tree
+    case class InnerNode(t1: Tree, t2: Tree) extends Tree
+    case class Leaf(w: BigInt, c: Char) extends Tree
+  
+    type Forest = List[Tree]
+\end{lstlisting}
+
+A \lstinline{Forest} is a list of trees that is used in the process of generation of the prefix-free code.
 
 \section{Encode} %TODO
 
