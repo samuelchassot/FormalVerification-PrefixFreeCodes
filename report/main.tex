@@ -125,7 +125,13 @@ To represent the binary trees used to represent the prefix-free codes, we define
 
 A \lstinline{Forest} is a list of trees that is used in the process of generation of the prefix-free code.
 
-%TODO one sentence to say what kind of functions and properties we needed to ensure
+We define two functions on \lstinline{Tree}s:
+\begin{itemize}
+    \item \lstinline{isSubTree(t: Tree, st: Tree)}: boolean value indicating if \lstinline{st} is a subtree of \lstinline{t}.
+    \item \lstinline{isSameTree(t1: Tree, t2: Tree)}: equality between trees) are reflexive and transitive.
+\end{itemize}
+
+We then prove that these two relations are transitive and reflexive.
 
 \section{Encoder} %TODO
 
