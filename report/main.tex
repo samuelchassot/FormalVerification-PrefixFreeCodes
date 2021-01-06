@@ -135,69 +135,81 @@ Moreover, we define two functions on \lstinline{Tree}s that are proven to be ref
 \section{Encoder}
 
 \subsection{"Encodability"}
-Before implementing the \lstinline{encode} function, we need to define the notion of encodability. For a character to be encoable using a given tree, it must appear exactly once in the leaves of this tree. If the character does 
-not appear in the tree, we simply cannot encode it and if it appears more than once, the behavior of the function is undefined.
+Before implementing the \lstinline{encode} function, we need to define the notion of encodability. For a character to be encodable with a given tree, it must appear exactly once its leaves.
+If the character does not appear in the tree, we simply cannot encode it and if it appears more than once, the behavior of the function is undefined.
 
-We so define the following function that return true if and only if the given character appears only once in the tree's leaves:
+We so define the following function that returns true if and only if the given character appears exactly once in the tree's leaves:
 
 \begin{lstlisting}
     def canEncodeCharUniquely(t: Tree, c: Char): Boolean
 \end{lstlisting}
 
+When encoding, we also require that the tree must be an \lstinline{InnerNode} because encoding with a single \lstinline{Leaf} is not properly defined. In fact, there is no point in encoding a string that contains only one unique character.
 
 \subsection{Encode a character}
-We first define a function \lstinline{encodeChar(t: Tree, c: Char): List[Boolean]} which encodes the given \lstinline{Char} using the given \lstinline{Tree}. This function also requires the \lstinline{Tree} to be an instance of \lstinline{InnerNode} 
-and the \lstinline{Char} to be uniquely encodable.
+We first define the following :
 
-This function is defined recursively:
-\begin{itemize}
-    \item it first checks which of the left or right child can encode the character (using the \lstinline{canEncodeCharUniquely} function),
-    \item if the subtree that can encode the character is a \lstinline{Leaf}, it returns \lstinline{List(False)} if it is the left child or \lstinline{List(True)} if it is the right,
-    \item if the subtree is a \lstinline{InnerNode}, it performs a recursive call on this subtree and appends the result to either \lstinline{List(False)} or \lstinline{List(True)} depending on the left or right again.
-\end{itemize}
+\begin{lstlisting}
+    def {encodeChar(t: Tree, c: Char): List[Boolean]} 
+\end{lstlisting}
 
-For the first point to be valid, we define a lemma proving the following: if a tree can encode uniquely a character, then exactly one child can. We then know that only one branch of the condition is valid at a time.
+It is used to encode the given \lstinline{Char} recursively using the given \lstinline{Tree}. This function also requires the \lstinline{Tree} to be an instance of \lstinline{InnerNode} 
+and the \lstinline{Char} to be uniquely encodable :
 
-The function has a post condition asserting that the produced list of bits is actually decodable (see later) and that, if it is decoded (calling \lstinline{decodeChar}), it gives the same character back and all bits are consumed.
+\begin{enumerate}
+    \item It first checks which of the left or right child of the tree contains the character to encode
+    \item if the child is a \lstinline{Leaf}, it returns \lstinline{List(False)} if it is the left child or \lstinline{List(True)} if it is the right,
+    \item if the child is a \lstinline{InnerNode}, it performs a recursive call on this subtree and appends the result to either \lstinline{List(False)} or \lstinline{List(True)}.
+\end{enumerate}
+
+For the first point to be valid, we define the following lemma: if a tree can encode uniquely a character, then exactly one of its children can. We then know that only one branch of the condition is valid at a time.
+
+The function has a post condition asserting that the produced list of bits is actually decodable and that, if it is decoded, it returns the exact same character that is to be encoded and all bits of its encoding are consumed.
 
 \subsection{Encode a string}
-The \lstinline{encode} function takes as input a \lstinline{List[Char]} and a \lstinline{Tree} and produces a \lstinline{List[Boolean]}.
-It requires that the \lstinline{Tree} is in fact a \lstinline{InnerNode} instance. Willing to encode something with only a \lstinline{Leaf} would not make sense as the bits are added to the output binary string when an edge of the tree is followed.
-It also requires that the \lstinline{List[Char]} is non-empty and that each of its character is uniquely encodable by the tree.
-We now define the \lstinline{encode} function itself. It is defined recursively as followed:
-\begin{itemize}
-    \item if there is only one char in the input list, call \lstinline{encodeChar} and returns the result
-    \item else, call \lstinline{encodeChar} on the head and concatenate the result with the result of a recursive call on the tail.
+We first define the following :
+
+\begin{lstlisting}
+    def encode(t: Tree, s: List[Char]): List[Boolean]
+\end{lstlisting}
+
+It requires the \lstinline{Tree} to be a \lstinline{InnerNode} and  the \lstinline{List[Char]} to be non-empty and that each of its character is uniquely encodable with the tree.
+
+We now define the \lstinline{encode} function itself. It is defined recursively as follows:
+\begin{enumerate}
+    \item If there is only one char in the input list, call \lstinline{encodeChar} and returns the result.
+    \item Else, call \lstinline{encodeChar} on the head and concatenate the result with the result of a recursive call on the tail.
 \end{itemize}
 
-The post condition asserts that, as stated earlier, that the produced list of bits is decodable using the same tree and that, if decoded, gives back the same string as the one received as input.
+The post condition asserts that the produced list of bits is decodable using the same tree and that, if decoded, gives back the same string as the one received as input.
 
-To prove this post condition, we have to define several lemmas:
-\begin{itemize}
-    \item to assert that \lstinline(encodeChar) produces a list of bits that is decodable and gives the right result back.
-    \item to assert that if we can decode two lists of bits, we can still decode the concatenation of the two.
-    \item to assert that if we can decode a list of bits, then we can decode at least one character from it and that we can still decode what is left (the tail).
-\end{itemize}
-
+To prove this postcondition, we have to define the following lemmas:
+\begin{enumerate}
+    \item Assert that \lstinline{encodeChar} produces a list of bits that is decodable and gives the right result back.
+    \item Assert that if we can decode two lists of bits, we can still decode the concatenation of the two.
+    \item Assert that if we can decode a list of bits, then we can correctly decode at least one character from it and that we can still decode correcty the remaining bits.
+\end{enumerate}
 
 \section{Decoder}
 
 \subsection{"Decodability"}
-Similarily to the notion of encodability, we define the notion of decodability. We define two functions:
+Similarily to the notion of encodability, we define the notion of decodability. Namely, the two following functions:
+
 \begin{lstlisting}
     def canDecodeAtLeastOneChar(t: Tree, bs: List[Boolean]): Boolean
-    def canDecode(s: Tree, bs: List[Boolean])(implicit t: Tree): Boolean
+    def canDecode(s: Tree, bs: List[Boolean])
+                 (implicit t: Tree): Boolean
 \end{lstlisting}
 
-The first one returns true if it is possible to decode one char from the given list of bits using the given tree. 
-It goes down the tree from the root and follow the proper edge given the head bit of the list and consumes it. If it reaches a leaf, it returns true, false if not. It is defined recursively.
+The first one returns true if it is possible to decode at least one character from the given list of bits using the given tree. 
+It goes down the tree from the root and follow the proper edge recursively given the head bit of the list and consumes it. If it reaches a leaf, it returns true or false otherwise.
 
-The second one returns true only if we can decode the whole list of bits, aka we can decode n characters and when the list of bits is empty, we reached a leaf. It is defined recursively and uses \lstinline{canDecodeAtLeastOneChar}.
+The second one returns true only if we can decode the whole list of bits, i.e. we can decode one or more characters and when the list of bits is empty, we eventually reached a leaf. It is defined recursively and uses \lstinline{canDecodeAtLeastOneChar}.
 
-We then define and prove some lemmas about these, the most important being these two:
+Then, we prove a few lemmas related to those two functions, the most important ones being the following:
 \begin{itemize}
     \item \lstinline{canDecodeImpliesCanDecodeAtLeastOneChar}: proves that, if we can decode the whole list of bits, then we can decode at least one character from it.
-    \item \lstinline{canDecodeImpliesCanDecodeTailAfterOneCharDecoded}: proves that, if we can decode the whole list of bits, then if we decode the first character, we can still decode the tail that is left.
+    \item \lstinline{canDecodeImpliesCanDecodeTailAfterOneCharDecoded}: proves that, if we can decode the whole list of bits, then if we decode the first character, we can still decode the remaining bits.
 \end{itemize}
 
 \subsection{Decode a character}
