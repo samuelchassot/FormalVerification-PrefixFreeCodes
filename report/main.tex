@@ -261,7 +261,7 @@ Huffman's algorithm was the starting point of this project altough we did not cl
 
 As an improvement, we suggest to extend our current implementation of naive prefix-free code generator to an actual formally verified implementation of Huffman's algorithm. This is surely more challenging to prove since Huffman's algorithm requires sorting the forest of tree at each iteration. Ensuring the forest properties such as the characters that can be uniquely decoded with it, is not trivial.
 
-\section{Conclusions}
+\section{Conclusion}
 We propose a formally verified implementation in Scala of a pair of encode/decode functions for prefix-free code. To complete the pipeline, we also propose a formally verified prefix-free code generator although not optimal.
 We verify the whole pipeline, that means that, given a string represented by a \lstinline{List[Char]}, it can generate the prefix-free code, encode the string and decode the encoded output correctly.
 
