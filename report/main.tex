@@ -220,7 +220,25 @@ The lemmas are called in the implementation to ensure that the preconditions of 
 
 
 \section{Prefix-free code generator} %TODO
-%TODO present how naive algo works and how we go from a string to a forest of leaves
+To complete the pipeline, we implement a algorithm that produces a prefix-free code for a string. It is a naive algorithm in the sense that it does not produce an optimal tree 
+(optimal in the sense that the encoded string is the shortest possible given the input).
+
+It takes as parameters a \lstinline{List[Char]} and works as following:
+\begin{itemize}
+    \item a function produces a \lstinline{List[(Char, Int)]} where each character of the input list appears once and the integer in the tuple is the number of times this character occurs in the input list. We call this list the occurences.
+    \item a function takes the occurences and produces a \lstinline{Forest} of leaves where each character appears in one leaf with the number of occurences as weight.
+    \item the tree is then produced by recursively merging the two first trees of the forest into a new \lstinline{InnerNode} and calling the function recursively on the resulting \lstinline{Forest} until only one tree is left.
+\end{itemize}
+
+To implement this algorithm, we use three functions:
+\begin{lstlisting}
+    def generateOccurrences(chars: List[Char])(implicit s: List[Char]): List[(Char, BigInt)]
+    def generateForest(s: List[Char]): Forest
+    def naivePrefixFreeCode(f: Forest)(implicit s: List[Char]): Tree
+\end{lstlisting}
+
+These three functions have some pre- and postconditions ensuring during the whole process that, at the end, each character of the input list in uniquely encodable by the produced tree.
+This proof is quite tedious and require to prove that the list of characters is indeed preserved during the whole process but without duplicates.
 
 \section{Main theorem}
 %TODO résume sa mère et comment on met tout ensemble pour prouver tout quoi
