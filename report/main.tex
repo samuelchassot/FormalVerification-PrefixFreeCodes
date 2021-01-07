@@ -284,6 +284,8 @@ Huffman's algorithm was the starting point of this project although we did not c
 
 As an improvement, we suggest to extend our current implementation of naive prefix-free code generator to an actual formally verified implementation of Huffman's algorithm. This is surely more challenging to prove since Huffman's algorithm requires sorting the forest of tree at each iteration. Ensuring the forest properties such as the characters that can be uniquely decoded with it, is not trivial.
 
+We could also explore how to adapt our work to different kind of codes. In fact, how could this work with the broader class of uniquely decodable codes, although prefix-free codes are already a large family of codes ? The main challenge would probably be to come up with an elegant way of representing such codes. In our case, representing prefix-free codes as full binary trees gave us a nice advantages, e.g. they allow recursion which is natural to work with in Stainless.
+
 \section{Conclusion}
 We propose a formally verified implementation in Scala of an encode-decode functions pair for prefix-free code. To complete the pipeline, we also propose a formally verified prefix-free code generator.
 We verify the whole pipeline, that means that, given a string represented by a \lstinline{List[Char]}, it can generate the prefix-free code, encode the string and decode the encoded output correctly.
