@@ -232,11 +232,15 @@ We first define the following :
     def decode(t: Tree, bs: List[Boolean]): List[Char]
 \end{lstlisting}
 
-The output corresponds to the list of characters obtained by decoding the list of bits using the given tree.
-It has no postcondition but some preconditions. Like \lstinline{decodeChar}, it requires the given \lstinline{Tree} to be an \lstinline{InnerNode} but also that we can decode the entire given list of bits using the given tree.
+The output corresponds to the list of characters obtained by decoding the list of bits using the given tree if it was indeed decodable, \lstinline{Nil()} otherwise.
+Like \lstinline{decodeChar}, it requires the given \lstinline{Tree} to be an \lstinline{InnerNode}. It has no postcondition. 
 
-Concerning the implementation, it first calls \lstinline{decodeChar} and if the remaining list of bits in the resulting tuple is empty, it returns \lstinline{List(c)} where \lstinline{c} is the character in the tuple. If the remaining bits list is not empty,
+Concerning the implementation, it first checks if the list of bits is decodable using the given tree by calling \lstinline{canDecode}: if it is not the case, it returns \lstinline{Nil()}. 
+If it is indeed decoable, it calls \lstinline{decodeChar} and if the remaining list of bits in the resulting tuple is empty, it returns \lstinline{List(c)} where \lstinline{c} is the character in the tuple. If the remaining bits list is not empty,
 it calls itself recursively on this list and returns \lstinline{c :: res} where res is the list produced by the recursive call.
+
+By testing that the given list of bits is decodable instead of requiring it as precondition, we ensure that it is possible to call decode on an incorrect list of bits. 
+In this way, if this pair of functions is actually used by users, a user can try to decode a list of bits that someone else sent to her. The user has to send the tree along with the list of bits so that someone else can decode it.
 
 The lemmas are called in the implementation to ensure that the preconditions of the calls to \lstinline{decodeChar} and to \lstinline{decode} are indeed valid.
 

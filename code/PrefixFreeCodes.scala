@@ -457,19 +457,23 @@ object PrefixFreeCodes {
 
   // decode a list of bits as a list of characters with a given tree------------
   def decode(t: Tree, bs: List[Boolean]): List[Char] = {
-    require(isInnerNode(t) && canDecode(t, bs)(t))
+    require(isInnerNode(t))
     decreases(bs.length)
 
-    bs match {
-      case Nil() => Nil()
-      case _ => {
-        isSubTreeReflexivity(t)
-        canDecodeImpliesCanDecodeAtLeastOneChar(t, bs)(t)
-        canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t, bs)(t)
+    if (canDecode(t, bs)(t)) {
+      bs match {
+        case Nil() => Nil()
+        case _ => {
+          isSubTreeReflexivity(t)
+          canDecodeImpliesCanDecodeAtLeastOneChar(t, bs)(t)
+          canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t, bs)(t)
 
-        val (c, nBs) = decodeChar(t, bs)
-        if (nBs.isEmpty) c else c ++ decode(t, nBs)
+          val (c, nBs) = decodeChar(t, bs)
+          if (nBs.isEmpty) c else c ++ decode(t, nBs)
+        }
       }
+    } else {
+      Nil()
     }
   }
 
