@@ -236,7 +236,7 @@ The output corresponds to the list of characters obtained by decoding the list o
 Like \lstinline{decodeChar}, it requires the given \lstinline{Tree} to be an \lstinline{InnerNode}. It has no postcondition. 
 
 Concerning the implementation, it first checks if the list of bits is decodable using the given tree by calling \lstinline{canDecode}: if it is not the case, it returns \lstinline{Nil()}. 
-If it is indeed decoable, it calls \lstinline{decodeChar} and if the remaining list of bits in the resulting tuple is empty, it returns \lstinline{List(c)} where \lstinline{c} is the character in the tuple. If the remaining bits list is not empty,
+If it is indeed decodable, it calls \lstinline{decodeChar} and if the remaining list of bits in the resulting tuple is empty, it returns \lstinline{List(c)} where \lstinline{c} is the character in the tuple. If the remaining bits list is not empty,
 it calls itself recursively on this list and returns \lstinline{c :: res} where res is the list produced by the recursive call.
 
 By testing that the given list of bits is decodable instead of requiring it as precondition, we ensure that it is possible to call decode on an incorrect list of bits. 
