@@ -202,7 +202,9 @@ Similarily to the notion of encodability, we define the notion of decodability. 
 \end{lstlisting}
 
 The first one returns true if it is possible to decode at least one character from the given list of bits using the given tree. 
-It goes down the tree from the root and follows the proper edge recursively given the head bit of the list and consumes it. If it reaches a leaf it returns true. This means that given the bits to decode a character from, you could actually find a path from the root of the tree to a character. If it does not reach a leaf, it is eventually stuck in ``the middle of the tree'' with no more bits to be consumed. In this case, the function returns false since the provided bits were not enough to decode at least one character from.
+It goes down the tree from the root and follows the proper edge recursively given the head bit of the list and consumes it. If it reaches a leaf it returns true. 
+This means that given the bits to decode a character from, you could actually find a path from the root of the tree to a character. If it does not reach a leaf, 
+it is eventually stuck in ``the middle of the tree'' with no more bits to consume. In this case, the function returns false since the provided bits were not enough to decode at least one character from.
 
 The second one returns true only if we can decode the whole list of bits, i.e. we can decode one or more characters and when the list of bits is empty, we effectively reached a leaf. It is defined recursively and uses \lstinline{canDecodeAtLeastOneChar}.
 
@@ -288,7 +290,9 @@ Huffman's algorithm was the starting point of this project although we did not c
 
 As an improvement, we suggest to extend our current implementation of naive prefix-free code generator to an actual formally verified implementation of Huffman's algorithm. This is surely more challenging to prove since Huffman's algorithm requires sorting the forest of tree at each iteration. Ensuring the forest properties such as the characters that can be uniquely decoded with it, is not trivial.
 
-We could also explore how to adapt our work to different kind of codes. In fact, how could this work with the broader class of uniquely decodable codes, although prefix-free codes are already a large family of codes ? The main challenge would probably be to come up with an elegant way of representing such codes. In our case, representing prefix-free codes as full binary trees gave us a nice advantages, e.g. they allow recursion which is natural to work with in Stainless.
+We could also explore how to adapt our work to different kind of codes. In fact, how could this work with the broader class of uniquely decodable codes. 
+The main challenge would probably be to come up with an elegant way of representing such codes. 
+In our case, representing prefix-free codes as full binary trees gave us a nice advantages, e.g. they allow recursion which is natural to work with in Stainless.
 
 \section{Conclusion}
 We propose a formally verified implementation in Scala of an encode-decode functions pair for prefix-free code. To complete the pipeline, we also propose a formally verified prefix-free code generator.
