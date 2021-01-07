@@ -112,7 +112,7 @@ Those codes can be represented as full binary trees. To determine the code word 
 \section{Datatypes}
 
 The inputs of our pipeline are string stored as \lstinline{List[Char]} since it is easier to define recursion on lists rather than on the \lstinline{String} type directly with Stainless. 
-Similarily, we define the outputs of our pipeline, an encoded binary string as \lstinline{List[Boolean]}.
+Similarily, the outputs of our pipeline, an encoded binary string are defined as \lstinline{List[Boolean]}.
 
 We define the following case classes to describe the full binary tree used to represent prefix-free codes and \lstinline{Forest}, which is a list of trees used for the generation of the prefix-free codes:
 
@@ -124,6 +124,8 @@ We define the following case classes to describe the full binary tree used to re
     type Forest = List[Tree]
 \end{lstlisting}
 
+On the one hand, we use \lstinline{InnerNode}s representing the intermediates nodes from the root down to the leaves and they are fully defined by their two children. On the other hand, we have \lstinline{Leaf} to describe the bottom nodes. Those contain the character \lstinline{c} they represent as well as their correspoding weight \lstinline{w}, i.e. how many time it appears in the corresponding string.
+
 Moreover, we define two functions on \lstinline{Tree}s that are proven to be reflexive and transitive:
 \begin{itemize}
     \item \lstinline{isSubTree(t: Tree, st: Tree)}: boolean value indicating if \lstinline{st} is a subtree of \lstinline{t}.
@@ -132,7 +134,7 @@ Moreover, we define two functions on \lstinline{Tree}s that are proven to be ref
 
 \section{Encoder}
 
-\subsection{"Encodability"}
+\subsection{``Encodability''}
 Before implementing the \lstinline{encode} function, we need to define the notion of encodability. For a character to be encodable with a given tree, it must appear exactly once in its leaves.
 If the character does not appear in the tree, we simply cannot encode it and if it appears more than once, the behavior of the function is undefined.
 
@@ -190,7 +192,7 @@ To prove this postcondition, we have to define the following lemmas:
 
 \section{Decoder}
 
-\subsection{"Decodability"}
+\subsection{``Decodability''}
 Similarily to the notion of encodability, we define the notion of decodability. Namely, the two following functions:
 
 \begin{lstlisting}
@@ -200,7 +202,7 @@ Similarily to the notion of encodability, we define the notion of decodability. 
 \end{lstlisting}
 
 The first one returns true if it is possible to decode at least one character from the given list of bits using the given tree. 
-It goes down the tree from the root and follow the proper edge recursively given the head bit of the list and consumes it. If it reaches a leaf, it returns true, false otherwise.
+It goes down the tree from the root and follows the proper edge recursively given the head bit of the list and consumes it. If it reaches a leaf it returns true. This means that given the bits to decode a character from, you could actually find a path from the root of the tree to a character. If it does not reach a leaf, it is eventually stuck in ``the middle of the tree'' with no more bits to be consumed. In this case, the function returns false since the provided bits were not enough to decode at least one character from.
 
 The second one returns true only if we can decode the whole list of bits, i.e. we can decode one or more characters and when the list of bits is empty, we effectively reached a leaf. It is defined recursively and uses \lstinline{canDecodeAtLeastOneChar}.
 
@@ -278,7 +280,7 @@ It states that, if we take the input string, generate a prefix-free code tree, u
 
 \section{Future work}
 
-Huffman's algorithm was the starting point of this project altough we did not clearly exploit it. We restricted ourselves to the broader class of prefix-free codes and how to generate some without worrying about its optimality as in \cite{blanchette}. 
+Huffman's algorithm was the starting point of this project although we did not clearly exploit it. We restricted ourselves to the broader class of prefix-free codes and how to generate some without worrying about its optimality as in \cite{blanchette}. 
 
 As an improvement, we suggest to extend our current implementation of naive prefix-free code generator to an actual formally verified implementation of Huffman's algorithm. This is surely more challenging to prove since Huffman's algorithm requires sorting the forest of tree at each iteration. Ensuring the forest properties such as the characters that can be uniquely decoded with it, is not trivial.
 
