@@ -48,7 +48,7 @@ object PrefixFreeCodes {
 
   // return the list of chars contained in a forest-----------------------------
   def containedChars(f: Forest): List[Char] = f match {
-    case hd :: tl => containedChars(hd) ++ containedChars(tl)
+    case Cons(hd, tl) => containedChars(hd) ++ containedChars(tl)
     case Nil() => Nil()
   }
 
@@ -101,7 +101,6 @@ object PrefixFreeCodes {
   // usefull to prove isSameSubTree---------------------------------------------
   def isSameTreeTransitivity(t1: Tree, t2: Tree, t3: Tree): Unit = {
     require(isSameTree(t1, t2) && isSameTree(t2, t3))
-
     (t1, t2, t3) match {
       case (InnerNode(t11, t12), InnerNode(t21, t22), InnerNode(t31, t32)) => {
         isSameTreeTransitivity(t11, t21, t31)
@@ -195,7 +194,7 @@ object PrefixFreeCodes {
   // is equivalent to counting it in the concatenation of the lists-------------
   def countPreservedOnConcat(l1: List[Char], l2: List[Char], p: Char => Boolean): Unit = {
     l1 match {
-      case hd1 :: tl1 => countPreservedOnConcat(tl1, l2, p)
+      case Cons(hd1, tl1) => countPreservedOnConcat(tl1, l2, p)
       case Nil() => ()
     }
   }.ensuring(_ => (l1 ++ l2).count(p) == l1.count(p) + l2.count(p))
@@ -218,7 +217,7 @@ object PrefixFreeCodes {
     require(isInnerNode(t) && canDecodeAtLeastOneChar(t, bs) && decodeChar(t, bs) == (List(c), Nil[Boolean]()) && canDecodeAtLeastOneChar(t, bs ++ tlBs))
 
     t match { case t@InnerNode(t1, t2) => bs match {
-      case hd :: tl => {
+      case Cons(hd, tl) => {
         if (!hd) t1 match {
           case Leaf(_, _) => ()
           case InnerNode(_, _) => canStillDecodeOneCharAndSomething(t1, c, tl, tlBs)
@@ -262,22 +261,23 @@ object PrefixFreeCodes {
     require(isInnerNode(t) && !s.isEmpty && s.forall(c => canEncodeCharUniquely(t, c)))
     decreases(s.length)
 
-    s match { case hd :: tl => {
-      if (tl.isEmpty) {
-        encodeCharIsDecodableAndCorrect(t, hd)
-        encodeChar(t, hd)
-      } else {
-        val hdBs = encodeChar(t, hd)
-        val tlBs = encode(t, tl)
+    s match { 
+      case Cons(hd, tl) => {
+        if (tl.isEmpty) {
+          encodeCharIsDecodableAndCorrect(t, hd)
+          encodeChar(t, hd)
+        } else {
+          val hdBs = encodeChar(t, hd)
+          val tlBs = encode(t, tl)
 
-        canStillDecodeConcatenation(t, hdBs, tlBs)(t)
-        canDecodeImpliesCanDecodeAtLeastOneChar(t, hdBs ++ tlBs)(t)
-        canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t, hdBs ++ tlBs)(t)
-        canStillDecodeOneCharAndSomething(t, hd, hdBs, tlBs)
-        concatenationIsStillDecodableAndCorrect(t, hdBs, tlBs, List(hd), tl)
+          canStillDecodeConcatenation(t, hdBs, tlBs)(t)
+          canDecodeImpliesCanDecodeAtLeastOneChar(t, hdBs ++ tlBs)(t)
+          canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t, hdBs ++ tlBs)(t)
+          canStillDecodeOneCharAndSomething(t, hd, hdBs, tlBs)
+          concatenationIsStillDecodableAndCorrect(t, hdBs, tlBs, List(hd), tl)
 
-        hdBs ++ tlBs
-      }
+          hdBs ++ tlBs
+        }
     }}
   // the result is decodable and decoding it returns exactly the original string
   }.ensuring(bs => canDecode(t, bs)(t) && decode(t, bs) == s)
@@ -291,7 +291,7 @@ object PrefixFreeCodes {
     decreases(bs.length)
     
     t match { case InnerNode(t1, t2) => { bs match {
-        case hd :: tl => {
+        case Cons(hd, tl) => {
           if (!hd) { t1 match {
             case t1@InnerNode(t11, t12) => toDecodeBinaryStringLengthDecreases(t1, tl)
             case Leaf(_, _) => ()
@@ -311,7 +311,7 @@ object PrefixFreeCodes {
     decreases(bs.length)
 
     t match { case InnerNode(t1, t2) => { bs match {
-      case hd :: tl => {
+      case Cons(hd, tl) => {
         if (!hd) t1 match {
           case Leaf(_, _) => true
           case t1@InnerNode(_, _) => canDecodeAtLeastOneChar(t1, tl)
@@ -346,7 +346,7 @@ object PrefixFreeCodes {
     decreases(bs.length)
 
     s match { case InnerNode(t1, t2) => { bs match {
-      case hd :: tl => {
+      case Cons(hd, tl) => {
         if (!hd) t1 match {
           case Leaf(_, c) => ()
           case t1@InnerNode(_, _) => {
@@ -378,7 +378,7 @@ object PrefixFreeCodes {
 
     bs match {
       case Nil() => ()
-      case hd :: tl => { s match { case InnerNode(t1, t2) => {
+      case Cons(hd, tl) => { s match { case InnerNode(t1, t2) => {
         if (!hd) t1 match {
           case t1@InnerNode(_, _) => canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t1, tl)(t)
           case Leaf(_, c) => ()
@@ -396,7 +396,7 @@ object PrefixFreeCodes {
     decreases(bs.length)
 
     s match { case InnerNode(t1, t2) => { bs match {
-      case hd :: tl => {
+      case Cons(hd, tl) => {
         if (!hd) t1 match {
           case Leaf(_, _) => ()
           case t1@InnerNode(_, _) => canDecodeExactlyOneCharImpliesCanDecode(t1, tl)
@@ -416,7 +416,7 @@ object PrefixFreeCodes {
     decreases(bs1.length)
 
     s match { case InnerNode(t1, t2) => bs1 match {
-      case hd :: tl => {
+      case Cons(hd, tl) => {
         if (!hd) t1 match {
           case Leaf(_, c) => canStillDecodeConcatenation(t, Nil(), bs2)
           case t1@InnerNode(_, _) => canStillDecodeConcatenation(t1, tl, bs2)
@@ -444,7 +444,7 @@ object PrefixFreeCodes {
     require(isInnerNode(t) && canDecodeAtLeastOneChar(t, bs))
     decreases(bs.length)
 
-    (t, bs) match { case (InnerNode(t1, t2), hd :: tl) => {
+    (t, bs) match { case (InnerNode(t1, t2), Cons(hd, tl)) => {
       if (!hd) t1 match {
         case Leaf(_, c) => (List(c), tl)
         case t1@InnerNode(_, _) => decodeChar(t1, tl)
@@ -494,9 +494,9 @@ object PrefixFreeCodes {
   // then we can with a forest with the same contained chars as well------------
   def sameContainedCharsImpliesSameCanEncodeUniquely(f1: Forest, f2: Forest, s: List[Char]) : Unit = {
     require(containedChars(f1) == containedChars(f2) && s.forall(canEncodeCharUniquely(f1, _)))
-
+    decreases(s)
     s match {
-      case hd :: tl => {
+      case Cons(hd, tl) => {
         sameContainedCharsImpliesSameCountChar(f1, f2, hd)
         sameContainedCharsImpliesSameCanEncodeUniquely(f1, f2, tl)
       }
@@ -523,10 +523,10 @@ object PrefixFreeCodes {
   // we can encode uniquely with the single tree of it--------------------------
   def canStillEncodeUniquelyWithSingleTree(f: Forest, s: List[Char]): Unit = {
     require(f.length == 1 && s.forall(canEncodeCharUniquely(f, _)))
-
+    decreases(s.length)
     s match {
       case Nil() => ()
-      case hd :: tl => canStillEncodeUniquelyWithSingleTree(f, tl)
+      case Cons(hd, tl) => canStillEncodeUniquelyWithSingleTree(f, tl)
     }
   }.ensuring(_ => s.forall(canEncodeCharUniquely(f.head, _)))
 
@@ -534,9 +534,9 @@ object PrefixFreeCodes {
   // characters of a string and its definition----------------------------------
   def forallCountCharOneImpliesCanEncodeCharUniquely(f: Forest, s: List[Char]): Unit = {
     require(s.forall(countChar(f, _) == 1))
-
+    decreases(s)
     s match {
-      case hd :: tl => {
+      case Cons(hd, tl) => {
         countCharOneImpliesCanEncodeCharUniquely(f, hd)
         forallCountCharOneImpliesCanEncodeCharUniquely(f, tl)
       }
@@ -556,7 +556,7 @@ object PrefixFreeCodes {
     decreases(s.length)
 
     s match {
-      case hd :: tl => {
+      case Cons(hd, tl) => {
         ListSpecs.forallContained(removeDuplicates(s), (c: Char) => canEncodeCharUniquely(f, c), hd)
         canStillEncodeSameCharsUniquely(f, tl)
       }
@@ -571,7 +571,7 @@ object PrefixFreeCodes {
     decreases(s.length)
 
     s match {
-      case hd :: tl => countCharOnALeafWithDifferentCharacterAlwaysGivesZero(l, tl)
+      case Cons(hd, tl) => countCharOnALeafWithDifferentCharacterAlwaysGivesZero(l, tl)
       case Nil() => ()
     }
   }.ensuring(_ => s.forall(countChar(l, _) == 0))
@@ -583,7 +583,7 @@ object PrefixFreeCodes {
     decreases(s.length)
 
     s match {
-      case hd :: tl => addingNewLeafToForestPreservesForallCountChar(f, l, tl)
+      case Cons(hd, tl) => addingNewLeafToForestPreservesForallCountChar(f, l, tl)
       case Nil() => ()
     }
   }.ensuring(_ => forallAltcountChar(s, l :: f))
@@ -595,7 +595,7 @@ object PrefixFreeCodes {
   def forallAltcountChar(s: List[Char], f: Forest) : Boolean = {
     decreases(s.length)
     s match {
-      case hd :: tl => (countChar(f, hd) == 1) && forallAltcountChar(tl, f)
+      case Cons(hd, tl) => (countChar(f, hd) == 1) && forallAltcountChar(tl, f)
       case Nil() => true
     }
   }.ensuring(r => r == s.forall(countChar(f, _) == 1))
@@ -606,7 +606,7 @@ object PrefixFreeCodes {
   def removeDuplicates(s: List[Char]): List[Char] = {
     s match {
       case Nil() => Nil[Char]()
-      case hd :: tl => {
+      case Cons(hd, tl) => {
         val tmp = removeDuplicates(tl)
         if (tmp.contains(hd)) tmp else hd :: tmp
       }
@@ -660,7 +660,7 @@ object PrefixFreeCodes {
 
     chars match {
       case Nil() => Nil[(Char, BigInt)]()
-      case hd :: tl => (hd, s.count(_ == hd)) :: generateOccurrences(tl)
+      case Cons(hd, tl) => (hd, s.count(_ == hd)) :: generateOccurrences(tl)
     }
   }.ensuring(r => ListSpecs.noDuplicate(r.map(_._1)) && r.map(_._1) == chars)
 
