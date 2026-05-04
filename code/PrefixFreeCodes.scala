@@ -177,7 +177,7 @@ object PrefixFreeCodes {
     require(isInnerNode(t) && canEncodeCharUniquely(t, c))
     decreases(encodeChar(t, c).length)
 
-    canDecodeExactlyOneCharImpliesCanDecode(t, encodeChar(t, c))(t)
+    canDecodeExactlyOneCharImpliesCanDecode(t, encodeChar(t, c))(using t)
     
     t match { case InnerNode(t1, t2) => {
       (t1, t2) match {
@@ -188,7 +188,7 @@ object PrefixFreeCodes {
         case (_, Leaf(_, c2)) if (c2 == c) => ()
       }
     }}
-  }.ensuring(_ => canDecode(t, encodeChar(t, c))(t) && decode(t, encodeChar(t, c)) == List(c))
+  }.ensuring(_ => canDecode(t, encodeChar(t, c))(using t) && decode(t, encodeChar(t, c)) == List(c))
 
   // prove that counting how many time a predicate is satisfied on two lists----
   // is equivalent to counting it in the concatenation of the lists-------------
@@ -270,9 +270,9 @@ object PrefixFreeCodes {
           val hdBs = encodeChar(t, hd)
           val tlBs = encode(t, tl)
 
-          canStillDecodeConcatenation(t, hdBs, tlBs)(t)
-          canDecodeImpliesCanDecodeAtLeastOneChar(t, hdBs ++ tlBs)(t)
-          canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t, hdBs ++ tlBs)(t)
+          canStillDecodeConcatenation(t, hdBs, tlBs)(using t)
+          canDecodeImpliesCanDecodeAtLeastOneChar(t, hdBs ++ tlBs)(using t)
+          canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t, hdBs ++ tlBs)(using t)
           canStillDecodeOneCharAndSomething(t, hd, hdBs, tlBs)
           concatenationIsStillDecodableAndCorrect(t, hdBs, tlBs, List(hd), tl)
 
@@ -280,7 +280,7 @@ object PrefixFreeCodes {
         }
     }}
   // the result is decodable and decoding it returns exactly the original string
-  }.ensuring(bs => canDecode(t, bs)(t) && decode(t, bs) == s)
+  }.ensuring(bs => canDecode(t, bs)(using t) && decode(t, bs) == s)
 
   // decode lemmas--------------------------------------------------------------
 
@@ -342,7 +342,7 @@ object PrefixFreeCodes {
 
   // prove that canDecode implies canDecodeAtLeastOneChar-----------------------
   def canDecodeImpliesCanDecodeAtLeastOneChar(s: Tree, bs: List[Boolean])(implicit t: Tree): Unit = {
-    require(isInnerNode(s) && isInnerNode(t) && isSubTree(t, s) &&  canDecode(s, bs)(t))
+    require(isInnerNode(s) && isInnerNode(t) && isSubTree(t, s) &&  canDecode(s, bs)(using t))
     decreases(bs.length)
 
     s match { case InnerNode(t1, t2) => { bs match {
@@ -370,24 +370,24 @@ object PrefixFreeCodes {
   // prove that can decode implies that we can decode the remaining bits--------
   // after having decoded the first decodable character-------------------------
   def canDecodeImpliesCanDecodeTailAfterOneCharDecoded(s: Tree, bs: List[Boolean])(implicit t: Tree): Unit = {
-    require(isInnerNode(s) && isInnerNode(t) && isSubTree(t, s) && canDecode(s, bs)(t))
+    require(isInnerNode(s) && isInnerNode(t) && isSubTree(t, s) && canDecode(s, bs)(using t))
     decreases(bs.length)
 
     isSubTreeReflexivity(t)
-    canDecodeImpliesCanDecodeAtLeastOneChar(s, bs)(t)
+    canDecodeImpliesCanDecodeAtLeastOneChar(s, bs)(using t)
 
     bs match {
       case Nil() => ()
       case Cons(hd, tl) => { s match { case InnerNode(t1, t2) => {
         if (!hd) t1 match {
-          case t1@InnerNode(_, _) => canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t1, tl)(t)
+          case t1@InnerNode(_, _) => canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t1, tl)(using t)
           case Leaf(_, c) => ()
         } else t2 match {
-          case t2@InnerNode(_, _) => canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t2, tl)(t)
+          case t2@InnerNode(_, _) => canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t2, tl)(using t)
           case Leaf(_, c) => ()
         }
     }}}}
-  }.ensuring(_ => decodeChar(s, bs) match { case(_, nBs) => nBs.isEmpty || canDecode(t, nBs)(t) })
+  }.ensuring(_ => decodeChar(s, bs) match { case(_, nBs) => nBs.isEmpty || canDecode(t, nBs)(using t) })
 
   // prove than if we can exactly decode exactly one character from ------------
   // a binary string with a given tree then we can decode the binary string-----
@@ -407,12 +407,12 @@ object PrefixFreeCodes {
       }
       case Nil() => ()
     }}}
-  }.ensuring(_ => canDecode(s, bs)(t))
+  }.ensuring(_ => canDecode(s, bs)(using t))
 
   // prove that if we can decode exactly one char and can decode an other-------
   // string then we can decode their concatenation------------------------------
   def canStillDecodeConcatenation(s: Tree, bs1: List[Boolean], bs2: List[Boolean])(implicit t: Tree): Unit = {
-    require(isInnerNode(s) && isInnerNode(t) && (bs1.isEmpty && t == s || canDecodeAtLeastOneChar(s, bs1) && decodeChar(s, bs1)._2 == Nil[Boolean]()) && canDecode(t, bs2)(t))
+    require(isInnerNode(s) && isInnerNode(t) && (bs1.isEmpty && t == s || canDecodeAtLeastOneChar(s, bs1) && decodeChar(s, bs1)._2 == Nil[Boolean]()) && canDecode(t, bs2)(using t))
     decreases(bs1.length)
 
     s match { case InnerNode(t1, t2) => bs1 match {
@@ -427,12 +427,12 @@ object PrefixFreeCodes {
       }
       case Nil() => ()
     }}
-  }.ensuring(_ => canDecode(s, bs1 ++ bs2)(t))
+  }.ensuring(_ => canDecode(s, bs1 ++ bs2)(using t))
 
   // prove that we can stil decode the concatenation of two binary strings------
   // and the result is correct--------------------------------------------------
   def concatenationIsStillDecodableAndCorrect(t: Tree, bs1: List[Boolean], bs2: List[Boolean], s1: List[Char], s2: List[Char]): Unit = {
-    require(isInnerNode(t) && canDecodeAtLeastOneChar(t, bs1 ++ bs2) && decodeChar(t, bs1 ++ bs2) == (s1, bs2) && canDecode(t, bs2)(t) && decode(t, bs2) == s2)
+    require(isInnerNode(t) && canDecodeAtLeastOneChar(t, bs1 ++ bs2) && decodeChar(t, bs1 ++ bs2) == (s1, bs2) && canDecode(t, bs2)(using t) && decode(t, bs2) == s2)
     // this is strange as it is automatically proven but removing this lemma----
     // prevents the proof from being validated----------------------------------
   }.ensuring(_ => decode(t, bs1 ++ bs2) == s1 ++ s2)
@@ -460,13 +460,13 @@ object PrefixFreeCodes {
     require(isInnerNode(t))
     decreases(bs.length)
 
-    if (canDecode(t, bs)(t)) {
+    if (canDecode(t, bs)(using t)) {
       bs match {
         case Nil() => Nil()
         case _ => {
           isSubTreeReflexivity(t)
-          canDecodeImpliesCanDecodeAtLeastOneChar(t, bs)(t)
-          canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t, bs)(t)
+          canDecodeImpliesCanDecodeAtLeastOneChar(t, bs)(using t)
+          canDecodeImpliesCanDecodeTailAfterOneCharDecoded(t, bs)(using t)
 
           val (c, nBs) = decodeChar(t, bs)
           if (nBs.isEmpty) c else c ++ decode(t, nBs)
@@ -619,7 +619,7 @@ object PrefixFreeCodes {
   def generatePrefixFreeCode(s: List[Char]): Tree = {
     require(removeDuplicates(s).length > 1)
 
-    naivePrefixFreeCode(generateForest(s))(s)
+    naivePrefixFreeCode(generateForest(s))(using s)
   }.ensuring(t => isInnerNode(t) && s.forall(c => canEncodeCharUniquely(t, c)))
 
   // generate the corresponding prefix free code given a forest-----------------
@@ -645,7 +645,7 @@ object PrefixFreeCodes {
   def generateForest(s: List[Char]): Forest = {
     require(removeDuplicates(s).length > 1)
 
-    val occ = generateOccurrences(removeDuplicates(s))(s)
+    val occ = generateOccurrences(removeDuplicates(s))(using s)
     val f = occurrencesToLeaves(occ, removeDuplicates(s))
 
     forallCountCharOneImpliesCanEncodeCharUniquely(f, removeDuplicates(s))
